@@ -61,7 +61,7 @@ Obsidian's own behavior is known with varying confidence, so rules carry a prove
 | ***[reported]*** | Not stated by Obsidian. Based on user reports, third-party tools, or how the official help vault's own source is written. |
 | ***[chosen]*** | Obsidian's behavior is undocumented. This spec fixes a rule so that implementations agree. Obsidian may behave differently. |
 
-**No example in this document has been run against Obsidian itself.** Rules marked *[chosen]* in particular are the first candidates for correction. [Appendix C](#appendix-c-open-questions) lists what most needs testing.
+**Apart from a manual check of colored highlights ([section 7.2](#72-highlights)), no example in this document has been run against Obsidian itself.** Rules marked *[chosen]* in particular are the first candidates for correction. [Appendix C](#appendix-c-open-questions) lists what most needs testing.
 
 ### 1.5 About this document
 
@@ -905,7 +905,7 @@ a == b == c
 <p>== spaced ==</p>
 ````````````````````````````````
 
-A highlight whose content starts with one of these six emoji has that color. The emoji is a marker and is removed from the content. ***[chosen]***
+A highlight whose content starts with one of these six emoji has that color. The emoji is a marker and is removed from the content. ***[reported]***
 
 | Emoji | Color |
 | --- | --- |
@@ -1524,15 +1524,14 @@ These points most need testing against Obsidian. The current rule is given for e
 2. **Inline math delimiters.** Does a closing `$` before a digit count? Currently yes, since a report of `$` amounts being read as math suggests it does.
 3. **Inline comments across lines.** Currently not allowed. The help only advises against them.
 4. **Highlight flanking and delimiter run length.** Are `== x ==` and `===x===` highlights? Currently no.
-5. **Whether the color emoji is shown** in a colored highlight. Currently removed.
-6. **Alias text.** Are inlines parsed in `[[a|*b*]]`? Currently no.
-7. **Image embeds with both alternative text and a size**, as in `![[a.png|caption|100]]`. Currently the whole `caption|100` is alternative text.
-8. **Block identifier case sensitivity and duplicates.** Currently exact and first wins.
-9. **Exact heading normalization.** `stripHeading` in the API exists but its character set is undocumented.
-10. **File resolution order** for ambiguous names. Currently as in [section 8.2](#82-file-resolution).
-11. **Footnote label matching and interruption of paragraphs.** Currently case-insensitive, and a definition can interrupt.
-12. **The sanitizer's allow-list.** Not documented.
-13. **Block identifiers at list items.** The help says one can be placed on a bullet point, but a third-party reference reports that this fails. This spec follows the help.
+5. **Alias text.** Are inlines parsed in `[[a|*b*]]`? Currently no.
+6. **Image embeds with both alternative text and a size**, as in `![[a.png|caption|100]]`. Currently the whole `caption|100` is alternative text.
+7. **Block identifier case sensitivity and duplicates.** Currently exact and first wins.
+8. **Exact heading normalization.** `stripHeading` in the API exists but its character set is undocumented.
+9. **File resolution order** for ambiguous names. Currently as in [section 8.2](#82-file-resolution).
+10. **Footnote label matching and interruption of paragraphs.** Currently case-insensitive, and a definition can interrupt.
+11. **The sanitizer's allow-list.** Not documented.
+12. **Block identifiers at list items.** The help says one can be placed on a bullet point, but a third-party reference reports that this fails. This spec follows the help.
 
 ---
 

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>obsidian-markdown demo</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { margin: 0; padding: 16px; font-family: system-ui, sans-serif; }
+      main { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+      textarea { width: 100%; height: 80vh; box-sizing: border-box; font: 13px/1.5 ui-monospace, monospace; }
+      pre { font-size: 12px; white-space: pre-wrap; }
+    </style>
+    <script type="module" src="/src/obsidian-markdown.ts"></script>
+  </head>
+  <body>
+    <main>
+      <textarea id="source" aria-label="Markdown source" spellcheck="false">---
+title: Demo note
+tags:
+  - demo
+---
+# Obsidian Flavored Markdown
+
+A [[Wikilink]], an [[Other note#Heading|aliased link]], and a #nested/tag. ^intro-paragraph
+
+==Highlight== ==🔴red== ==🟢green== ~~struck~~ **bold** %%hidden comment%% visible.
+A single newline is a line break here.
+
+> [!tip]+ A foldable callout, open
+> With **formatting** and [[a link]].
+
+> [!faq]- A foldable callout, closed
+> Hidden until opened.
+
+> [!warning]
+> > [!example] Nested
+> > Inner body.
+
+%%
+A block comment.
+
+# Hidden heading
+%%
+
+- [x] Done
+- [ ] Not done
+- [?] Question
+
+| Left | Center | Right |
+| :-- | :--: | --: |
+| [[Note\|Alias]] | ![[pic.png\|64]] | `code` |
+
+^table-id
+
+Footnote[^1] and an inline one ^[Inline *note*.].
+
+[^1]: A footnote
+  across two lines.
+
+Inline math $e^{2i\pi} = 1$ and a rare glyph $\mathfrak{A} \mathscr{B} \mathbb{C}$.
+
+$$
+\begin{vmatrix}a & b\\
+c & d
+\end{vmatrix}=ad-bc
+$$
+
+```mermaid
+graph TD
+Biology --> Chemistry
+class Biology,Chemistry internal-link;
+```
+
+```js
+const a = "[[not a link]]";
+```
+
+![[Embedded note#^block]]
+
+Autolink www.example.com but not README.md.
+
+## Inert on purpose
+
+<img src=x onerror="document.title='pwned'">
+
+<script>document.title = 'pwned'</script>
+
+[[javascript:document.title='pwned']]
+
+$\href{javascript:document.title='pwned'}{link}$
+</textarea>
+      <obsidian-markdown id="note"></obsidian-markdown>
+    </main>
+    <pre id="log"></pre>
+
+    <script type="module">
+      const source = document.querySelector('#source');
+      const note = document.querySelector('#note');
+      const log = document.querySelector('#log');
+      const show = () => { note.value = source.value; };
+      source.addEventListener('input', show);
+      note.addEventListener('wikilink', (e) => {
+        log.textContent = `wikilink ${JSON.stringify(e.detail)}\n${log.textContent}`;
+      });
+      show();
+    </script>
+  </body>
+</html>
