@@ -1,7 +1,6 @@
 import { LitElement, css, html } from 'lit';
-import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { until } from 'lit/directives/until.js';
 import { draw } from './draw.ts';
 import { renderMarkdown } from './markdown.ts';
 
@@ -107,28 +106,22 @@ export class ObsidianMarkdown extends LitElement {
   @property() accessor value = '';
   @property({ type: Boolean, attribute: 'strict-line-breaks' }) accessor strictLineBreaks = false;
 
-  #html = '';
-  #generation = 0;
-
-  #inputsChanged(changed: PropertyValues<this>) {
-    return changed.has('value') || changed.has('strictLineBreaks');
-  }
-
-  willUpdate(changed: PropertyValues<this>) {
-    if (!this.#inputsChanged(changed)) return;
-    this.#html = renderMarkdown(this.value ?? '', { strictLineBreaks: this.strictLineBreaks });
-  }
-
-  updated(changed: PropertyValues<this>) {
-    if (!this.#inputsChanged(changed)) return;
-    for (const title of this.renderRoot.querySelectorAll(FOLDABLE_TITLE)) {
+  /** Render and draw off-screen. A template's content is inert until it's inserted. */
+  #build = async (value: string, strictLineBreaks: boolean) => {
+    const template = document.createElement('template');
+    template.innerHTML = renderMarkdown(value, { strictLineBreaks });
+    await draw(template.content);
+    for (const title of template.content.querySelectorAll(FOLDABLE_TITLE)) {
       title.setAttribute('role', 'button');
       title.setAttribute('tabindex', '0');
       title.setAttribute('aria-expanded', String(title.parentElement?.getAttribute('data-callout-fold') === '+'));
     }
-    const generation = ++this.#generation;
-    void draw(this.renderRoot, () => generation === this.#generation);
-  }
+    // A superseded build is dropped by until, so it shouldn't announce anything.
+    if (value === (this.value ?? '') && strictLineBreaks === this.strictLineBreaks) {
+      this.dispatchEvent(new CustomEvent('rendered', { bubbles: true, composed: true }));
+    }
+    return template.content;
+  };
 
   #openWikilink(target: string) {
     this.dispatchEvent(new CustomEvent<MarkdownWikilinkDetail>('wikilink', {
@@ -179,7 +172,9 @@ export class ObsidianMarkdown extends LitElement {
 
   render() {
     return html`
-      <div @click=${this.#onClick} @keydown=${this.#onKeydown}>${unsafeHTML(this.#html)}</div>
+      <div class="note" @click=${this.#onClick} @keydown=${this.#onKeydown}>
+        ${until(this.#build(this.value ?? '', this.strictLineBreaks))}
+      </div>
     `;
   }
 }

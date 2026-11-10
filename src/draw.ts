@@ -1,17 +1,18 @@
-type IsCurrent = () => boolean;
-
 let nextDiagramId = 0;
+
+// Skipping import() once loaded lets later renders finish in microtasks, before paint.
+let tex: typeof import('./tex.ts') | undefined;
+let mermaid: typeof import('mermaid').default | undefined;
 
 const warn = (what: string, error: unknown) => console.warn(`obsidian-markdown: could not draw ${what}`, error);
 
-const drawMath = async (elements: HTMLElement[], isCurrent: IsCurrent) => {
-  const { renderTex } = await import('./tex.ts');
+const drawMath = async (elements: HTMLElement[]) => {
+  tex ??= await import('./tex.ts');
+  const { renderTex } = tex;
   for (const element of elements) {
-    if (!isCurrent()) return;
     const latex = element.textContent ?? '';
     try {
       const drawing = await renderTex(latex, !element.classList.contains('math-inline'));
-      if (!isCurrent()) return;
       element.replaceChildren(drawing);
       element.setAttribute('role', 'img');
       element.setAttribute('aria-label', latex);
@@ -21,8 +22,8 @@ const drawMath = async (elements: HTMLElement[], isCurrent: IsCurrent) => {
   }
 };
 
-const drawDiagrams = async (codes: HTMLElement[], isCurrent: IsCurrent) => {
-  const { default: mermaid } = await import('mermaid');
+const drawDiagrams = async (codes: HTMLElement[]) => {
+  mermaid ??= (await import('mermaid')).default;
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
@@ -30,10 +31,8 @@ const drawDiagrams = async (codes: HTMLElement[], isCurrent: IsCurrent) => {
     theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
   });
   for (const code of codes) {
-    if (!isCurrent()) return;
     try {
       const { svg } = await mermaid.render(`obsidian-markdown-${++nextDiagramId}`, code.textContent ?? '');
-      if (!isCurrent()) return;
       const diagram = document.createElement('div');
       diagram.className = 'diagram';
       diagram.innerHTML = svg;
@@ -44,12 +43,12 @@ const drawDiagrams = async (codes: HTMLElement[], isCurrent: IsCurrent) => {
   }
 };
 
-/** Replace math and Mermaid markup with drawings. On failure the source stays visible. */
-export const draw = async (root: ParentNode, isCurrent: IsCurrent) => {
+/** Replace math and Mermaid markup with drawings. Never rejects. On failure the source stays in place. */
+export const draw = async (root: ParentNode) => {
   const math = [...root.querySelectorAll<HTMLElement>('.math')];
   const diagrams = [...root.querySelectorAll<HTMLElement>('code.language-mermaid')];
   await Promise.all([
-    math.length > 0 ? drawMath(math, isCurrent).catch((error) => warn('math', error)) : null,
-    diagrams.length > 0 ? drawDiagrams(diagrams, isCurrent).catch((error) => warn('diagrams', error)) : null,
+    math.length > 0 ? drawMath(math).catch((error) => warn('math', error)) : null,
+    diagrams.length > 0 ? drawDiagrams(diagrams).catch((error) => warn('diagrams', error)) : null,
   ]);
 };

@@ -103,6 +103,9 @@ $\href{javascript:document.title='pwned'}{link}$
       note.addEventListener('wikilink', (e) => {
         log.textContent = `wikilink ${JSON.stringify(e.detail)}\n${log.textContent}`;
       });
+      note.addEventListener('rendered', () => {
+        log.textContent = `rendered\n${log.textContent}`;
+      });
       show();
     </script>
   </body>
