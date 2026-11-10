@@ -9,7 +9,7 @@
       body { margin: 0; padding: 16px; font-family: system-ui, sans-serif; }
       main { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
       textarea { width: 100%; height: 80vh; box-sizing: border-box; font: 13px/1.5 ui-monospace, monospace; }
-      pre { font-size: 12px; white-space: pre-wrap; }
+      #log { font-size: 12px; white-space: pre-wrap; }
     </style>
     <script type="module" src="/src/obsidian-markdown.ts"></script>
   </head>
@@ -95,6 +95,11 @@ $\href{javascript:document.title='pwned'}{link}$
     <pre id="log"></pre>
 
     <script type="module">
+      import { adoptSheet } from '/src/adopt-sheet.ts';
+      import { obsidianTheme } from '/src/obsidian-markdown-theme.ts';
+
+      adoptSheet(obsidianTheme);
+
       const source = document.querySelector('#source');
       const note = document.querySelector('#note');
       const log = document.querySelector('#log');

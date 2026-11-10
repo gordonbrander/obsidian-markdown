@@ -29,5 +29,9 @@ const texDocument = mathjax.document(document, {
 });
 
 /** Convert LaTeX to a self-contained element holding an SVG. */
-export const renderTex = async (latex: string, display: boolean): Promise<Element> =>
-  texDocument.convertPromise(latex, { display }) as Promise<Element>;
+export const renderTex = async (latex: string, display: boolean): Promise<Element> => {
+  const drawing = await texDocument.convertPromise(latex, { display }) as Element;
+  // Browsers clip inner SVGs by default, which cuts off tall glyphs.
+  drawing.querySelector('svg')?.setAttribute('overflow', 'visible');
+  return drawing;
+};

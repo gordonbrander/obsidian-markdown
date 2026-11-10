@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/front-matter.ts",
-    "./obsidian-markdown": "./src/obsidian-markdown.ts"
+    "./obsidian-markdown.js": "./src/obsidian-markdown.ts",
+    "./obsidian-markdown-theme.js": "./src/obsidian-markdown-theme.ts",
+    "./adopt-sheet.js": "./src/adopt-sheet.ts"
   },
   "scripts": {
     "dev": "vite",
