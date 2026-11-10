@@ -3,11 +3,12 @@ import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './property-row.ts';
 import type { PropertyChangeDetail } from './property-row.ts';
-import type { Json } from './sniff.ts';
+import type { DeclaredKind, Json } from './sniff.ts';
 
 export type { WikilinkDetail } from './property-row.ts';
 
 export type Properties = Record<string, Json>;
+export type PropertyTypes = Record<string, DeclaredKind>;
 export type ChangeDetail = { key: string; value: Json; properties: Properties };
 
 // The attribute can hold any JSON, so the declared type isn't guaranteed.
@@ -25,6 +26,7 @@ export class FrontMatter extends LitElement {
   `;
 
   @property({ type: Object }) accessor properties: Properties | null = null;
+  @property({ type: Object }) accessor types: PropertyTypes | null = null;
   @property({ type: Boolean }) accessor readonly = false;
 
   #onRowChange({ detail: { key, value } }: CustomEvent<PropertyChangeDetail>) {
@@ -42,6 +44,7 @@ export class FrontMatter extends LitElement {
       <property-row
         .key=${key}
         .value=${value}
+        .type=${isRecord(this.types) ? this.types[key] : undefined}
         .readonly=${this.readonly}
         @property-change=${this.#onRowChange}
       ></property-row>

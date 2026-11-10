@@ -12,6 +12,9 @@ export type Field =
 
 export type Kind = Field['kind'];
 
+/** Types a host can declare. `link` and `object` only describe existing values. */
+export type DeclaredKind = 'text' | 'number' | 'checkbox' | 'date' | 'datetime' | 'list';
+
 export type Wikilink = { target: string; label: string };
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -62,4 +65,34 @@ export const sniff = (value: Json): Field => {
   }
   if (isScalarList(value)) return { kind: 'list', value };
   return { kind: 'object', value };
+};
+
+/** Read committed text as a number when that loses nothing, so "007" and "1.50" stay text. */
+export const parseCommitted = (text: string): string | number => {
+  const number = Number(text);
+  return Number.isFinite(number) && String(number) === text ? number : text;
+};
+
+// Null for no declared type, or an unknown name from the `types` attribute.
+const emptyField = (declared: DeclaredKind | undefined): Field | null => {
+  switch (declared) {
+    case 'checkbox': return { kind: 'checkbox', value: false };
+    case 'list': return { kind: 'list', value: [] };
+    case 'text':
+    case 'number':
+    case 'date':
+    case 'datetime': return { kind: declared, value: null };
+    default: return null;
+  }
+};
+
+/** The field for a value, given the type the host declared for its property, if any. */
+export const fieldFor = (value: Json, declared?: DeclaredKind): Field => {
+  const field = sniff(value);
+  if (value === null || value === undefined) return emptyField(declared) ?? field;
+  if (declared === 'text' && (field.kind === 'date' || field.kind === 'datetime')) {
+    return { kind: 'text', value: field.value };
+  }
+  // Anything else the declared widget couldn't show losslessly keeps its sniffed widget.
+  return field;
 };

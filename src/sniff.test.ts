@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { formatCompact, parseWikilink, sniff } from './sniff.ts';
-import type { Json, Kind } from './sniff.ts';
+import { fieldFor, formatCompact, parseCommitted, parseWikilink, sniff } from './sniff.ts';
+import type { DeclaredKind, Field, Json, Kind } from './sniff.ts';
 
 test('sniff picks the widget kind', () => {
   const cases: [Json, Kind][] = [
@@ -30,6 +30,39 @@ test('sniff picks the widget kind', () => {
   ];
   for (const [value, kind] of cases) {
     assert.equal(sniff(value).kind, kind, JSON.stringify(value));
+  }
+});
+
+test('fieldFor applies declared types without coercing values', () => {
+  const cases: [Json, string | undefined, Field][] = [
+    [null, undefined, { kind: 'text', value: null }],
+    [null, 'checkbox', { kind: 'checkbox', value: false }],
+    [null, 'list', { kind: 'list', value: [] }],
+    [null, 'text', { kind: 'text', value: null }],
+    [null, 'number', { kind: 'number', value: null }],
+    [null, 'date', { kind: 'date', value: null }],
+    [null, 'datetime', { kind: 'datetime', value: null }],
+    ['2020-08-21', 'text', { kind: 'text', value: '2020-08-21' }],
+    ['2020-08-21T10:30:00', 'text', { kind: 'text', value: '2020-08-21T10:30:00' }],
+    ['[[Note]]', 'text', { kind: 'link', value: '[[Note]]' }],
+    ['soon', 'date', { kind: 'text', value: 'soon' }],
+    ['42', 'number', { kind: 'text', value: '42' }],
+    [42, 'text', { kind: 'number', value: 42 }],
+    [null, 'bogus', { kind: 'text', value: null }],
+  ];
+  for (const [value, declared, field] of cases) {
+    assert.deepEqual(fieldFor(value, declared as DeclaredKind), field, `${JSON.stringify(value)} as ${declared}`);
+  }
+  // A `types` lookup on a key like "constructor" yields an inherited function.
+  assert.deepEqual(fieldFor(null, ({} as Record<string, DeclaredKind>)['constructor']), { kind: 'text', value: null });
+});
+
+test('parseCommitted only reads lossless numbers', () => {
+  assert.equal(parseCommitted('1977'), 1977);
+  assert.equal(parseCommitted('-1.5'), -1.5);
+  assert.equal(parseCommitted('0'), 0);
+  for (const text of ['', ' ', '007', '1.50', '1e3', '0x10', 'Infinity', 'NaN', '12345678901234567890', '2020-08-21', 'hello']) {
+    assert.equal(parseCommitted(text), text);
   }
 });
 

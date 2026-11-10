@@ -1,8 +1,8 @@
 import { LitElement, css, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { formatCompact, parseWikilink, sniff } from './sniff.ts';
-import type { Field, Json, Kind, Wikilink } from './sniff.ts';
+import { fieldFor, formatCompact, parseCommitted, parseWikilink } from './sniff.ts';
+import type { DeclaredKind, Field, Json, Kind, Wikilink } from './sniff.ts';
 
 export type PropertyChangeDetail = { key: string; value: Json };
 export type WikilinkDetail = { key: string; target: string };
@@ -198,10 +198,6 @@ export const row = (data: RowData): TemplateResult => {
   }
 };
 
-// Kinds that emit null when cleared, and must keep their widget while empty.
-const isClearable = (kind: Kind | null): kind is 'number' | 'date' | 'datetime' =>
-  kind === 'number' || kind === 'date' || kind === 'datetime';
-
 @customElement('property-row')
 export class PropertyRow extends LitElement {
   static styles = css`
@@ -313,19 +309,9 @@ export class PropertyRow extends LitElement {
 
   @property({ attribute: false }) accessor key = '';
   @property({ attribute: false }) accessor value: Json = null;
+  @property({ attribute: false }) accessor type: DeclaredKind | undefined = undefined;
   @property({ type: Boolean }) accessor readonly = false;
   @state() private accessor editing = false;
-
-  #lastKind: Kind | null = null;
-  #field: Field = { kind: 'text', value: null };
-
-  willUpdate() {
-    const field = sniff(this.value);
-    if (this.value !== null && this.value !== undefined) this.#lastKind = field.kind;
-    this.#field = field.value === null && isClearable(this.#lastKind)
-      ? { kind: this.#lastKind, value: null }
-      : field;
-  }
 
   async #startEdit() {
     this.editing = true;
@@ -333,7 +319,10 @@ export class PropertyRow extends LitElement {
     this.renderRoot.querySelector<HTMLInputElement>('[data-editing]')?.focus();
   }
 
-  #commit(value: Json) {
+  #commit(committed: Json) {
+    const value = typeof committed === 'string' && this.type !== 'text'
+      ? parseCommitted(committed)
+      : committed;
     this.dispatchEvent(new CustomEvent<PropertyChangeDetail>('property-change', {
       detail: { key: this.key, value },
     }));
@@ -349,7 +338,7 @@ export class PropertyRow extends LitElement {
 
   render() {
     const data = {
-      ...this.#field,
+      ...fieldFor(this.value, this.type),
       key: this.key,
       readonly: this.readonly,
       editing: this.editing,
