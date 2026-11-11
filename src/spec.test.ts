@@ -89,7 +89,8 @@ test('front matter is split off and parsed', () => {
   const note = '---\ntitle: Note\nreleased: 2024-01-01\n---\nBody\n';
   assert.deepEqual(splitFrontmatter(note), { frontmatter: 'title: Note\nreleased: 2024-01-01', content: 'Body\n' });
   assert.deepEqual(parseFrontmatter(note), { data: { title: 'Note', released: '2024-01-01' }, content: 'Body\n' });
-  assert.deepEqual(splitFrontmatter('Body'), { content: 'Body' });
+  assert.deepEqual(splitFrontmatter('Body'), { frontmatter: '', content: 'Body' });
+  assert.deepEqual(splitFrontmatter('---\n---\nBody'), { frontmatter: '', content: 'Body' });
   assert.deepEqual(parseFrontmatter('Body'), { data: {}, content: 'Body' });
   assert.throws(() => parseFrontmatter('---\na: [\n---\n'));
 });

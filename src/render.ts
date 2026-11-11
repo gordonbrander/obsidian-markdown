@@ -61,12 +61,17 @@ export const renderer = (): MarkdownIt => config(markdownit());
 const BOM = /^﻿/;
 const FRONT_MATTER = /^---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
 
-/** Split a note into its raw front matter (SPEC 4) and the content after it. */
-export const splitFrontmatter = (text: string): { frontmatter?: string; content: string } => {
+/**
+ * Split a note into its raw front matter (SPEC 4) and the content after it.
+ * `frontmatter` is '' when the note has no front matter, or an empty block.
+ */
+export const splitFrontmatter = (text: string): { frontmatter: string; content: string } => {
   const src = text.replace(BOM, '');
   const match = src.match(FRONT_MATTER);
-  if (!match) return { content: src };
-  return { frontmatter: match[1] ?? '', content: src.slice(match[0].length) };
+  return {
+    frontmatter: match?.[1] ?? '',
+    content: match ? src.slice(match[0].length) : src,
+  };
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -75,7 +80,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 /** Split a note and parse its front matter as YAML. Invalid YAML throws. */
 export const parseFrontmatter = (text: string): { data: Record<string, unknown>; content: string } => {
   const { frontmatter, content } = splitFrontmatter(text);
-  const data: unknown = frontmatter === undefined ? {} : parse(frontmatter);
+  const data: unknown = parse(frontmatter);
   return { data: isRecord(data) ? data : {}, content };
 };
 
