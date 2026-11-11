@@ -12,10 +12,8 @@ import { SVG } from '@mathjax/src/js/output/svg.js';
 import { fontFiles } from './tex-fonts.ts';
 
 // Rarely used glyph ranges load on demand from our own bundle, never a CDN.
-mathjax.asyncLoad = (name: string) => {
-  const load = fontFiles[name.split('/').pop()?.replace(/\.js$/, '') ?? ''];
-  return load ? load() : Promise.reject(new Error(`Unknown MathJax file: ${name}`));
-};
+mathjax.asyncLoad = (name: string) =>
+  fontFiles[name]?.() ?? Promise.reject(new Error(`Unknown MathJax file: ${name}`));
 
 RegisterHTMLHandler(browserAdaptor());
 
