@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fieldFor, formatCompact, parseCommitted, parseWikilink, sniff } from './sniff.ts';
-import type { DeclaredKind, Field, Json, Kind } from './sniff.ts';
+import type { Field, Json, Type } from './sniff.ts';
 
-test('sniff picks the widget kind', () => {
-  const cases: [Json, Kind][] = [
+test('sniff picks the widget type', () => {
+  const cases: [Json, Type][] = [
     [null, 'text'],
     ['', 'text'],
     ['A New Hope', 'text'],
@@ -28,33 +28,35 @@ test('sniff picks the widget kind', () => {
     [[['nested']], 'object'],
     [{ a: 1 }, 'object'],
   ];
-  for (const [value, kind] of cases) {
-    assert.equal(sniff(value).kind, kind, JSON.stringify(value));
+  for (const [value, type] of cases) {
+    assert.equal(sniff(value).type, type, JSON.stringify(value));
   }
 });
 
 test('fieldFor applies declared types without coercing values', () => {
   const cases: [Json, string | undefined, Field][] = [
-    [null, undefined, { kind: 'text', value: null }],
-    [null, 'checkbox', { kind: 'checkbox', value: false }],
-    [null, 'list', { kind: 'list', value: [] }],
-    [null, 'text', { kind: 'text', value: null }],
-    [null, 'number', { kind: 'number', value: null }],
-    [null, 'date', { kind: 'date', value: null }],
-    [null, 'datetime', { kind: 'datetime', value: null }],
-    ['2020-08-21', 'text', { kind: 'text', value: '2020-08-21' }],
-    ['2020-08-21T10:30:00', 'text', { kind: 'text', value: '2020-08-21T10:30:00' }],
-    ['[[Note]]', 'text', { kind: 'link', value: '[[Note]]' }],
-    ['soon', 'date', { kind: 'text', value: 'soon' }],
-    ['42', 'number', { kind: 'text', value: '42' }],
-    [42, 'text', { kind: 'number', value: 42 }],
-    [null, 'bogus', { kind: 'text', value: null }],
+    [null, undefined, { type: 'text', value: null }],
+    [null, 'checkbox', { type: 'checkbox', value: false }],
+    [null, 'list', { type: 'list', value: [] }],
+    [null, 'text', { type: 'text', value: null }],
+    [null, 'number', { type: 'number', value: null }],
+    [null, 'date', { type: 'date', value: null }],
+    [null, 'datetime', { type: 'datetime', value: null }],
+    [null, 'link', { type: 'link', value: '' }],
+    [null, 'object', { type: 'object', value: {} }],
+    ['2020-08-21', 'text', { type: 'text', value: '2020-08-21' }],
+    ['2020-08-21T10:30:00', 'text', { type: 'text', value: '2020-08-21T10:30:00' }],
+    ['[[Note]]', 'text', { type: 'link', value: '[[Note]]' }],
+    ['soon', 'date', { type: 'text', value: 'soon' }],
+    ['42', 'number', { type: 'text', value: '42' }],
+    [42, 'text', { type: 'number', value: 42 }],
+    [null, 'bogus', { type: 'text', value: null }],
   ];
   for (const [value, declared, field] of cases) {
-    assert.deepEqual(fieldFor(value, declared as DeclaredKind), field, `${JSON.stringify(value)} as ${declared}`);
+    assert.deepEqual(fieldFor(value, declared as Type), field, `${JSON.stringify(value)} as ${declared}`);
   }
   // A `types` lookup on a key like "constructor" yields an inherited function.
-  assert.deepEqual(fieldFor(null, ({} as Record<string, DeclaredKind>)['constructor']), { kind: 'text', value: null });
+  assert.deepEqual(fieldFor(null, ({} as Record<string, Type>)['constructor']), { type: 'text', value: null });
 });
 
 test('parseCommitted only reads lossless numbers', () => {

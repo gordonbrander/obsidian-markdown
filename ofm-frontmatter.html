@@ -7,7 +7,7 @@
     <style>
       :root { color-scheme: light dark; }
       body { max-width: 640px; margin: 32px auto; padding: 0 16px; font-family: system-ui, sans-serif; }
-      pre { font-size: 12px; white-space: pre-wrap; }
+      #log { font-size: 12px; white-space: pre-wrap; }
     </style>
     <script type="module" src="/src/ofm-frontmatter.ts"></script>
   </head>
@@ -35,13 +35,17 @@
     <pre id="log"></pre>
 
     <script type="module">
+      import { adoptSheet } from '/src/adopt-sheet.ts';
+      import { obsidianTheme } from '/src/ofm-theme.ts';
+
+      adoptSheet(obsidianTheme);
+
       const demo = document.querySelector('#demo');
       const log = document.querySelector('#log');
       const show = (e) => {
-        const { properties, ...rest } = e.detail;
-        log.textContent = `${e.type} ${JSON.stringify(rest)}\n${log.textContent}`;
+        log.textContent = `${e.type} ${JSON.stringify(e.detail)}\n${log.textContent}`;
       };
-      demo.addEventListener('change', show);
+      demo.addEventListener('proprow-change', show);
       demo.addEventListener('wikilink', show);
       document.querySelector('#readonly').addEventListener('change', (e) => {
         demo.readonly = e.target.checked;

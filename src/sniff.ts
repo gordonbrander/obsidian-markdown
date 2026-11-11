@@ -1,19 +1,16 @@
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
 export type Field =
-  | { kind: 'text'; value: string | null }
-  | { kind: 'number'; value: number | null }
-  | { kind: 'checkbox'; value: boolean }
-  | { kind: 'link'; value: string }
-  | { kind: 'date'; value: string | null }
-  | { kind: 'datetime'; value: string | null }
-  | { kind: 'list'; value: (string | number)[] }
-  | { kind: 'object'; value: Json };
+  | { type: 'text'; value: string | null }
+  | { type: 'number'; value: number | null }
+  | { type: 'checkbox'; value: boolean }
+  | { type: 'link'; value: string }
+  | { type: 'date'; value: string | null }
+  | { type: 'datetime'; value: string | null }
+  | { type: 'list'; value: (string | number)[] }
+  | { type: 'object'; value: Json };
 
-export type Kind = Field['kind'];
-
-/** Types a host can declare. `link` and `object` only describe existing values. */
-export type DeclaredKind = 'text' | 'number' | 'checkbox' | 'date' | 'datetime' | 'list';
+export type Type = Field['type'];
 
 export type Wikilink = { target: string; label: string };
 
@@ -52,19 +49,19 @@ export const formatCompact = (value: Json): string => {
   return JSON.stringify(value);
 };
 
-/** Pair a JSON value with the widget kind that renders it. */
+/** Pair a JSON value with the widget type that renders it. */
 export const sniff = (value: Json): Field => {
-  if (value === null || value === undefined) return { kind: 'text', value: null };
-  if (typeof value === 'boolean') return { kind: 'checkbox', value };
-  if (typeof value === 'number') return { kind: 'number', value };
+  if (value === null || value === undefined) return { type: 'text', value: null };
+  if (typeof value === 'boolean') return { type: 'checkbox', value };
+  if (typeof value === 'number') return { type: 'number', value };
   if (typeof value === 'string') {
-    if (parseWikilink(value)) return { kind: 'link', value };
-    if (DATE.test(value) && isRealDate(value)) return { kind: 'date', value };
-    if (DATETIME.test(value) && isRealDate(value)) return { kind: 'datetime', value };
-    return { kind: 'text', value };
+    if (parseWikilink(value)) return { type: 'link', value };
+    if (DATE.test(value) && isRealDate(value)) return { type: 'date', value };
+    if (DATETIME.test(value) && isRealDate(value)) return { type: 'datetime', value };
+    return { type: 'text', value };
   }
-  if (isScalarList(value)) return { kind: 'list', value };
-  return { kind: 'object', value };
+  if (isScalarList(value)) return { type: 'list', value };
+  return { type: 'object', value };
 };
 
 /** Read committed text as a number when that loses nothing, so "007" and "1.50" stay text. */
@@ -74,24 +71,26 @@ export const parseCommitted = (text: string): string | number => {
 };
 
 // Null for no declared type, or an unknown name from the `types` attribute.
-const emptyField = (declared: DeclaredKind | undefined): Field | null => {
+const emptyField = (declared: Type | undefined): Field | null => {
   switch (declared) {
-    case 'checkbox': return { kind: 'checkbox', value: false };
-    case 'list': return { kind: 'list', value: [] };
+    case 'checkbox': return { type: 'checkbox', value: false };
+    case 'list': return { type: 'list', value: [] };
+    case 'link': return { type: 'link', value: '' };
+    case 'object': return { type: 'object', value: {} };
     case 'text':
     case 'number':
     case 'date':
-    case 'datetime': return { kind: declared, value: null };
+    case 'datetime': return { type: declared, value: null };
     default: return null;
   }
 };
 
 /** The field for a value, given the type the host declared for its property, if any. */
-export const fieldFor = (value: Json, declared?: DeclaredKind): Field => {
+export const fieldFor = (value: Json, declared?: Type): Field => {
   const field = sniff(value);
   if (value === null || value === undefined) return emptyField(declared) ?? field;
-  if (declared === 'text' && (field.kind === 'date' || field.kind === 'datetime')) {
-    return { kind: 'text', value: field.value };
+  if (declared === 'text' && (field.type === 'date' || field.type === 'datetime')) {
+    return { type: 'text', value: field.value };
   }
   // Anything else the declared widget couldn't show losslessly keeps its sniffed widget.
   return field;
