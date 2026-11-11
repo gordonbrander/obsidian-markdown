@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>front-matter demo</title>
+    <title>ofm-frontmatter demo</title>
     <style>
       :root { color-scheme: light dark; }
       body { max-width: 640px; margin: 32px auto; padding: 0 16px; font-family: system-ui, sans-serif; }
       pre { font-size: 12px; white-space: pre-wrap; }
     </style>
-    <script type="module" src="/src/front-matter.ts"></script>
+    <script type="module" src="/src/ofm-frontmatter.ts"></script>
   </head>
   <body>
     <details open>
     <summary>Properties</summary>
-    <front-matter
+    <ofm-frontmatter
       id="demo"
       types='{"year": "number", "released": "date", "reviewed": "date"}'
       properties='{
@@ -31,7 +31,7 @@
         "notes": null,
         "crew": {"director": "George Lucas", "composers": ["John Williams"]}
       }'
-    ></front-matter>
+    ></ofm-frontmatter>
     </details>
 
     <p><label><input id="readonly" type="checkbox" /> readonly</label></p>

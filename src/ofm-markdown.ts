@@ -18,8 +18,8 @@ const toggleFold = (title: Element) => {
   setFolded(title, title.parentElement?.getAttribute('data-callout-fold') === '+');
 };
 
-@customElement('obsidian-markdown')
-export class ObsidianMarkdown extends LitElement {
+@customElement('ofm-markdown')
+export class OfmMarkdown extends LitElement {
   /** No shadow root, so the page styles the note. Consumers who want isolation can wrap it in their own. */
   protected createRenderRoot() {
     return this;
@@ -104,6 +104,6 @@ export class ObsidianMarkdown extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'obsidian-markdown': ObsidianMarkdown;
+    'ofm-markdown': OfmMarkdown;
   }
 }

@@ -1,11 +1,11 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import './property-row.ts';
-import type { PropertyChangeDetail } from './property-row.ts';
+import './ofm-proprow.ts';
+import type { PropertyChangeDetail } from './ofm-proprow.ts';
 import type { DeclaredKind, Json } from './sniff.ts';
 
-export type { WikilinkDetail } from './property-row.ts';
+export type { WikilinkDetail } from './ofm-proprow.ts';
 
 export type Properties = Record<string, Json>;
 export type PropertyTypes = Record<string, DeclaredKind>;
@@ -15,8 +15,8 @@ export type ChangeDetail = { key: string; value: Json; properties: Properties };
 const isRecord = (value: unknown): value is Properties =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-@customElement('front-matter')
-export class FrontMatter extends LitElement {
+@customElement('ofm-frontmatter')
+export class OfmFrontmatter extends LitElement {
   static styles = css`
     :host {
       display: block;
@@ -41,19 +41,19 @@ export class FrontMatter extends LitElement {
   render() {
     const entries = isRecord(this.properties) ? Object.entries(this.properties) : [];
     return repeat(entries, ([key]) => key, ([key, value]) => html`
-      <property-row
+      <ofm-proprow
         .key=${key}
         .value=${value}
         .type=${isRecord(this.types) ? this.types[key] : undefined}
         .readonly=${this.readonly}
         @property-change=${this.#onRowChange}
-      ></property-row>
+      ></ofm-proprow>
     `);
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'front-matter': FrontMatter;
+    'ofm-frontmatter': OfmFrontmatter;
   }
 }

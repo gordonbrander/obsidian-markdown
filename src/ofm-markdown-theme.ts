@@ -1,12 +1,12 @@
 import { css } from 'lit';
 
 /**
- * An optional look for `<obsidian-markdown>`, using Obsidian's CSS variable names.
+ * An optional look for `<ofm-markdown>`, using Obsidian's CSS variable names.
  * Callout colors are full colors, not Obsidian's `r, g, b` triples, which can't go through `light-dark()`.
  */
 export const obsidianTheme = css`
-  /* Zero specificity, so a host's own obsidian-markdown { --x: y } wins over this adopted sheet. */
-  :where(obsidian-markdown) {
+  /* Zero specificity, so a host's own ofm-markdown { --x: y } wins over this adopted sheet. */
+  :where(ofm-markdown) {
     --color-red: light-dark(#e93147, #fb464c);
     --color-orange: light-dark(#ec7500, #e9973f);
     --color-yellow: light-dark(#e0ac00, #e0de71);
@@ -132,7 +132,7 @@ export const obsidianTheme = css`
   }
 
   /* Variables with no default above fall back to inherit here, because --x: inherit wouldn't mean the same thing. */
-  obsidian-markdown {
+  ofm-markdown {
     display: block;
     color-scheme: light dark;
     color: var(--text-normal);

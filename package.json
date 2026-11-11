@@ -1,12 +1,12 @@
 {
-  "name": "front-matter-element",
+  "name": "obsidian-markdown",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/front-matter.ts",
-    "./obsidian-markdown.js": "./src/obsidian-markdown.ts",
-    "./obsidian-markdown-theme.js": "./src/obsidian-markdown-theme.ts",
+    ".": "./src/ofm-frontmatter.ts",
+    "./ofm-markdown.js": "./src/ofm-markdown.ts",
+    "./ofm-markdown-theme.js": "./src/ofm-markdown-theme.ts",
     "./adopt-sheet.js": "./src/adopt-sheet.ts"
   },
   "scripts": {

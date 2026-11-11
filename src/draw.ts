@@ -4,7 +4,7 @@ let nextDiagramId = 0;
 let tex: typeof import('./tex.ts') | undefined;
 let mermaid: typeof import('mermaid').default | undefined;
 
-const warn = (what: string, error: unknown) => console.warn(`obsidian-markdown: could not draw ${what}`, error);
+const warn = (what: string, error: unknown) => console.warn(`ofm-markdown: could not draw ${what}`, error);
 
 const drawMath = async (elements: HTMLElement[]) => {
   tex ??= await import('./tex.ts');
@@ -32,7 +32,7 @@ const drawDiagrams = async (codes: HTMLElement[]) => {
   });
   for (const code of codes) {
     try {
-      const { svg } = await mermaid.render(`obsidian-markdown-${++nextDiagramId}`, code.textContent ?? '');
+      const { svg } = await mermaid.render(`ofm-markdown-${++nextDiagramId}`, code.textContent ?? '');
       const diagram = document.createElement('div');
       diagram.className = 'diagram';
       diagram.innerHTML = svg;

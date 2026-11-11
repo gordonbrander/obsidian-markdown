@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>obsidian-markdown demo</title>
+    <title>ofm-markdown demo</title>
     <style>
       :root { color-scheme: light dark; }
       body { margin: 0; padding: 16px; font-family: system-ui, sans-serif; }
@@ -11,7 +11,7 @@
       textarea { width: 100%; height: 80vh; box-sizing: border-box; font: 13px/1.5 ui-monospace, monospace; }
       #log { font-size: 12px; white-space: pre-wrap; }
     </style>
-    <script type="module" src="/src/obsidian-markdown.ts"></script>
+    <script type="module" src="/src/ofm-markdown.ts"></script>
   </head>
   <body>
     <main>
@@ -90,13 +90,13 @@ Autolink www.example.com but not README.md.
 
 $\href{javascript:document.title='pwned'}{link}$
 </textarea>
-      <obsidian-markdown id="note"></obsidian-markdown>
+      <ofm-markdown id="note"></ofm-markdown>
     </main>
     <pre id="log"></pre>
 
     <script type="module">
       import { adoptSheet } from '/src/adopt-sheet.ts';
-      import { obsidianTheme } from '/src/obsidian-markdown-theme.ts';
+      import { obsidianTheme } from '/src/ofm-markdown-theme.ts';
 
       adoptSheet(obsidianTheme);
 

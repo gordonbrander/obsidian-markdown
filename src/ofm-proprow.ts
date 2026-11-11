@@ -198,8 +198,8 @@ export const row = (data: RowData): TemplateResult => {
   }
 };
 
-@customElement('property-row')
-export class PropertyRow extends LitElement {
+@customElement('ofm-proprow')
+export class OfmProprow extends LitElement {
   static styles = css`
     :host {
       display: grid;
@@ -357,6 +357,6 @@ export class PropertyRow extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'property-row': PropertyRow;
+    'ofm-proprow': OfmProprow;
   }
 }
