@@ -1,19 +1,52 @@
 {
   "name": "obsidian-markdown",
   "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/render.ts",
-    "./ofm-markdown.js": "./src/ofm-markdown.ts",
-    "./ofm-frontmatter.js": "./src/ofm-frontmatter.ts",
-    "./ofm-proprow.js": "./src/ofm-proprow.ts",
-    "./ofm-markdown-theme.js": "./src/ofm-markdown-theme.ts",
-    "./adopt-sheet.js": "./src/adopt-sheet.ts"
+  "description": "Render Obsidian Flavored Markdown with markdown-it, plus Lit web components for notes and their properties.",
+  "keywords": [
+    "obsidian",
+    "markdown",
+    "markdown-it",
+    "web-components",
+    "lit",
+    "custom-elements"
+  ],
+  "homepage": "https://github.com/gordonbrander/obsidian-markdown#readme",
+  "bugs": {
+    "url": "https://github.com/gordonbrander/obsidian-markdown/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gordonbrander/obsidian-markdown.git"
+  },
+  "license": "MIT",
+  "author": "Gordon Brander",
+  "type": "module",
+  "files": [
+    "dist",
+    "custom-elements.json",
+    "LICENSE-MIT"
+  ],
+  "exports": {
+    ".": "./dist/render.js",
+    "./ofm-markdown.js": "./dist/ofm-markdown.js",
+    "./ofm-frontmatter.js": "./dist/ofm-frontmatter.js",
+    "./ofm-proprow.js": "./dist/ofm-proprow.js",
+    "./ofm-markdown-theme.js": "./dist/ofm-markdown-theme.js",
+    "./adopt-sheet.js": "./dist/adopt-sheet.js",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "./dist/ofm-markdown.js",
+    "./dist/ofm-frontmatter.js",
+    "./dist/ofm-proprow.js",
+    "./dist/tex.js"
+  ],
+  "customElements": "custom-elements.json",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && cem analyze",
+    "build:demo": "vite build",
+    "prepack": "npm run build",
     "test": "node --test",
     "typecheck": "tsc"
   },
@@ -26,6 +59,7 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
+    "@custom-elements-manifest/analyzer": "^0.11.0",
     "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2",

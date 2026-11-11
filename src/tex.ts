@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 // Loaded on demand by draw.ts, so plain notes never download MathJax.
 import { MathJaxNewcmFont } from '@mathjax/mathjax-newcm-font/js/svg.js';
 import { browserAdaptor } from '@mathjax/src/js/adaptors/browserAdaptor.js';
@@ -10,12 +9,11 @@ import '@mathjax/src/js/input/tex/noundefined/NoUndefinedConfiguration.js';
 import { TeX } from '@mathjax/src/js/input/tex.js';
 import { mathjax } from '@mathjax/src/js/mathjax.js';
 import { SVG } from '@mathjax/src/js/output/svg.js';
+import { fontFiles } from './tex-fonts.ts';
 
 // Rarely used glyph ranges load on demand from our own bundle, never a CDN.
-const fontFiles = import.meta.glob('/node_modules/@mathjax/mathjax-newcm-font/mjs/svg/dynamic/*.js');
 mathjax.asyncLoad = (name: string) => {
-  const file = name.split('/').pop()?.replace(/\.js$/, '');
-  const load = fontFiles[`/node_modules/@mathjax/mathjax-newcm-font/mjs/svg/dynamic/${file}.js`];
+  const load = fontFiles[name.split('/').pop()?.replace(/\.js$/, '') ?? ''];
   return load ? load() : Promise.reject(new Error(`Unknown MathJax file: ${name}`));
 };
 

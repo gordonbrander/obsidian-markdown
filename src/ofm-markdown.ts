@@ -18,6 +18,11 @@ const toggleFold = (title: Element) => {
   setFolded(title, title.parentElement?.getAttribute('data-callout-fold') === '+');
 };
 
+/**
+ * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams.
+ * @fires rendered - The note has been rendered and drawn.
+ * @fires wikilink - An internal link was clicked. `detail.target` is the link target. Cancelable.
+ */
 @customElement('ofm-markdown')
 export class OfmMarkdown extends LitElement {
   /** No shadow root, so the page styles the note. Consumers who want isolation can wrap it in their own. */

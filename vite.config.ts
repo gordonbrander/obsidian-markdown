@@ -4,6 +4,7 @@ export default defineConfig({
   // Pre-bundling would give the lazily loaded font files (src/tex.ts) a second copy of the font class.
   optimizeDeps: { exclude: ['@mathjax/src', '@mathjax/mathjax-newcm-font'] },
   build: {
+    outDir: 'demo-dist',
     rolldownOptions: { input: ['index.html', 'ofm-markdown.html'] },
   },
   plugins: [
