@@ -1,14 +1,14 @@
 # obsidian-markdown
 
-Render [Obsidian Flavored Markdown](SPEC.md) with [markdown-it](https://github.com/markdown-it/markdown-it), plus [Lit](https://lit.dev) web components for displaying notes and their properties.
+A [specification](SPEC.md), renderer, and complete test suite for [Obsidian-flavored Markdown](https://obsidian.md/help/syntax).
+
+Ships with a spec-complete [markdown-it](https://github.com/markdown-it/markdown-it) renderer, as well as optional lightweight web components for displaying Obsidian-flavored Markdown and the Obsidian frontmatter property drawer.
 
 ```sh
 npm install obsidian-markdown
 ```
 
-## Renderer
-
-The package's main entry is the renderer. It has no DOM or Lit dependency, so it runs in Node as well as the browser.
+## Basic use
 
 ```js
 import { render, parseFrontmatter } from 'obsidian-markdown';
@@ -20,7 +20,7 @@ const { data, content } = parseFrontmatter(note); // data is the parsed YAML pro
 | Export | Description |
 |---|---|
 | `render(src, { strictLineBreaks? })` | Render a note to HTML. Single line breaks become `<br>` unless `strictLineBreaks` is set. |
-| `renderer()` | A new markdown-it instance configured for Obsidian Flavored Markdown. |
+| `renderer()` | Returns a new markdown-it instance configured for Obsidian Flavored Markdown. |
 | `config(md)` | Configure an existing markdown-it instance. Mutates and returns it. |
 | `splitFrontmatter(text)` | `{ frontmatter, content }`, where `frontmatter` is the raw YAML (`''` if there is none). |
 | `parseFrontmatter(text)` | `{ data, content }`, where `data` is the parsed YAML (`{}` if there is none). Throws on invalid YAML. |
@@ -29,7 +29,9 @@ Raw HTML in notes is escaped.
 
 ## Web components
 
-Each component is its own module, and importing it registers the element. Import only what you use.
+`obsidian-markdown` offers several lightweight components for displaying Obsidian-flavored markdown in your app. The components ship as lightweight web components that will happily work within your framework of choice. Each component ships as a separate module, and will only be included in your bundle if you import it. Importing a module registers the element.
+
+A [Custom Elements Manifest](https://custom-elements-manifest.open-wc.org) ships in `custom-elements.json` for editors and documentation tools.
 
 ### `<ofm-note>`
 
@@ -44,14 +46,17 @@ title: Hello
 # Hello"></ofm-note>
 ```
 
-A whole note: its properties in a collapsible Properties section, as in Obsidian, followed by its rendered Markdown. It's built from `<ofm-frontmatter>` and `<ofm-markdown>`, and importing it registers both.
+Display a whole note: property drawer followed by rendered Markdown. It's built from `<ofm-frontmatter>` and `<ofm-markdown>`, and importing it registers both.
 
-- **`value`**: the note's source, front matter included.
-- **`types`**, **`readonly`**: passed to `<ofm-frontmatter>`.
-- **`strict-line-breaks`**: passed to `<ofm-markdown>`.
-- **`change` and `wikilink` events**: bubble up from the properties and the note.
+- Properties/attributes:
+  - **`value`**: the note's source, front matter included.
+  - **`types`**, **`readonly`**: passed to `<ofm-frontmatter>`.
+  - **`strict-line-breaks`**: passed to `<ofm-markdown>`.
+- Events:
+  - **`change`**: a property was edited. Bubbles up from `<ofm-frontmatter>`; `detail` is `{ key, value, properties }`.
+  - **`wikilink`**: a link was clicked, in a property or the note. Bubbles up from `<ofm-frontmatter>` or `<ofm-markdown>`; `detail.target` is the link target.
 
-The Properties section is hidden when the note has no properties. If the front matter isn't valid YAML, the properties are skipped with a console warning and the note still renders.
+The Properties drawer is hidden when the note has no properties. If the front matter isn't valid YAML, the properties are skipped with a console warning and the note still renders.
 
 ### `<ofm-markdown>`
 
@@ -70,10 +75,32 @@ import 'obsidian-markdown/ofm-markdown.js';
 
 Renders a note, drawing math (MathJax) and Mermaid diagrams. Both libraries load on demand, only when a note contains math or a diagram.
 
-- **`value`**: the note's Markdown source.
-- **`strict-line-breaks`**: a boolean attribute. When set, single line breaks don't become `<br>`.
-- **`wikilink` event**: an internal link was clicked. `detail.target` is the link target.
-- **`rendered` event**: the note has been rendered and drawn.
+- Properties/attributes:
+  - **`value`**: the note's Markdown source.
+  - **`strict-line-breaks`**: a boolean attribute. When set, single line breaks don't become `<br>`.
+- Events:
+  - **`wikilink`**: an internal link was clicked. `detail.target` is the link target.
+  - **`rendered`**: the note has been rendered and drawn.
+
+### `<ofm-frontmatter>`
+
+```js
+import 'obsidian-markdown/ofm-frontmatter.js';
+```
+
+An editable property list, like Obsidian's properties view.
+
+- Properties/attributes:
+  - **`properties`**: the note's properties, as an object or JSON attribute.
+  - **`types`**: optional declared types per property: `text`, `number`, `checkbox`, `date`, `datetime` or `list`.
+  - **`readonly`**: a boolean attribute that disables editing.
+- Events:
+  - **`change`**: a property was edited. `detail` is `{ key, value, properties }`.
+  - **`wikilink`**: a link in a property value was clicked. `detail` is `{ key, target }`.
+
+`<ofm-proprow>`, a single property row, is registered along with it.
+
+### Styling components
 
 `<ofm-note>` and `<ofm-markdown>` render into the light DOM, so page styles apply. For an Obsidian-like look, adopt the optional theme:
 
@@ -85,28 +112,6 @@ adoptSheet(obsidianTheme);
 ```
 
 The theme uses Obsidian's CSS variable names (`--text-normal`, `--text-accent`, `--link-color`, …), so you can restyle it by setting those variables.
-
-### `<ofm-frontmatter>`
-
-```js
-import 'obsidian-markdown/ofm-frontmatter.js';
-```
-
-An editable property list, like Obsidian's properties view.
-
-- **`properties`**: the note's properties, as an object or JSON attribute.
-- **`types`**: optional declared types per property: `text`, `number`, `checkbox`, `date`, `datetime` or `list`.
-- **`readonly`**: a boolean attribute that disables editing.
-- **`change` event**: a property was edited. `detail` is `{ key, value, properties }`.
-- **`wikilink` event**: a link in a property value was clicked. `detail` is `{ key, target }`.
-
-`<ofm-proprow>`, a single property row, is registered along with it.
-
-A [Custom Elements Manifest](https://custom-elements-manifest.open-wc.org) ships in `custom-elements.json` for editors and documentation tools.
-
-## Bundling
-
-The package ships unbundled ES modules with TypeScript declarations, and works with any bundler.
 
 ## License
 
