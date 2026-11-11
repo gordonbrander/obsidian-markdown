@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ofm-frontmatter demo</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { max-width: 640px; margin: 32px auto; padding: 0 16px; font-family: system-ui, sans-serif; }
+      pre { font-size: 12px; white-space: pre-wrap; }
+    </style>
+    <script type="module" src="/src/ofm-frontmatter.ts"></script>
+  </head>
+  <body>
+    <ofm-frontmatter
+      id="demo"
+      types='{"year": "number", "released": "date", "reviewed": "date"}'
+      properties='{
+        "title": "A New Hope",
+        "year": 1977,
+        "favorite": true,
+        "released": "1977-05-25",
+        "reviewed": null,
+        "premiere": "1977-05-25T19:30:00",
+        "link": "[[Episode IV|Episode four]]",
+        "tags": ["journal", "scifi"],
+        "cast": ["Mark Hamill", "[[Carrie Fisher]]"],
+        "ratings": [8, 9, 10],
+        "notes": null,
+        "crew": {"director": "George Lucas", "composers": ["John Williams"]}
+      }'
+    ></ofm-frontmatter>
+
+    <p><label><input id="readonly" type="checkbox" /> readonly</label></p>
+    <pre id="log"></pre>
+
+    <script type="module">
+      const demo = document.querySelector('#demo');
+      const log = document.querySelector('#log');
+      const show = (e) => {
+        const { properties, ...rest } = e.detail;
+        log.textContent = `${e.type} ${JSON.stringify(rest)}\n${log.textContent}`;
+      };
+      demo.addEventListener('change', show);
+      demo.addEventListener('wikilink', show);
+      document.querySelector('#readonly').addEventListener('change', (e) => {
+        demo.readonly = e.target.checked;
+      });
+    </script>
+  </body>
+</html>

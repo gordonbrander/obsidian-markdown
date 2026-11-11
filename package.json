@@ -28,14 +28,16 @@
   ],
   "exports": {
     ".": "./dist/render.js",
+    "./ofm-note.js": "./dist/ofm-note.js",
     "./ofm-markdown.js": "./dist/ofm-markdown.js",
     "./ofm-frontmatter.js": "./dist/ofm-frontmatter.js",
     "./ofm-proprow.js": "./dist/ofm-proprow.js",
-    "./ofm-markdown-theme.js": "./dist/ofm-markdown-theme.js",
+    "./ofm-theme.js": "./dist/ofm-theme.js",
     "./adopt-sheet.js": "./dist/adopt-sheet.js",
     "./package.json": "./package.json"
   },
   "sideEffects": [
+    "./dist/ofm-note.js",
     "./dist/ofm-markdown.js",
     "./dist/ofm-frontmatter.js",
     "./dist/ofm-proprow.js",

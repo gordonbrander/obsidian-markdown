@@ -31,7 +31,7 @@ const GLYPHS: Record<Kind, string> = {
 const inputOf = (e: Event) => e.target as HTMLInputElement;
 
 const linkButton = ({ target, label }: Wikilink, openLink: Linkable['openLink']) => html`
-  <button class="link" type="button" title=${target} @click=${() => openLink(target)}>${label}</button>
+  <button class="ofm-link" type="button" title=${target} @click=${() => openLink(target)}>${label}</button>
 `;
 
 const textRow = (data: RowOf<'text'>) => html`
@@ -91,7 +91,7 @@ const linkRow = (data: RowOf<'link'>) => {
   return html`
     ${linkButton(link, data.openLink)}
     ${data.readonly ? nothing : html`
-      <button class="icon" type="button" aria-label="Edit ${data.key}" @click=${data.edit}>✎</button>
+      <button class="ofm-icon" type="button" aria-label="Edit ${data.key}" @click=${data.edit}>✎</button>
     `}
   `;
 };
@@ -124,11 +124,11 @@ const datetimeRow = (data: RowOf<'datetime'>) => html`
 const token = (item: string | number, index: number, data: RowOf<'list'>) => {
   const link = typeof item === 'string' ? parseWikilink(item) : null;
   return html`
-    <span class="token">
+    <span class="ofm-token">
       ${link ? linkButton(link, data.openLink) : item}
       ${data.readonly ? nothing : html`
         <button
-          class="icon"
+          class="ofm-icon"
           type="button"
           aria-label="Remove ${item}"
           @click=${() => data.commit(data.value.toSpliced(index, 1))}
@@ -163,7 +163,7 @@ const listRow = (data: RowOf<'list'>) => {
   };
 
   return html`
-    <div class="tokens">
+    <div class="ofm-tokens">
       ${value.map((item, index) => token(item, index, data))}
       ${readonly ? nothing : html`
         <input
@@ -212,17 +212,17 @@ export class OfmProprow extends LitElement {
       --token: light-dark(#0000000f, #ffffff1a);
       --accent: light-dark(#6d3fd1, #a88bfa);
     }
-    .glyph, .key {
+    .ofm-glyph, .ofm-key {
       color: var(--muted);
       line-height: 28px;
     }
-    .glyph { text-align: center; }
-    .key {
+    .ofm-glyph { text-align: center; }
+    .ofm-key {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
     }
-    .value {
+    .ofm-value {
       display: flex;
       align-items: center;
       min-width: 0;
@@ -249,7 +249,7 @@ export class OfmProprow extends LitElement {
       height: 16px;
       margin: 0 6px;
     }
-    .tokens {
+    .ofm-tokens {
       display: flex;
       flex: 1;
       flex-wrap: wrap;
@@ -258,16 +258,16 @@ export class OfmProprow extends LitElement {
       min-width: 0;
       padding: 3px 6px;
     }
-    .tokens input {
+    .ofm-tokens input {
       flex: 1 1 4em;
       height: 22px;
       padding: 0;
     }
-    .tokens input:hover, .tokens input:focus {
+    .ofm-tokens input:hover, .ofm-tokens input:focus {
       background: transparent;
       outline: none;
     }
-    .token {
+    .ofm-token {
       display: inline-flex;
       align-items: center;
       gap: 2px;
@@ -285,14 +285,14 @@ export class OfmProprow extends LitElement {
       font: inherit;
       cursor: pointer;
     }
-    .link {
+    .ofm-link {
       color: var(--accent);
       text-align: left;
       text-decoration: underline;
       overflow-wrap: anywhere;
     }
-    .value > .link { margin-left: 6px; }
-    .icon {
+    .ofm-value > .ofm-link { margin-left: 6px; }
+    .ofm-icon {
       color: var(--muted);
       padding: 0 4px;
     }
@@ -348,9 +348,9 @@ export class OfmProprow extends LitElement {
       openLink: (target: string) => this.#openLink(target),
     };
     return html`
-      <span class="glyph" aria-hidden="true">${GLYPHS[data.kind]}</span>
-      <span class="key" title=${this.key}>${this.key}</span>
-      <div class="value">${row(data)}</div>
+      <span class="ofm-glyph" aria-hidden="true">${GLYPHS[data.kind]}</span>
+      <span class="ofm-key" title=${this.key}>${this.key}</span>
+      <div class="ofm-value">${row(data)}</div>
     `;
   }
 }

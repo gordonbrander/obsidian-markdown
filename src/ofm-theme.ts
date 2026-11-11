@@ -1,12 +1,12 @@
 import { css } from 'lit';
 
 /**
- * An optional look for `<ofm-markdown>`, using Obsidian's CSS variable names.
+ * An optional look for `<ofm-note>` and `<ofm-markdown>`, using Obsidian's CSS variable names.
  * Callout colors are full colors, not Obsidian's `r, g, b` triples, which can't go through `light-dark()`.
  */
 export const obsidianTheme = css`
   /* Zero specificity, so a host's own ofm-markdown { --x: y } wins over this adopted sheet. */
-  :where(ofm-markdown) {
+  :where(ofm-note, ofm-markdown) {
     --color-red: light-dark(#e93147, #fb464c);
     --color-orange: light-dark(#ec7500, #e9973f);
     --color-yellow: light-dark(#e0ac00, #e0de71);
@@ -131,15 +131,49 @@ export const obsidianTheme = css`
     --embed-font-style: normal;
   }
 
-  /* Variables with no default above fall back to inherit here, because --x: inherit wouldn't mean the same thing. */
-  ofm-markdown {
+  ofm-note, ofm-markdown {
     display: block;
     color-scheme: light dark;
     color: var(--text-normal);
     font-family: var(--font-text-theme);
     font-size: var(--font-text-size);
     line-height: var(--line-height-normal);
+  }
 
+  /* Obsidian's collapsible Properties section. */
+  ofm-note {
+    .ofm-properties {
+      margin-block-end: 1em;
+      padding-block-end: 0.5em;
+      border-bottom: 1px solid var(--background-modifier-border);
+    }
+    .ofm-properties-heading {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-block: 4px;
+      color: var(--text-muted);
+      font-size: 0.875em;
+      font-weight: 600;
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+      &::-webkit-details-marker { display: none; }
+      &::before {
+        content: '';
+        width: 0.4em;
+        height: 0.4em;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(-45deg);
+        transition: transform 100ms ease-in-out;
+      }
+    }
+    .ofm-properties[open] > .ofm-properties-heading::before { transform: rotate(45deg); }
+  }
+
+  /* Variables with no default above fall back to inherit here, because --x: inherit wouldn't mean the same thing. */
+  ofm-markdown {
     p { margin-block: var(--p-spacing); }
     strong { color: var(--bold-color, inherit); font-weight: var(--bold-weight); }
     em { color: var(--italic-color, inherit); }
@@ -241,8 +275,8 @@ export const obsidianTheme = css`
     }
 
     .math-block, .math-display { display: block; text-align: center; overflow-x: auto; }
-    .diagram { text-align: center; }
-    .diagram .internal-link { cursor: pointer; }
+    .ofm-diagram { text-align: center; }
+    .ofm-diagram .internal-link { cursor: pointer; }
 
     .footnotes {
       margin-top: 2em;

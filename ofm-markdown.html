@@ -15,12 +15,7 @@
   </head>
   <body>
     <main>
-      <textarea id="source" aria-label="Markdown source" spellcheck="false">---
-title: Demo note
-tags:
-  - demo
----
-# Obsidian Flavored Markdown
+      <textarea id="source" aria-label="Markdown source" spellcheck="false"># Obsidian Flavored Markdown
 
 A [[Wikilink]], an [[Other note#Heading|aliased link]], and a #nested/tag. ^intro-paragraph
 
@@ -96,7 +91,7 @@ $\href{javascript:document.title='pwned'}{link}$
 
     <script type="module">
       import { adoptSheet } from '/src/adopt-sheet.ts';
-      import { obsidianTheme } from '/src/ofm-markdown-theme.ts';
+      import { obsidianTheme } from '/src/ofm-theme.ts';
 
       adoptSheet(obsidianTheme);
 

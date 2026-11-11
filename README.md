@@ -31,6 +31,28 @@ Raw HTML in notes is escaped.
 
 Each component is its own module, and importing it registers the element. Import only what you use.
 
+### `<ofm-note>`
+
+```js
+import 'obsidian-markdown/ofm-note.js';
+```
+
+```html
+<ofm-note value="---
+title: Hello
+---
+# Hello"></ofm-note>
+```
+
+A whole note: its properties in a collapsible Properties section, as in Obsidian, followed by its rendered Markdown. It's built from `<ofm-frontmatter>` and `<ofm-markdown>`, and importing it registers both.
+
+- **`value`**: the note's source, front matter included.
+- **`types`**, **`readonly`**: passed to `<ofm-frontmatter>`.
+- **`strict-line-breaks`**: passed to `<ofm-markdown>`.
+- **`change` and `wikilink` events**: bubble up from the properties and the note.
+
+The Properties section is hidden when the note has no properties. If the front matter isn't valid YAML, the properties are skipped with a console warning and the note still renders.
+
 ### `<ofm-markdown>`
 
 ```js
@@ -53,10 +75,10 @@ Renders a note, drawing math (MathJax) and Mermaid diagrams. Both libraries load
 - **`wikilink` event**: an internal link was clicked. `detail.target` is the link target.
 - **`rendered` event**: the note has been rendered and drawn.
 
-The note renders into the light DOM, so page styles apply. For an Obsidian-like look, adopt the optional theme:
+`<ofm-note>` and `<ofm-markdown>` render into the light DOM, so page styles apply. For an Obsidian-like look, adopt the optional theme:
 
 ```js
-import { obsidianTheme } from 'obsidian-markdown/ofm-markdown-theme.js';
+import { obsidianTheme } from 'obsidian-markdown/ofm-theme.js';
 import { adoptSheet } from 'obsidian-markdown/adopt-sheet.js';
 
 adoptSheet(obsidianTheme);

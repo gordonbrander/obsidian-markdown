@@ -5,7 +5,7 @@ export default defineConfig({
   optimizeDeps: { exclude: ['@mathjax/src', '@mathjax/mathjax-newcm-font'] },
   build: {
     outDir: 'demo-dist',
-    rolldownOptions: { input: ['index.html', 'ofm-markdown.html'] },
+    rolldownOptions: { input: ['index.html', 'ofm-markdown.html', 'ofm-frontmatter.html'] },
   },
   plugins: [
     {

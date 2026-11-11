@@ -100,7 +100,7 @@ export class OfmMarkdown extends LitElement {
 
   render() {
     return html`
-      <div class="obs-content" @click=${this.#onClick} @keydown=${this.#onKeydown}>
+      <div class="ofm-content" @click=${this.#onClick} @keydown=${this.#onKeydown}>
         ${until(this.#build(this.value ?? '', this.strictLineBreaks))}
       </div>
     `;
