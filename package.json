@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/ofm-frontmatter.ts",
+    ".": "./src/render.ts",
     "./ofm-markdown.js": "./src/ofm-markdown.ts",
+    "./ofm-frontmatter.js": "./src/ofm-frontmatter.ts",
+    "./ofm-proprow.js": "./src/ofm-proprow.ts",
     "./ofm-markdown-theme.js": "./src/ofm-markdown-theme.ts",
     "./adopt-sheet.js": "./src/adopt-sheet.ts"
   },
@@ -20,7 +22,8 @@
     "@mathjax/src": "^4.1.3",
     "lit": "^3.3.3",
     "markdown-it": "^15.0.3",
-    "mermaid": "^12.3.0"
+    "mermaid": "^12.3.0",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { until } from 'lit/directives/until.js';
 import { draw } from './draw.ts';
-import { renderMarkdown } from './markdown.ts';
+import { render } from './render.ts';
 
 export type MarkdownWikilinkDetail = { target: string };
 
@@ -32,7 +32,7 @@ export class OfmMarkdown extends LitElement {
   /** Render and draw off-screen. A template's content is inert until it's inserted. */
   #build = async (value: string, strictLineBreaks: boolean) => {
     const template = document.createElement('template');
-    template.innerHTML = renderMarkdown(value, { strictLineBreaks });
+    template.innerHTML = render(value, { strictLineBreaks });
     await draw(template.content);
     for (const title of template.content.querySelectorAll(FOLDABLE_TITLE)) {
       title.setAttribute('role', 'button');
