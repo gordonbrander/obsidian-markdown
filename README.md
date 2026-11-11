@@ -53,7 +53,7 @@ Display a whole note: property drawer followed by rendered Markdown. It's built 
   - **`types`**, **`readonly`**: passed to `<ofm-frontmatter>`.
   - **`strict-line-breaks`**: passed to `<ofm-markdown>`.
 - Events:
-  - **`change`**: a property was edited. Bubbles up from `<ofm-frontmatter>`; `detail` is `{ key, value, properties }`.
+  - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`.
   - **`wikilink`**: a link was clicked, in a property or the note. Bubbles up from `<ofm-frontmatter>` or `<ofm-markdown>`; `detail.target` is the link target.
 
 The Properties drawer is hidden when the note has no properties. If the front matter isn't valid YAML, the properties are skipped with a console warning and the note still renders.
@@ -92,17 +92,20 @@ An editable property list, like Obsidian's properties view.
 
 - Properties/attributes:
   - **`properties`**: the note's properties, as an object or JSON attribute.
-  - **`types`**: optional declared types per property: `text`, `number`, `checkbox`, `date`, `datetime` or `list`.
+  - **`types`**: optional declared types per property: `text`, `number`, `checkbox`, `link`, `date`, `datetime`, `list` or `object`. A value that the declared type can't show without losing data keeps the type sniffed from it.
   - **`readonly`**: a boolean attribute that disables editing.
 - Events:
-  - **`change`**: a property was edited. `detail` is `{ key, value, properties }`.
+  - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`. By then, `properties` holds the edit.
   - **`wikilink`**: a link in a property value was clicked. `detail` is `{ key, target }`.
 
-`<ofm-proprow>`, a single property row, is registered along with it.
+`<ofm-proprow>`, a single property row, is registered along with it. Each row has two attributes for styling:
+
+- **`type`**: the declared type, if any.
+- **`effective-type`**: the type the row actually draws, declared or sniffed from the value.
 
 ### Styling components
 
-`<ofm-note>` and `<ofm-markdown>` render into the light DOM, so page styles apply. For an Obsidian-like look, adopt the optional theme:
+All components render into the light DOM, with no shadow root, so page styles apply. They're unstyled until you style them. For an Obsidian-like look, adopt the optional theme:
 
 ```js
 import { obsidianTheme } from 'obsidian-markdown/ofm-theme.js';

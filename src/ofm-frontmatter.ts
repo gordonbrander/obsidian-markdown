@@ -1,41 +1,37 @@
-import { LitElement, css, html } from 'lit';
+import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './ofm-proprow.ts';
-import type { PropertyChangeDetail } from './ofm-proprow.ts';
-import type { DeclaredKind, Json } from './sniff.ts';
+import type { ProprowChangeDetail } from './ofm-proprow.ts';
+import type { Json, Type } from './sniff.ts';
 
-export type { WikilinkDetail } from './ofm-proprow.ts';
+export type { ProprowChangeDetail, WikilinkDetail } from './ofm-proprow.ts';
 
 export type Properties = Record<string, Json>;
-export type PropertyTypes = Record<string, DeclaredKind>;
-export type ChangeDetail = { key: string; value: Json; properties: Properties };
+export type PropertyTypes = Record<string, Type>;
 
 // The attribute can hold any JSON, so the declared type isn't guaranteed.
 const isRecord = (value: unknown): value is Properties =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/**
+ * An editable property list, like Obsidian's properties view.
+ * @fires proprow-change - A property was edited. Bubbles from its row. `detail` is `{ key, value, type, effectiveType }`, and `properties` already holds the edit.
+ * @fires wikilink - A link in a property value was clicked. `detail` is `{ key, target }`.
+ */
 @customElement('ofm-frontmatter')
 export class OfmFrontmatter extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-      color-scheme: light dark;
-      font: 14px/1.4 var(--font-interface, system-ui, sans-serif);
-    }
-  `;
+  /** No shadow root, so the page styles the properties. */
+  protected createRenderRoot() {
+    return this;
+  }
 
   @property({ type: Object }) accessor properties: Properties | null = null;
   @property({ type: Object }) accessor types: PropertyTypes | null = null;
   @property({ type: Boolean }) accessor readonly = false;
 
-  #onRowChange({ detail: { key, value } }: CustomEvent<PropertyChangeDetail>) {
+  #onRowChange({ detail: { key, value } }: CustomEvent<ProprowChangeDetail>) {
     this.properties = { ...this.properties, [key]: value };
-    this.dispatchEvent(new CustomEvent<ChangeDetail>('change', {
-      bubbles: true,
-      composed: true,
-      detail: { key, value, properties: this.properties },
-    }));
   }
 
   render() {
@@ -46,7 +42,7 @@ export class OfmFrontmatter extends LitElement {
         .value=${value}
         .type=${isRecord(this.types) ? this.types[key] : undefined}
         .readonly=${this.readonly}
-        @property-change=${this.#onRowChange}
+        @proprow-change=${this.#onRowChange}
       ></ofm-proprow>
     `);
   }

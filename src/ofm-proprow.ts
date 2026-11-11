@@ -1,32 +1,21 @@
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { fieldFor, formatCompact, parseCommitted, parseWikilink } from './sniff.ts';
-import type { DeclaredKind, Field, Json, Kind, Wikilink } from './sniff.ts';
+import type { Field, Json, Type, Wikilink } from './sniff.ts';
 
-export type PropertyChangeDetail = { key: string; value: Json };
+export type ProprowChangeDetail = { key: string; value: Json; type: Type | undefined; effectiveType: Type };
 export type WikilinkDetail = { key: string; target: string };
 
 type Editable = { key: string; readonly: boolean; commit(value: Json): void };
 type Linkable = { openLink(target: string): void };
-type Extras<K extends Kind> =
+type Extras<K extends Type> =
   K extends 'object' ? unknown :
   K extends 'list' ? Editable & Linkable :
   K extends 'link' ? Editable & Linkable & { editing: boolean; edit(): void; endEdit(): void } :
   Editable;
-type RowOf<K extends Kind> = Extract<Field, { kind: K }> & Extras<K>;
-type RowData = { [K in Kind]: RowOf<K> }[Kind];
-
-const GLYPHS: Record<Kind, string> = {
-  text: 'T',
-  number: '#',
-  checkbox: '☑',
-  link: '↗',
-  date: '▦',
-  datetime: '◷',
-  list: '≣',
-  object: '{}',
-};
+type RowOf<K extends Type> = Extract<Field, { type: K }> & Extras<K>;
+type RowData = { [K in Type]: RowOf<K> }[Type];
 
 const inputOf = (e: Event) => e.target as HTMLInputElement;
 
@@ -182,7 +171,7 @@ const objectRow = (data: RowOf<'object'>) => html`
 `;
 
 export const row = (data: RowData): TemplateResult => {
-  switch (data.kind) {
+  switch (data.type) {
     case 'text': return textRow(data);
     case 'number': return numberRow(data);
     case 'checkbox': return checkboxRow(data);
@@ -193,125 +182,37 @@ export const row = (data: RowData): TemplateResult => {
     case 'object': return objectRow(data);
     default: {
       const unhandled: never = data;
-      throw new Error(`Unknown property kind: ${JSON.stringify(unhandled)}`);
+      throw new Error(`Unknown property type: ${JSON.stringify(unhandled)}`);
     }
   }
 };
 
+/**
+ * One property row: its key and an editor for its value.
+ * The `effective-type` attribute holds the type the row draws, which can differ from the declared `type`.
+ * @attr effective-type - The drawn type: text, number, checkbox, link, date, datetime, list or object.
+ * @fires proprow-change - A property was edited. `detail` is `{ key, value, type, effectiveType }`.
+ * @fires wikilink - A link in the value was clicked. `detail` is `{ key, target }`.
+ */
 @customElement('ofm-proprow')
 export class OfmProprow extends LitElement {
-  static styles = css`
-    :host {
-      display: grid;
-      grid-template-columns: 20px 9em 1fr;
-      align-items: start;
-      gap: 4px;
-      padding: 2px 0;
-      --muted: light-dark(#6b6b6b, #a0a0a0);
-      --hover: light-dark(#0000000d, #ffffff14);
-      --token: light-dark(#0000000f, #ffffff1a);
-      --accent: light-dark(#6d3fd1, #a88bfa);
-    }
-    .ofm-glyph, .ofm-key {
-      color: var(--muted);
-      line-height: 28px;
-    }
-    .ofm-glyph { text-align: center; }
-    .ofm-key {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-    .ofm-value {
-      display: flex;
-      align-items: center;
-      min-width: 0;
-      min-height: 28px;
-    }
-    input {
-      flex: 1;
-      min-width: 0;
-      height: 28px;
-      box-sizing: border-box;
-      padding: 0 6px;
-      border: 0;
-      border-radius: 4px;
-      background: transparent;
-      color: inherit;
-      font: inherit;
-    }
-    input:not([readonly]):hover, input:not([readonly]):focus { background: var(--hover); }
-    input:focus { outline: 1px solid var(--accent); }
-    input[readonly]:focus { outline: none; }
-    input[type='checkbox'] {
-      flex: none;
-      width: 16px;
-      height: 16px;
-      margin: 0 6px;
-    }
-    .ofm-tokens {
-      display: flex;
-      flex: 1;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px;
-      min-width: 0;
-      padding: 3px 6px;
-    }
-    .ofm-tokens input {
-      flex: 1 1 4em;
-      height: 22px;
-      padding: 0;
-    }
-    .ofm-tokens input:hover, .ofm-tokens input:focus {
-      background: transparent;
-      outline: none;
-    }
-    .ofm-token {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      padding: 0 6px;
-      border-radius: 10px;
-      background: var(--token);
-      line-height: 22px;
-      overflow-wrap: anywhere;
-    }
-    button {
-      padding: 0;
-      border: 0;
-      background: none;
-      color: inherit;
-      font: inherit;
-      cursor: pointer;
-    }
-    .ofm-link {
-      color: var(--accent);
-      text-align: left;
-      text-decoration: underline;
-      overflow-wrap: anywhere;
-    }
-    .ofm-value > .ofm-link { margin-left: 6px; }
-    .ofm-icon {
-      color: var(--muted);
-      padding: 0 4px;
-    }
-    pre {
-      flex: 1;
-      min-width: 0;
-      margin: 0;
-      padding: 4px 6px;
-      overflow-x: auto;
-      color: var(--muted);
-      font: 12px/1.4 var(--font-monospace, ui-monospace, monospace);
-    }
-  `;
+  /** No shadow root, so the page styles the row. */
+  protected createRenderRoot() {
+    return this;
+  }
 
   @property({ attribute: false }) accessor key = '';
   @property({ attribute: false }) accessor value: Json = null;
-  @property({ attribute: false }) accessor type: DeclaredKind | undefined = undefined;
+  /** The declared type. Unset, the type is sniffed from the value. */
+  @property({ reflect: true }) accessor type: Type | undefined = undefined;
   @property({ type: Boolean }) accessor readonly = false;
   @state() private accessor editing = false;
+  #field: Field = fieldFor(null);
+
+  willUpdate() {
+    this.#field = fieldFor(this.value, this.type);
+    this.setAttribute('effective-type', this.#field.type);
+  }
 
   async #startEdit() {
     this.editing = true;
@@ -323,8 +224,10 @@ export class OfmProprow extends LitElement {
     const value = typeof committed === 'string' && this.type !== 'text'
       ? parseCommitted(committed)
       : committed;
-    this.dispatchEvent(new CustomEvent<PropertyChangeDetail>('property-change', {
-      detail: { key: this.key, value },
+    this.dispatchEvent(new CustomEvent<ProprowChangeDetail>('proprow-change', {
+      bubbles: true,
+      composed: true,
+      detail: { key: this.key, value, type: this.type, effectiveType: this.#field.type },
     }));
   }
 
@@ -338,7 +241,7 @@ export class OfmProprow extends LitElement {
 
   render() {
     const data = {
-      ...fieldFor(this.value, this.type),
+      ...this.#field,
       key: this.key,
       readonly: this.readonly,
       editing: this.editing,
@@ -348,7 +251,6 @@ export class OfmProprow extends LitElement {
       openLink: (target: string) => this.#openLink(target),
     };
     return html`
-      <span class="ofm-glyph" aria-hidden="true">${GLYPHS[data.kind]}</span>
       <span class="ofm-key" title=${this.key}>${this.key}</span>
       <div class="ofm-value">${row(data)}</div>
     `;

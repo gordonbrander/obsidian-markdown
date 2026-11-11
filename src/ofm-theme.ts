@@ -1,12 +1,12 @@
 import { css } from 'lit';
 
 /**
- * An optional look for `<ofm-note>` and `<ofm-markdown>`, using Obsidian's CSS variable names.
+ * An optional look for `<ofm-note>`, `<ofm-markdown>` and `<ofm-frontmatter>`, using Obsidian's CSS variable names.
  * Callout colors are full colors, not Obsidian's `r, g, b` triples, which can't go through `light-dark()`.
  */
 export const obsidianTheme = css`
   /* Zero specificity, so a host's own ofm-markdown { --x: y } wins over this adopted sheet. */
-  :where(ofm-note, ofm-markdown) {
+  :where(ofm-note, ofm-markdown, ofm-frontmatter) {
     --color-red: light-dark(#e93147, #fb464c);
     --color-orange: light-dark(#ec7500, #e9973f);
     --color-yellow: light-dark(#e0ac00, #e0de71);
@@ -22,9 +22,11 @@ export const obsidianTheme = css`
     --text-accent-hover: light-dark(#8a5cf5, #bda6fc);
     --text-highlight-bg: light-dark(#fff3a3, #7a6a00);
     --background-modifier-border: light-dark(#0000001f, #ffffff29);
+    --background-modifier-hover: light-dark(#0000000d, #ffffff14);
 
     --font-text-theme: system-ui, sans-serif;
     --font-monospace-theme: ui-monospace, monospace;
+    --font-interface: system-ui, sans-serif;
     --font-text-size: 16px;
     --line-height-normal: 1.6;
     --p-spacing: 1em;
@@ -170,6 +172,113 @@ export const obsidianTheme = css`
       }
     }
     .ofm-properties[open] > .ofm-properties-heading::before { transform: rotate(45deg); }
+  }
+
+  /* Obsidian's properties view. */
+  ofm-frontmatter {
+    display: block;
+    color-scheme: light dark;
+    color: var(--text-normal);
+    font: 14px/1.4 var(--font-interface);
+  }
+
+  ofm-proprow {
+    display: grid;
+    grid-template-columns: 9em 1fr;
+    align-items: start;
+    gap: 4px;
+    padding: 2px 0;
+
+    .ofm-key {
+      overflow: hidden;
+      color: var(--text-muted);
+      line-height: 28px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .ofm-value {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      min-height: 28px;
+    }
+    input {
+      flex: 1;
+      min-width: 0;
+      height: 28px;
+      box-sizing: border-box;
+      padding: 0 6px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+    }
+    input:not([readonly]):hover, input:not([readonly]):focus { background: var(--background-modifier-hover); }
+    input:focus { outline: 1px solid var(--text-accent); }
+    input[readonly]:focus { outline: none; }
+    input[type='checkbox'] {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      margin: 0 6px;
+    }
+    .ofm-tokens {
+      display: flex;
+      flex: 1;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+      padding: 3px 6px;
+    }
+    .ofm-tokens input {
+      flex: 1 1 4em;
+      height: 22px;
+      padding: 0;
+    }
+    .ofm-tokens input:hover, .ofm-tokens input:focus {
+      background: transparent;
+      outline: none;
+    }
+    .ofm-token {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 6px;
+      border-radius: 10px;
+      background: var(--code-background);
+      line-height: 22px;
+      overflow-wrap: anywhere;
+    }
+    button {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+    .ofm-link {
+      color: var(--text-accent);
+      text-align: left;
+      text-decoration: underline;
+      overflow-wrap: anywhere;
+    }
+    .ofm-value > .ofm-link { margin-left: 6px; }
+    .ofm-icon {
+      padding: 0 4px;
+      color: var(--text-muted);
+    }
+    pre {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
+      padding: 4px 6px;
+      overflow-x: auto;
+      color: var(--text-muted);
+      font: 12px/1.4 var(--font-monospace-theme);
+    }
   }
 
   /* Variables with no default above fall back to inherit here, because --x: inherit wouldn't mean the same thing. */

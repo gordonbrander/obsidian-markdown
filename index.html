@@ -61,11 +61,10 @@ Escape velocity: $v_e = \sqrt{2GM/r}$.
       const note = document.querySelector('#note');
       const log = document.querySelector('#log');
       const show = (e) => {
-        const { properties, ...rest } = e.detail ?? {};
-        log.textContent = `${e.type} ${JSON.stringify(rest)}\n${log.textContent}`;
+        log.textContent = `${e.type} ${JSON.stringify(e.detail)}\n${log.textContent}`;
       };
       source.addEventListener('input', () => { note.value = source.value; });
-      note.addEventListener('change', show);
+      note.addEventListener('proprow-change', show);
       note.addEventListener('wikilink', show);
       document.querySelector('#readonly').addEventListener('change', (e) => { note.readonly = e.target.checked; });
       document.querySelector('#strict').addEventListener('change', (e) => { note.strictLineBreaks = e.target.checked; });
