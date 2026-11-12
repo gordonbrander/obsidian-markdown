@@ -630,7 +630,7 @@ Parts of quotations and callouts cannot be linked. A marker in a paragraph insid
 ^my-callout
 .
 <div class="callout" data-callout="tip" data-block-id="my-callout">
-<div class="callout-title">Tip</div>
+<div class="callout-title"><span class="callout-title-inner">Tip</span></div>
 <div class="callout-content">
 <p>Body</p>
 </div>
@@ -667,7 +667,7 @@ The captures are, in order:
 
 1. The **type identifier**. It is case-insensitive and is normalized to lowercase.
 2. **Metadata**, an optional string after `|` that themes can use for styling. The canonical rendering stores it in `data-callout-metadata`. ***[reported]***
-3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable.
+3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. The canonical rendering of a foldable callout is a `details` element with the class `is-collapsible`, plus `open` when the marker is `+`. Its title is a `summary` that ends with an empty `.callout-fold` element. Obsidian renders `div`s and folds them with script. ***[chosen]***
 4. The **title**, parsed as inline content. ***[chosen]***
 
 This first line is removed from the paragraph. Remaining lines, and the remaining children of the block quote, are the callout's **content**. Content is parsed as ordinary blocks, so callouts can contain lists, code, wikilinks, and embeds.
@@ -679,7 +679,7 @@ This first line is removed from the paragraph. Remaining lines, and the remainin
 > Here's a callout block.
 .
 <div class="callout" data-callout="info">
-<div class="callout-title">Here's a callout title</div>
+<div class="callout-title"><span class="callout-title-inner">Here's a callout title</span></div>
 <div class="callout-content">
 <p>Here's a callout block.</p>
 </div>
@@ -695,7 +695,7 @@ With no title, the default title is the type identifier in title case, meaning i
 > Careful.
 .
 <div class="callout" data-callout="warning">
-<div class="callout-title">Warning</div>
+<div class="callout-title"><span class="callout-title-inner">Warning</span></div>
 <div class="callout-content">
 <p>Careful.</p>
 </div>
@@ -710,7 +710,7 @@ A callout may have no content:
 > [!tip] Title-only callout
 .
 <div class="callout" data-callout="tip">
-<div class="callout-title">Title-only callout</div>
+<div class="callout-title"><span class="callout-title-inner">Title-only callout</span></div>
 </div>
 ````````````````````````````````
 
@@ -722,12 +722,12 @@ The fold marker must directly follow `]`:
 > [!faq]- Are callouts foldable?
 > Yes!
 .
-<div class="callout" data-callout="faq" data-callout-fold="-">
-<div class="callout-title">Are callouts foldable?</div>
+<details class="callout is-collapsible" data-callout="faq" data-callout-fold="-">
+<summary class="callout-title"><span class="callout-title-inner">Are callouts foldable?</span><span class="callout-fold"></span></summary>
 <div class="callout-content">
 <p>Yes!</p>
 </div>
-</div>
+</details>
 ````````````````````````````````
 
 Callouts can nest:
@@ -739,10 +739,10 @@ Callouts can nest:
 > > [!todo] Yes!, they can.
 .
 <div class="callout" data-callout="question">
-<div class="callout-title">Can callouts be nested?</div>
+<div class="callout-title"><span class="callout-title-inner">Can callouts be nested?</span></div>
 <div class="callout-content">
 <div class="callout" data-callout="todo">
-<div class="callout-title">Yes!, they can.</div>
+<div class="callout-title"><span class="callout-title-inner">Yes!, they can.</span></div>
 </div>
 </div>
 </div>
