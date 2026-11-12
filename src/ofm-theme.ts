@@ -190,36 +190,45 @@ export const obsidianTheme = css`
   /* Obsidian's collapsible Properties section. */
   ofm-note {
     .ofm-properties {
-      margin-block-end: 1em;
-      padding-block-end: 0.5em;
-      border-bottom: 1px solid var(--background-modifier-border);
+      margin-block-end: 3em;
     }
     .ofm-properties-heading {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding-block: 4px;
-      color: var(--text-muted);
-      font-size: 0.875em;
-      font-weight: 600;
+      position: relative;
+      display: block;
+      padding-block: 0 4px;
+      color: var(--text-normal);
+      font-size: 1em;
+      font-weight: var(--bold-weight);
       list-style: none;
       cursor: pointer;
       user-select: none;
       &::-webkit-details-marker {
         display: none;
       }
+      /* Hangs in the gutter, so the title stays flush with the body text. */
       &::before {
         content: '';
+        position: absolute;
+        inset-inline-end: 100%;
+        top: 0.75em;
         width: 0.4em;
         height: 0.4em;
+        margin-inline-end: 0.6em;
         border-right: 1.5px solid currentColor;
         border-bottom: 1.5px solid currentColor;
-        transform: rotate(-45deg);
-        transition: transform 100ms ease-in-out;
+        color: var(--text-accent);
+        transform: translateY(-50%) rotate(-45deg);
+        transition: transform 100ms ease-in-out, opacity 100ms ease-in-out;
       }
     }
+    /* Open, the arrow is faint and shows only on hover or focus. Closed, it's always shown in the accent color. */
     .ofm-properties[open] > .ofm-properties-heading::before {
-      transform: rotate(45deg);
+      color: var(--text-faint);
+      opacity: 0;
+      transform: translateY(-50%) rotate(45deg);
+    }
+    .ofm-properties[open] > .ofm-properties-heading:is(:hover, :focus-visible)::before {
+      opacity: 1;
     }
   }
 
@@ -236,7 +245,6 @@ export const obsidianTheme = css`
     grid-template-columns: 9em 1fr;
     align-items: start;
     gap: 4px;
-    padding: 2px 0;
 
     .ofm-key {
       overflow: hidden;
