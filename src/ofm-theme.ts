@@ -1,12 +1,12 @@
 import { css } from 'lit';
 
 /**
- * An optional look for `<ofm-note>`, `<ofm-markdown>` and `<ofm-frontmatter>`, using Obsidian's CSS variable names.
+ * An optional look for `<ofm-note>`, `<ofm-markdown>`, `<ofm-frontmatter>` and the variables `<ofm-markdown-editor>` uses, using Obsidian's CSS variable names.
  * Callout colors are full colors, not Obsidian's `r, g, b` triples, which can't go through `light-dark()`.
  */
 export const obsidianTheme = css`
   /* Zero specificity, so a host's own ofm-markdown { --x: y } wins over this adopted sheet. */
-  :where(ofm-note, ofm-markdown, ofm-frontmatter) {
+  :where(ofm-note, ofm-markdown, ofm-frontmatter, ofm-markdown-editor) {
     --color-red: light-dark(#e93147, #fb464c);
     --color-orange: light-dark(#ec7500, #e9973f);
     --color-yellow: light-dark(#e0ac00, #e0de71);
@@ -188,7 +188,7 @@ export const obsidianTheme = css`
   }
 
   /* Obsidian's collapsible Properties section. */
-  ofm-note {
+  :is(ofm-note, ofm-markdown-editor) {
     .ofm-properties {
       margin-block-end: 3em;
     }

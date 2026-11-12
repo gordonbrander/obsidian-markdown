@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ofm-markdown-editor demo</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { margin: 0; font-family: system-ui, sans-serif; }
+      header { display: flex; gap: 12px; align-items: center; padding: 8px 16px; font-size: 13px; }
+      ofm-markdown-editor { height: calc(100vh - 140px); background: var(--background-primary); }
+      ofm-note { height: calc(100vh - 140px); box-sizing: border-box; max-width: 764px; margin: 0 auto; padding: 32px; overflow: auto; }
+      [hidden] { display: none !important; }
+      #log { height: 80px; margin: 0; padding: 4px 16px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <label><input type="radio" name="mode" value="live" checked /> Live Preview</label>
+      <label><input type="radio" name="mode" value="source" /> Source mode</label>
+      <label><input type="radio" name="mode" value="reading" /> Reading view</label>
+      <label><input type="checkbox" id="readonly" /> Read-only</label>
+      <span>Mod-E toggles Reading view. Type <code>[[</code> or <code>#</code> to autocomplete.</span>
+    </header>
+    <ofm-markdown-editor id="editor" placeholder="Start typing…"></ofm-markdown-editor>
+    <ofm-note id="reading" readonly hidden></ofm-note>
+    <pre id="log"></pre>
+
+    <script type="module">
+      import { adoptSheet } from '/src/adopt-sheet.ts';
+      import { obsidianEditorTheme } from '/src/ofm-editor-theme.ts';
+      import { obsidianTheme } from '/src/ofm-theme.ts';
+      import '/src/components/ofm-markdown-editor.ts';
+      import { completionService } from '/src/completion-service.ts';
+      import { noteService } from '/src/note-service.ts';
+      import '/src/components/ofm-note.ts';
+
+      adoptSheet(obsidianTheme);
+      adoptSheet(obsidianEditorTheme);
+
+      // A tiny in-memory vault for note embeds and autocomplete.
+      const vault = {
+        'Embedded note': '# Embedded note\n\nThis note is embedded. It embeds ![[Deeper note]].\n\n## Section\n\nA section on its own. ^block',
+        'Deeper note': 'One level deeper, with **formatting** and a [[Wikilink]].',
+      };
+      // One loader for every component on the page, so Reading view shows embeds too.
+      noteService.setLoader(async (name) => vault[name]);
+
+      const editor = document.querySelector('#editor');
+      const log = document.querySelector('#log');
+      const write = (line) => { log.textContent = `${line}\n${log.textContent}`.slice(0, 4000); };
+
+      completionService.setCompletions(async (query, kind) => {
+        const names = kind === 'link' ? [...Object.keys(vault), 'Wikilink', 'Other note'] : ['nested/tag', 'obsidian', 'todo'];
+        return names.filter((name) => name.toLowerCase().includes(query.toLowerCase()));
+      });
+
+      editor.value = `---
+title: Obsidian Flavored Markdown
+tags:
+  - demo # comments survive edits
+done: false
+---
+# Obsidian Flavored Markdown
+
+A [[Wikilink]], an [[Other note#Heading|aliased link]], and a #nested/tag. ^intro
+
+==Highlight== ~~struck~~ **bold** *italic* \`inline code\` %%hidden comment%% visible.
+A [Markdown link](https://obsidian.md) and www.example.com.
+
+> [!tip]+ A foldable callout
+> With **formatting** and [[a link]].
+
+> A plain quote.
+
+- [x] Done
+- [ ] Not done
+- A bullet
+  - Nested
+1. First
+2. Second
+
+| Left | Center | Right |
+| :-- | :--: | --: |
+| [[Note\\|Alias]] | [link][ref] | \`code\` |
+
+Footnote[^1] and an inline one ^[Inline *note*.].
+
+Inline math $e^{2i\\pi} = 1$.
+
+$$
+\\begin{vmatrix}a & b\\\\
+c & d
+\\end{vmatrix}=ad-bc
+$$
+
+\`\`\`mermaid
+graph TD
+Biology --> Chemistry
+\`\`\`
+
+\`\`\`js
+const a = "[[not a link]]";
+\`\`\`
+
+![[Embedded note]]
+
+![[Embedded note#Section]]
+
+![[Missing note]]
+
+---
+
+[^1]: A footnote.
+
+[ref]: https://example.com
+`;
+
+      // Reading view is <ofm-note>, as Obsidian's is a separate view of the same note.
+      const reading = document.querySelector('#reading');
+      let editingMode = 'live';
+      const show = (mode) => {
+        document.querySelector(`[name=mode][value=${mode}]`).checked = true;
+        reading.hidden = mode !== 'reading';
+        editor.hidden = mode === 'reading';
+        if (mode === 'reading') reading.value = editor.value;
+        else editor.mode = editingMode = mode;
+      };
+      for (const radio of document.querySelectorAll('[name=mode]')) {
+        radio.addEventListener('change', () => show(radio.value));
+      }
+      editor.addEventListener('toggle-reading', () => show('reading'));
+      document.addEventListener('keydown', (e) => {
+        if (!reading.hidden && e.key === 'e' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          show(editingMode);
+        }
+      });
+      document.querySelector('#readonly').addEventListener('change', (e) => { editor.readonly = e.target.checked; });
+      editor.addEventListener('input', (e) => write(`input (${e.detail.value.length} chars)`));
+      editor.addEventListener('change', () => write('change'));
+      editor.addEventListener('proprow-change', (e) => write(`proprow-change ${JSON.stringify(e.detail)}`));
+      editor.addEventListener('click-wikilink', (e) => {
+        e.preventDefault(); // Log the link instead of following it.
+        write(`click-wikilink ${JSON.stringify(e.detail)}`);
+      });
+    </script>
+  </body>
+</html>

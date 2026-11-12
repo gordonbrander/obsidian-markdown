@@ -1,9 +1,9 @@
 import type { MarkdownIt, Delimiter, StateInline } from 'markdown-it';
 import { hasScheme, parseWikilink } from './sniff.ts';
 
-const IMAGE_EXTENSIONS = new Set(['avif', 'bmp', 'gif', 'jpeg', 'jpg', 'png', 'svg', 'webp']);
-const EMBED_SIZE = /^(\d+)(?:x(\d+))?$/;
-const HIGHLIGHT_COLORS: [string, string][] = [
+export const IMAGE_EXTENSIONS = new Set(['avif', 'bmp', 'gif', 'jpeg', 'jpg', 'png', 'svg', 'webp']);
+export const EMBED_SIZE = /^(\d+)(?:x(\d+))?$/;
+export const HIGHLIGHT_COLORS: [string, string][] = [
   ['🔴', 'red'],
   ['🟠', 'orange'],
   ['🟡', 'yellow'],
@@ -13,8 +13,8 @@ const HIGHLIGHT_COLORS: [string, string][] = [
 ];
 
 /** SPEC 7.6: letters, marks, numbers, _ - / and non-ASCII symbols, including joined emoji. */
-const TAG = /#((?:[\p{L}\p{M}\p{N}_\-/‍]|\p{Extended_Pictographic}|(?![\x00-\x7f])\p{S})+)/uy;
-const ALL_DIGITS = /^\p{Nd}+$/u;
+export const TAG = /#((?:[\p{L}\p{M}\p{N}_\-/‍]|\p{Extended_Pictographic}|(?![\x00-\x7f])\p{S})+)/uy;
+export const ALL_DIGITS = /^\p{Nd}+$/u;
 const WHITESPACE = /\s/;
 
 /** Index of `needle` between `from` and the end of the line, or -1. */
