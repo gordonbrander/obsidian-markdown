@@ -1,6 +1,6 @@
 {
   "name": "obsidian-markdown",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Render Obsidian Flavored Markdown with markdown-it, plus Lit web components for notes and their properties.",
   "keywords": [
     "obsidian",
