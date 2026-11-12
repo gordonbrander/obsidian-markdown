@@ -1,6 +1,5 @@
 import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { until } from 'lit/directives/until.js';
 import { draw } from './draw.ts';
 import { render } from './render.ts';
 
@@ -20,7 +19,8 @@ const toggleFold = (title: Element) => {
 
 /**
  * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams.
- * @fires rendered - The note has been rendered and drawn.
+ * @attr rendered - Set by the element once its first content is in the DOM and drawn. Style the first render with `ofm-markdown:not([rendered])`.
+ * @fires rendered - The new content is in the DOM and drawn.
  * @fires wikilink - An internal link was clicked. `detail.target` is the link target. Cancelable.
  */
 @customElement('ofm-markdown')
@@ -44,12 +44,30 @@ export class OfmMarkdown extends LitElement {
       title.setAttribute('tabindex', '0');
       setFolded(title, title.parentElement?.getAttribute('data-callout-fold') === '-');
     }
-    // A superseded build is dropped by until, so it shouldn't announce anything.
-    if (value === (this.value ?? '') && strictLineBreaks === this.strictLineBreaks) {
-      this.dispatchEvent(new CustomEvent('rendered', { bubbles: true, composed: true }));
-    }
     return template.content;
   };
+
+  #content?: DocumentFragment;
+
+  /** Build before every update, so the update renders finished content and `updateComplete` waits for it. */
+  protected override async scheduleUpdate() {
+    try {
+      // Props can change while drawing. Those changes merge into this pending update, so rebuild until the content matches.
+      let value: string, strictLineBreaks: boolean;
+      do {
+        ({ value, strictLineBreaks } = this);
+        this.#content = await this.#build(value ?? '', strictLineBreaks);
+      } while (value !== this.value || strictLineBreaks !== this.strictLineBreaks);
+    } finally {
+      // Never skip it, or the update stays pending and the element stops updating.
+      await super.scheduleUpdate();
+    }
+  }
+
+  updated() {
+    this.setAttribute('rendered', '');
+    this.dispatchEvent(new CustomEvent('rendered', { bubbles: true, composed: true }));
+  }
 
   #openWikilink(target: string) {
     this.dispatchEvent(new CustomEvent<MarkdownWikilinkDetail>('wikilink', {
@@ -101,7 +119,7 @@ export class OfmMarkdown extends LitElement {
   render() {
     return html`
       <div class="ofm-content" @click=${this.#onClick} @keydown=${this.#onKeydown}>
-        ${until(this.#build(this.value ?? '', this.strictLineBreaks))}
+        ${this.#content}
       </div>
     `;
   }
