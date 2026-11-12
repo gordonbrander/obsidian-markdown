@@ -1,6 +1,6 @@
 # obsidian-markdown
 
-A [specification](SPEC.md), renderer, and complete test suite for [Obsidian-flavored Markdown](https://obsidian.md/help/syntax).
+A [specification](https://github.com/gordonbrander/obsidian-markdown/blob/main/SPEC.md), renderer, and complete test suite for [Obsidian-flavored Markdown](https://obsidian.md/help/syntax).
 
 Ships with a spec-complete [markdown-it](https://github.com/markdown-it/markdown-it) renderer, as well as some optional lightweight web components for displaying Obsidian-flavored Markdown.
 
