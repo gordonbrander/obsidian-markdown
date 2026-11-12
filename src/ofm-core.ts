@@ -1,7 +1,7 @@
 import type { MarkdownIt, StateCore, Token } from 'markdown-it';
 
-const CALLOUT = /^\[!([^\]|\s]+)(?:\|([^\]]*))?\]([+-]?)(?:[ \t]+(.*))?$/;
-const BLOCK_ID = /(?:^|[ \t\n])\^([A-Za-z0-9-]+)[ \t]*$/;
+export const CALLOUT = /^\[!([^\]|\s]+)(?:\|([^\]]*))?\]([+-]?)(?:[ \t]+(.*))?$/;
+export const BLOCK_ID = /(?:^|[ \t\n])\^([A-Za-z0-9-]+)[ \t]*$/;
 const TASK = /^\[(.)\](?=[ \t\n]|$)/u;
 
 const isQuote = (token: Token | null) => token?.type === 'blockquote_open' || token?.type === 'callout_open';

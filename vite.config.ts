@@ -13,7 +13,7 @@ export default defineConfig({
   resolve: { alias: [{ find: /^\/src\//, replacement: `${resolve(import.meta.dirname, 'src')}/` }] },
   build: {
     outDir: 'dist',
-    rolldownOptions: { input: ['index.html', 'ofm-note.html', 'ofm-markdown.html', 'ofm-frontmatter.html'].map(examples) },
+    rolldownOptions: { input: ['index.html', 'ofm-note.html', 'ofm-markdown.html', 'ofm-frontmatter.html', 'ofm-markdown-editor.html'].map(examples) },
   },
   plugins: [
     {

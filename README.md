@@ -6,6 +6,7 @@ demos:
   - "[[ofm-note.html|ofm-note]]"
   - "[[ofm-markdown.html|ofm-markdown]]"
   - "[[ofm-frontmatter.html|ofm-frontmatter]]"
+  - "[[ofm-markdown-editor.html|ofm-markdown-editor]]"
 ---
 # obsidian-markdown
 
@@ -120,9 +121,53 @@ An editable property list, like Obsidian's properties view.
 - **`type`**: the declared type, if any.
 - **`effective-type`**: the type the row actually draws, declared or sniffed from the value.
 
+### `<ofm-markdown-editor>`
+
+```js
+import 'obsidian-markdown/components/ofm-markdown-editor.js';
+```
+
+```html
+<ofm-markdown-editor value="# Hello" mode="live"></ofm-markdown-editor>
+```
+
+A [CodeMirror 6](https://codemirror.net) editor that looks and works like Obsidian's. Live Preview is the default: formatting hides unless the cursor touches it, and callouts, tables, math, Mermaid diagrams, embeds and Properties render in place until you click into them. Source mode shows the styled Markdown. The editor uses Obsidian's class names (`.markdown-source-view.mod-cm6`, `.HyperMD-*`, `.cm-formatting-*`…), so Obsidian theme snippets for the editor apply.
+
+- Properties/attributes:
+  - **`value`**: the whole note, front matter included. Setting it replaces the document without firing `input`.
+  - **`mode`**: `live` (default) or `source`.
+  - **`readonly`**: a boolean attribute that disables editing.
+  - **`readable-line-width`**: on by default. Set it to `"false"` to use the full width.
+  - **`spellcheck`**, **`placeholder`**: passed to the editable area.
+  - **`completions`** (property only): `(query, kind) => Promise<string[]>`, where `kind` is `'link'` or `'tag'`. Powers `[[` and `#` autocomplete. With no callback there's no popup.
+  - **`view`** (read-only property): the CodeMirror `EditorView`.
+- Events:
+  - **`input`**: the document changed. `detail.value` is the whole note.
+  - **`change`**: on blur, when the text changed since focus.
+  - **`click-wikilink`**: a wikilink was clicked: a plain click in Live Preview, Cmd/Ctrl-click in Source mode. `detail.target` is the link target. Cancelable.
+  - **`proprow-change`**: a property was edited. The editor has already rewritten the front matter, keeping YAML comments and key order.
+  - **`toggle-reading`**: Mod-E asked for Reading view, as it does in Obsidian. Show the note in `<ofm-note>`. `detail.value` is the whole note.
+
+Note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) load through a loader you register once per page. The loader gets the note's name and returns its source, or `null` if it doesn't exist. Embeds nest up to four deep, and cycles stop. Results are cached until you call `setNoteLoader` again or `OfmMarkdownEditor.invalidateNote(name)`.
+
+```js
+import { OfmMarkdownEditor } from 'obsidian-markdown/components/ofm-markdown-editor.js';
+
+OfmMarkdownEditor.setNoteLoader(async (name) => {
+  const response = await fetch(`/notes/${encodeURIComponent(name)}.md`);
+  return response.ok ? response.text() : null;
+});
+```
+
+Keys follow Obsidian 1.15's defaults: Enter continues lists, tasks, quotes and callouts; Tab and Shift-Tab indent list items with their children; Mod-B, Mod-I and Mod-K format; Mod-L toggles a checkbox; Mod-/ toggles a `%%` comment; Mod-E asks for Reading view; Mod-F opens a find bar like Obsidian's, which searches as you type; Mod-Alt-F (macOS) or Mod-H adds its replace row; Mod-D selects the next occurrence; Alt-Up and Alt-Down move lines; Alt-click adds a cursor. Like Obsidian, there's no default key for Live Preview ↔ Source mode. Set `mode` yourself. Typing `*`, `_`, `=`, `$`, `~` or `` ` `` with text selected wraps it.
+
+Tables are edited as source: click a rendered table to reveal its Markdown. The editor loads about 240 KB gzipped up front (710 KB minified), including the 90 KB of rendering code the reading components share. CodeMirror is most of the rest. Code-block languages, MathJax and Mermaid load on demand.
+
 ### Using with frameworks
 
 The components are standard custom elements, so you can use them from any framework. Import the module once to register the element, then pass properties and listen for events with your framework's syntax.
+
+`<ofm-markdown-editor>` works the same way. Bind `value` and update it from the `input` event's `detail.value`. Passing back the text the editor already holds does nothing, so the cursor stays put. `completions` is a function, so pass it as a property, not an attribute.
 
 #### React
 
@@ -234,6 +279,17 @@ adoptSheet(obsidianTheme);
 ```
 
 The theme uses Obsidian's CSS variable names (`--text-normal`, `--text-accent`, `--link-color`, …), so you can restyle it by setting those variables.
+
+`<ofm-markdown-editor>` has its own sheet, which builds on the variables in `obsidianTheme`. Adopt both:
+
+```js
+import { obsidianEditorTheme } from 'obsidian-markdown/ofm-editor-theme.js';
+
+adoptSheet(obsidianTheme);
+adoptSheet(obsidianEditorTheme);
+```
+
+It adds editor variables of its own: `--file-line-width`, `--file-margins`, `--caret-color`, `--text-selection` and `--list-indent-editing`.
 
 ## License
 
