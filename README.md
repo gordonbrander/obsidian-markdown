@@ -78,9 +78,14 @@ Renders a note, drawing math (MathJax) and Mermaid diagrams. Both libraries load
 - Properties/attributes:
   - **`value`**: the note's Markdown source.
   - **`strict-line-breaks`**: a boolean attribute. When set, single line breaks don't become `<br>`.
+  - **`rendered`**: set by the element once its first content is in the DOM and drawn. It stays set after that. Use it to fade in the first render:
+    ```css
+    ofm-markdown { transition: opacity 150ms; }
+    ofm-markdown:not([rendered]) { opacity: 0; }
+    ```
 - Events:
   - **`wikilink`**: an internal link was clicked. `detail.target` is the link target.
-  - **`rendered`**: the note has been rendered and drawn.
+  - **`rendered`**: the new content is in the DOM and drawn.
 
 ### `<ofm-frontmatter>`
 
