@@ -36,8 +36,13 @@ test('bare file names are not autolinked', () => {
 });
 
 test('www. and email addresses are autolinked', () => {
-  assert.match(render('www.example.com'), /<a href="http:\/\/www\.example\.com">www\.example\.com<\/a>/);
-  assert.match(render('me@example.com'), /<a href="mailto:me@example\.com">/);
+  assert.match(render('www.example.com'), /<a href="http:\/\/www\.example\.com" class="external-link">www\.example\.com<\/a>/);
+  assert.match(render('me@example.com'), /<a href="mailto:me@example\.com" class="external-link">/);
+});
+
+test('only links with a scheme are external', () => {
+  assert.match(render('[x](Note.md)'), /<a href="Note\.md">/);
+  assert.match(render('[x](obsidian://open)'), /<a href="obsidian:\/\/open" class="external-link">/);
 });
 
 test('a + callout is an open details', () => {

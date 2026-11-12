@@ -800,10 +800,10 @@ Unlike GFM, the character may be anything. A space means the task is incomplete.
 - [-] Cancelled
 .
 <ul>
-<li class="task-list-item" data-task="x"><input type="checkbox" disabled="" checked="" /> Done</li>
-<li class="task-list-item" data-task=""><input type="checkbox" disabled="" /> Not done</li>
-<li class="task-list-item" data-task="?"><input type="checkbox" disabled="" checked="" /> Question</li>
-<li class="task-list-item" data-task="-"><input type="checkbox" disabled="" checked="" /> Cancelled</li>
+<li class="task-list-item is-checked" data-task="x"><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Done</li>
+<li class="task-list-item" data-task=""><input class="task-list-item-checkbox" type="checkbox" disabled="" /> Not done</li>
+<li class="task-list-item is-checked" data-task="?"><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Question</li>
+<li class="task-list-item is-checked" data-task="-"><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Cancelled</li>
 </ul>
 ````````````````````````````````
 
@@ -840,15 +840,15 @@ Simple[^1] and named[^note].
   It spans lines.
 [^note]: Named footnotes appear as numbers.
 .
-<p>Simple<sup class="footnote-ref"><a href="#fn-1" id="fnref-1">1</a></sup> and named<sup class="footnote-ref"><a href="#fn-2" id="fnref-2">2</a></sup>.</p>
+<p>Simple<sup class="footnote-ref" data-footnote-id="fnref-1"><a class="footnote-link" href="#fn-1" id="fnref-1">1</a></sup> and named<sup class="footnote-ref" data-footnote-id="fnref-2"><a class="footnote-link" href="#fn-2" id="fnref-2">2</a></sup>.</p>
 <section class="footnotes">
 <ol>
-<li id="fn-1">
+<li id="fn-1" data-footnote-id="fn-1">
 <p>The first.<br />
-It spans lines. <a href="#fnref-1" class="footnote-backref">↩</a></p>
+It spans lines. <a href="#fnref-1" class="footnote-backref footnote-link">↩</a></p>
 </li>
-<li id="fn-2">
-<p>Named footnotes appear as numbers. <a href="#fnref-2" class="footnote-backref">↩</a></p>
+<li id="fn-2" data-footnote-id="fn-2">
+<p>Named footnotes appear as numbers. <a href="#fnref-2" class="footnote-backref footnote-link">↩</a></p>
 </li>
 </ol>
 </section>
@@ -921,7 +921,7 @@ A highlight whose content starts with one of these six emoji has that color. The
 ```````````````````````````````` example
 ==🔴Important==
 .
-<p><mark data-highlight-color="red">Important</mark></p>
+<p><mark data-highlight="red">Important</mark></p>
 ````````````````````````````````
 
 ### 7.3 Strikethrough
@@ -1307,7 +1307,7 @@ CommonMark inline links and images whose destination has no URI scheme refer to 
 <p><a href="My%20Note.md">With spaces</a></p>
 ````````````````````````````````
 
-Links with a scheme are external, including `obsidian://` URIs.
+Links with a scheme are external, including `obsidian://` URIs. The canonical rendering gives them the class `external-link`, as Obsidian does. This includes autolinks ([7.12](#712-autolinks)).
 
 ### 7.11 Footnote references
 
@@ -1328,11 +1328,11 @@ An **inline footnote** is `^[`, inline content with balanced brackets, and `]`. 
 ```````````````````````````````` example
 Text ^[An *inline* note.].
 .
-<p>Text <sup class="footnote-ref"><a href="#fn-1" id="fnref-1">1</a></sup>.</p>
+<p>Text <sup class="footnote-ref" data-footnote-id="fnref-1"><a class="footnote-link" href="#fn-1" id="fnref-1">1</a></sup>.</p>
 <section class="footnotes">
 <ol>
-<li id="fn-1">
-<p>An <em>inline</em> note. <a href="#fnref-1" class="footnote-backref">↩</a></p>
+<li id="fn-1" data-footnote-id="fn-1">
+<p>An <em>inline</em> note. <a href="#fnref-1" class="footnote-backref footnote-link">↩</a></p>
 </li>
 </ol>
 </section>
@@ -1347,7 +1347,7 @@ CommonMark autolinks and GFM extended autolinks (bare `http://`, `https://`, `ww
 ```````````````````````````````` example
 See https://example.com/#fragment for more.
 .
-<p>See <a href="https://example.com/#fragment">https://example.com/#fragment</a> for more.</p>
+<p>See <a href="https://example.com/#fragment" class="external-link">https://example.com/#fragment</a> for more.</p>
 ````````````````````````````````
 
 ### 7.13 Raw HTML

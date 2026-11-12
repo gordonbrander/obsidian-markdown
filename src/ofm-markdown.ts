@@ -86,7 +86,7 @@ export class OfmMarkdown extends LitElement {
 
   render() {
     return html`
-      <div class="ofm-content" @click=${this.#onClick}>
+      <div class="markdown-rendered" @click=${this.#onClick}>
         ${this.#content}
       </div>
     `;

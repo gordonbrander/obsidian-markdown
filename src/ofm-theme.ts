@@ -20,7 +20,15 @@ export const obsidianTheme = css`
     --text-muted: light-dark(#6b6b6b, #a0a0a0);
     --text-accent: light-dark(#6d3fd1, #a88bfa);
     --text-accent-hover: light-dark(#8a5cf5, #bda6fc);
-    --text-highlight-bg: light-dark(#fff3a3, #7a6a00);
+    --highlight-opacity: 30%;
+    --highlight-background-red: color-mix(in srgb, var(--color-red) var(--highlight-opacity), transparent);
+    --highlight-background-orange: color-mix(in srgb, var(--color-orange) var(--highlight-opacity), transparent);
+    --highlight-background-yellow: color-mix(in srgb, var(--color-yellow) var(--highlight-opacity), transparent);
+    --highlight-background-green: color-mix(in srgb, var(--color-green) var(--highlight-opacity), transparent);
+    --highlight-background-blue: color-mix(in srgb, var(--color-blue) var(--highlight-opacity), transparent);
+    --highlight-background-purple: color-mix(in srgb, var(--color-purple) var(--highlight-opacity), transparent);
+    /* As in Obsidian, --text-highlight-bg is an optional override with no default. */
+    --highlight-background: var(--text-highlight-bg, var(--highlight-background-yellow));
     --background-modifier-border: light-dark(#0000001f, #ffffff29);
     --background-modifier-hover: light-dark(#0000000d, #ffffff14);
 
@@ -470,15 +478,15 @@ export const obsidianTheme = css`
     li::marker {
       color: var(--list-marker-color);
     }
-    li[data-task] {
+    .task-list-item {
       list-style: none;
       margin-left: -1.2em;
     }
-    li[data-task]:not([data-task='']) {
+    .task-list-item.is-checked {
       color: var(--checklist-done-color);
       text-decoration: var(--checklist-done-decoration);
     }
-    input[type='checkbox'] {
+    .task-list-item-checkbox {
       width: var(--checkbox-size);
       height: var(--checkbox-size);
     }
@@ -486,26 +494,26 @@ export const obsidianTheme = css`
     mark {
       padding: 0 2px;
       border-radius: 2px;
-      background: var(--text-highlight-bg);
+      background: var(--highlight-background);
       color: inherit;
     }
-    mark[data-highlight-color='red'] {
-      background: color-mix(in srgb, var(--color-red) 35%, transparent);
+    mark[data-highlight='red'] {
+      --highlight-background: var(--highlight-background-red);
     }
-    mark[data-highlight-color='orange'] {
-      background: color-mix(in srgb, var(--color-orange) 35%, transparent);
+    mark[data-highlight='orange'] {
+      --highlight-background: var(--highlight-background-orange);
     }
-    mark[data-highlight-color='yellow'] {
-      background: color-mix(in srgb, var(--color-yellow) 35%, transparent);
+    mark[data-highlight='yellow'] {
+      --highlight-background: var(--highlight-background-yellow);
     }
-    mark[data-highlight-color='green'] {
-      background: color-mix(in srgb, var(--color-green) 35%, transparent);
+    mark[data-highlight='green'] {
+      --highlight-background: var(--highlight-background-green);
     }
-    mark[data-highlight-color='blue'] {
-      background: color-mix(in srgb, var(--color-blue) 35%, transparent);
+    mark[data-highlight='blue'] {
+      --highlight-background: var(--highlight-background-blue);
     }
-    mark[data-highlight-color='purple'] {
-      background: color-mix(in srgb, var(--color-purple) 35%, transparent);
+    mark[data-highlight='purple'] {
+      --highlight-background: var(--highlight-background-purple);
     }
 
     span.internal-embed:empty::before {
@@ -524,10 +532,10 @@ export const obsidianTheme = css`
       text-align: center;
       overflow-x: auto;
     }
-    .ofm-diagram {
+    .mermaid {
       text-align: center;
     }
-    .ofm-diagram .internal-link {
+    .mermaid .internal-link {
       cursor: pointer;
     }
 

@@ -116,10 +116,11 @@ const tasks = (state: StateCore) => {
     const match = inline.content.match(TASK);
     if (!match) continue;
     inline.content = inline.content.slice(match[0].length).trimStart();
-    tokens[i].attrSet('class', 'task-list-item');
-    tokens[i].attrSet('data-task', match[1] === ' ' ? '' : match[1]);
+    const checked = match[1] !== ' ';
+    tokens[i].attrSet('class', checked ? 'task-list-item is-checked' : 'task-list-item');
+    tokens[i].attrSet('data-task', checked ? match[1] : '');
     const checkbox = new state.Token('task_checkbox', 'input', 0);
-    checkbox.meta = { checked: match[1] !== ' ', hasText: inline.content !== '' };
+    checkbox.meta = { checked, hasText: inline.content !== '' };
     tokens.splice(i + 2, 0, checkbox);
   }
 };
@@ -143,6 +144,6 @@ export const ofmCore = (md: MarkdownIt) => {
 
   md.renderer.rules.task_checkbox = (tokens, idx) => {
     const { checked, hasText } = tokens[idx].meta as { checked: boolean; hasText: boolean };
-    return `<input type="checkbox" disabled=""${checked ? ' checked=""' : ''} />${hasText ? ' ' : ''}`;
+    return `<input class="task-list-item-checkbox" type="checkbox" disabled=""${checked ? ' checked=""' : ''} />${hasText ? ' ' : ''}`;
   };
 };

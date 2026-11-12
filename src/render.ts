@@ -27,6 +27,15 @@ const image: RendererRule = (tokens, idx, options, env, self) => {
   return self.renderToken(tokens, idx, options);
 };
 
+const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+
+// Links with a scheme are external (SPEC 7.10). Obsidian marks them with external-link.
+const linkOpen: RendererRule = (tokens, idx, options, _env, self) => {
+  const token = tokens[idx];
+  if (SCHEME.test(String(token.attrGet('href') ?? ''))) token.attrSet('class', 'external-link');
+  return self.renderToken(tokens, idx, options);
+};
+
 /** Configure a MarkdownIt instance to render Obsidian Flavored Markdown as SPEC.md describes. Mutates and returns it. */
 export const config = (md: MarkdownIt): MarkdownIt => {
   // ponytail: raw HTML is escaped (SPEC 5.5 and 7.13 unmet). Turning this on requires a sanitizer before unsafeHTML.
@@ -52,6 +61,7 @@ export const config = (md: MarkdownIt): MarkdownIt => {
   md.renderer.rules.s_open = () => '<del>';
   md.renderer.rules.s_close = () => '</del>';
   md.renderer.rules.image = image;
+  md.renderer.rules.link_open = linkOpen;
   return md;
 };
 

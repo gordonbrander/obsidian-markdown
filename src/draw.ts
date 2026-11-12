@@ -34,7 +34,7 @@ const drawDiagrams = async (codes: HTMLElement[]) => {
     try {
       const { svg } = await mermaid.render(`ofm-markdown-${++nextDiagramId}`, code.textContent ?? '');
       const diagram = document.createElement('div');
-      diagram.className = 'ofm-diagram';
+      diagram.className = 'mermaid';
       diagram.innerHTML = svg;
       code.parentElement?.replaceWith(diagram);
     } catch (error) {
