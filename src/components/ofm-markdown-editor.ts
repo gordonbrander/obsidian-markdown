@@ -10,16 +10,15 @@ import { classMap } from 'lit/directives/class-map.js';
 import './ofm-frontmatter.ts';
 import type { ProprowChangeDetail } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
-import { frontmatterBody, invalidateNote, livePreviewBlocks, setNoteLoader, setProperty } from '../editor/blocks.ts';
-import type { NoteLoader } from '../editor/blocks.ts';
+import { CompletionService, completionService } from '../completion-service.ts';
+import { frontmatterBody, livePreviewBlocks, noteServiceFacet, setProperty } from '../editor/blocks.ts';
 import { obsidianClasses, obsidianStyleTags } from '../editor/classes.ts';
 import { editing } from '../editor/keymap.ts';
-import type { Completions } from '../editor/keymap.ts';
 import { livePreviewInline, touches } from '../editor/live-preview.ts';
+import { NoteService, noteService } from '../note-service.ts';
 import { ofmMarkdown } from '../ofm-lezer.ts';
 import { parseWikilink } from '../sniff.ts';
 
-export type { Completions, NoteLoader };
 export type EditorInputDetail = { value: string };
 export type EditorClickWikilinkDetail = { target: string };
 export type EditorToggleReadingDetail = { value: string };
@@ -37,7 +36,8 @@ const livePreview: Extension = [livePreviewInline, livePreviewBlocks];
 
 /**
  * A Markdown editor that looks and works like Obsidian's: Live Preview by default, Source mode as an option.
- * Register its note embeds with `OfmMarkdownEditor.setNoteLoader(loader)`.
+ * Note embeds load through `OfmMarkdownEditor.noteService`, and `[[`/`#` autocomplete comes from
+ * `OfmMarkdownEditor.completionService`. Both are the shared services unless you assign others.
  * @fires input - The document changed. `detail.value` is the whole note.
  * @fires change - On blur, when the text changed since focus. `detail.value` is the whole note.
  * @fires click-wikilink - A wikilink was clicked: in Live Preview a plain click, in Source mode Cmd/Ctrl-click. `detail.target` is the link target. Cancelable.
@@ -46,15 +46,11 @@ const livePreview: Extension = [livePreviewInline, livePreviewBlocks];
  */
 @customElement('ofm-markdown-editor')
 export class OfmMarkdownEditor extends LitElement {
-  /** Set the loader every editor on the page uses for note embeds like `![[Note]]`, and forget loaded notes. */
-  static setNoteLoader(loader: NoteLoader | null) {
-    setNoteLoader(loader);
-  }
+  /** Loads note embeds like `![[Note]]` for every editor. Assign another `NoteService` to configure editors on their own. */
+  static noteService: NoteService = noteService;
 
-  /** Forget a loaded note when the host knows it changed, so embeds load it again. */
-  static invalidateNote(target: string) {
-    invalidateNote(target);
-  }
+  /** Suggestions for `[[` and `#` autocomplete in every editor. Assign another `CompletionService` to configure editors on their own. */
+  static completionService: CompletionService = completionService;
 
   /** No shadow root, so the page's theme and Obsidian snippets reach the editor. */
   protected createRenderRoot() {
@@ -68,8 +64,6 @@ export class OfmMarkdownEditor extends LitElement {
   @property({ attribute: 'readable-line-width', converter: defaultOn }) accessor readableLineWidth = true;
   @property({ converter: presentOn }) override accessor spellcheck = false;
   @property() accessor placeholder = '';
-  /** Powers `[[` and `#` autocomplete. With none, there's no popup. */
-  @property({ attribute: false }) accessor completions: Completions | null = null;
 
   #view?: EditorView;
   #mode = new Compartment();
@@ -186,7 +180,8 @@ export class OfmMarkdownEditor extends LitElement {
         extensions: [
           ofmMarkdown({ codeLanguages: languages, extensions: [obsidianStyleTags] }),
           obsidianClasses,
-          editing({ toggleReading: this.#toggleReading, completions: () => this.completions }),
+          editing({ toggleReading: this.#toggleReading, completions: () => OfmMarkdownEditor.completionService }),
+          noteServiceFacet.of(() => OfmMarkdownEditor.noteService),
           foldGutter({
             markerDOM: (open) => {
               const marker = document.createElement('div');

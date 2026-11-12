@@ -1,12 +1,15 @@
 import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { draw } from '../draw.ts';
+import { fillEmbeds } from '../embeds.ts';
+import { NoteService, noteService } from '../note-service.ts';
 import { render } from '../render.ts';
 
 export type MarkdownClickWikilinkDetail = { target: string };
 
 /**
  * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams and highlighting code.
+ * Note embeds load through `OfmMarkdown.noteService`, the shared `noteService` unless you assign another.
  * @attr rendered - Set by the element once its first content is in the DOM and drawn. Style the first render with `ofm-markdown:not([rendered])`.
  * @fires rendered - The new content is in the DOM and drawn.
  * @fires click-wikilink - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
@@ -18,14 +21,26 @@ export class OfmMarkdown extends LitElement {
     return this;
   }
 
+  /** Loads note embeds for every `<ofm-markdown>`. Assign another `NoteService` to configure this element on its own. */
+  static noteService: NoteService = noteService;
+
   /** The note's Markdown source. */
   @property() accessor value = '';
   @property({ type: Boolean, attribute: 'strict-line-breaks' }) accessor strictLineBreaks = false;
 
   /** Render and draw off-screen. A template's content is inert until it's inserted. */
+  /**
+   * @internal Set by the element that creates this one (`<ofm-note>`, the editor, an embed), so its embeds use the
+   * owner's service rather than `OfmMarkdown.noteService`.
+   */
+  noteService?: NoteService;
+  /** @internal The notes embedding this one, for the depth cap and cycle check. */
+  embedStack?: readonly string[];
+
   #build = async (value: string, strictLineBreaks: boolean) => {
     const template = document.createElement('template');
     template.innerHTML = render(value, { strictLineBreaks });
+    fillEmbeds(template.content, this.noteService ?? OfmMarkdown.noteService, this.embedStack ?? []);
     await draw(template.content);
     return template.content;
   };

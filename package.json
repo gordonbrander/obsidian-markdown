@@ -37,6 +37,8 @@
     "./ofm-theme.js": "./dist/ofm-theme.js",
     "./ofm-editor-theme.js": "./dist/ofm-editor-theme.js",
     "./adopt-sheet.js": "./dist/adopt-sheet.js",
+    "./note-service.js": "./dist/note-service.js",
+    "./completion-service.js": "./dist/completion-service.js",
     "./package.json": "./package.json"
   },
   "sideEffects": [

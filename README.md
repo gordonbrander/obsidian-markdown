@@ -139,7 +139,6 @@ A [CodeMirror 6](https://codemirror.net) editor that looks and works like Obsidi
   - **`readonly`**: a boolean attribute that disables editing.
   - **`readable-line-width`**: on by default. Set it to `"false"` to use the full width.
   - **`spellcheck`**, **`placeholder`**: passed to the editable area.
-  - **`completions`** (property only): `(query, kind) => Promise<string[]>`, where `kind` is `'link'` or `'tag'`. Powers `[[` and `#` autocomplete. With no callback there's no popup.
   - **`view`** (read-only property): the CodeMirror `EditorView`.
 - Events:
   - **`input`**: the document changed. `detail.value` is the whole note.
@@ -148,26 +147,46 @@ A [CodeMirror 6](https://codemirror.net) editor that looks and works like Obsidi
   - **`proprow-change`**: a property was edited. The editor has already rewritten the front matter, keeping YAML comments and key order.
   - **`toggle-reading`**: Mod-E asked for Reading view, as it does in Obsidian. Show the note in `<ofm-note>`. `detail.value` is the whole note.
 
-Note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) load through a loader you register once per page. The loader gets the note's name and returns its source, or `null` if it doesn't exist. Embeds nest up to four deep, and cycles stop. Results are cached until you call `setNoteLoader` again or `OfmMarkdownEditor.invalidateNote(name)`.
-
-```js
-import { OfmMarkdownEditor } from 'obsidian-markdown/components/ofm-markdown-editor.js';
-
-OfmMarkdownEditor.setNoteLoader(async (name) => {
-  const response = await fetch(`/notes/${encodeURIComponent(name)}.md`);
-  return response.ok ? response.text() : null;
-});
-```
+Note embeds and `[[`/`#` autocomplete come from the host app, through [services](#services).
 
 Keys follow Obsidian 1.15's defaults: Enter continues lists, tasks, quotes and callouts; Tab and Shift-Tab indent list items with their children; Mod-B, Mod-I and Mod-K format; Mod-L toggles a checkbox; Mod-/ toggles a `%%` comment; Mod-E asks for Reading view; Mod-F opens a find bar like Obsidian's, which searches as you type; Mod-Alt-F (macOS) or Mod-H adds its replace row; Mod-D selects the next occurrence; Alt-Up and Alt-Down move lines; Alt-click adds a cursor. Like Obsidian, there's no default key for Live Preview ↔ Source mode. Set `mode` yourself. Typing `*`, `_`, `=`, `$`, `~` or `` ` `` with text selected wraps it.
 
 Tables are edited as source: click a rendered table to reveal its Markdown. The editor loads about 240 KB gzipped up front (710 KB minified), including the 90 KB of rendering code the reading components share. CodeMirror is most of the rest. Code-block languages, MathJax and Mermaid load on demand.
 
+### Services
+
+The components can't see your vault, so two services ask the host app. Each lives in its own module, so a component only loads the services it uses.
+
+- **Note embeds** (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) in `<ofm-markdown>`, `<ofm-note>` and `<ofm-markdown-editor>` load through `noteService`. Your loader gets the note's name and returns its source, or `undefined` if it doesn't exist. Embeds nest up to four deep, and cycles stop. With no loader, embeds stay placeholders.
+- **Autocomplete** for `[[` and `#` in `<ofm-markdown-editor>` comes from `completionService`. Your function gets the text typed so far and `'link'` or `'tag'`, and returns the names to suggest. With no function there's no popup.
+
+```js
+import { noteService } from 'obsidian-markdown/note-service.js';
+import { completionService } from 'obsidian-markdown/completion-service.js';
+
+noteService.setLoader(async (name) => {
+  const response = await fetch(`/notes/${encodeURIComponent(name)}.md`);
+  return response.ok ? response.text() : undefined;
+});
+completionService.setCompletions(async (query, kind) => (kind === 'link' ? searchNotes(query) : searchTags(query)));
+```
+
+Every component shares these instances, so a note loads once for all of them. Loaded notes are cached; call `noteService.clear(name)` when a note changes, or `setLoader` again to forget them all. A failed load isn't cached, so it's tried again next time.
+
+To configure one component on its own, give its class another instance: `OfmNote.noteService`, `OfmMarkdown.noteService`, `OfmMarkdownEditor.noteService` and `OfmMarkdownEditor.completionService`. Elements a component creates inside itself, such as `<ofm-note>`'s body, use their owner's service.
+
+```js
+import { NoteService } from 'obsidian-markdown/note-service.js';
+import { OfmNote } from 'obsidian-markdown/components/ofm-note.js';
+
+OfmNote.noteService = new NoteService(loadPublishedNote);
+```
+
 ### Using with frameworks
 
 The components are standard custom elements, so you can use them from any framework. Import the module once to register the element, then pass properties and listen for events with your framework's syntax.
 
-`<ofm-markdown-editor>` works the same way. Bind `value` and update it from the `input` event's `detail.value`. Passing back the text the editor already holds does nothing, so the cursor stays put. `completions` is a function, so pass it as a property, not an attribute.
+`<ofm-markdown-editor>` works the same way. Bind `value` and update it from the `input` event's `detail.value`. Passing back the text the editor already holds does nothing, so the cursor stays put.
 
 #### React
 

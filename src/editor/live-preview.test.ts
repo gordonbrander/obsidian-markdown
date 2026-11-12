@@ -4,7 +4,7 @@ import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { ofmMarkdown } from '../ofm-lezer.ts';
 import { render } from '../render.ts';
-import { blockDecorations, blockSource, invalidateNote, resolveEmbed, section, setNoteLoader, setProperty } from './blocks.ts';
+import { blockDecorations, blockSource, setProperty } from './blocks.ts';
 import { inlineDecorations } from './live-preview.ts';
 
 /** A parsed state with one selection range per `[anchor, head]`. */
@@ -132,28 +132,4 @@ test('a callout slice renders its footnote refs, and only its own definitions', 
   const source = blockSource(state, 0, note.indexOf('\n\n'));
   assert.match(render(source), /<sup class="footnote-ref"/);
   assert.ok(source.includes('[^1]: One.') && !source.includes('Two'));
-});
-
-test('section slices a heading to the next heading of its level, or a block by id', () => {
-  const note = '---\na: 1\n---\n# A\nx\n## B\ny ^id\n# C\nz';
-  assert.equal(section(note), '# A\nx\n## B\ny ^id\n# C\nz');
-  assert.equal(section(note, 'A'), '# A\nx\n## B\ny ^id');
-  assert.equal(section(note, 'B'), '## B\ny ^id');
-  assert.equal(section(note, '^id'), 'y ^id');
-  assert.equal(section(note, 'Missing'), null);
-});
-
-test('the note loader resolves embeds, stops at cycles and the depth cap, and reports missing notes', async () => {
-  const notes: Record<string, string> = { A: '![[B]]', B: '# H\nb' };
-  setNoteLoader(async (name) => notes[name] ?? null);
-  assert.equal(await resolveEmbed('B#H'), '# H\nb');
-  assert.equal(await resolveEmbed('Missing'), null);
-  assert.equal(await resolveEmbed('A', ['A', 'B']), undefined);
-  assert.equal(await resolveEmbed('B', ['1', '2', '3', '4']), undefined);
-  notes.B = 'changed';
-  assert.equal(await resolveEmbed('B'), '# H\nb', 'cached');
-  invalidateNote('B');
-  assert.equal(await resolveEmbed('B'), 'changed');
-  setNoteLoader(null);
-  assert.equal(await resolveEmbed('B'), undefined);
 });

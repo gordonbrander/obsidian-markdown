@@ -30,7 +30,9 @@
       import { adoptSheet } from '/src/adopt-sheet.ts';
       import { obsidianEditorTheme } from '/src/ofm-editor-theme.ts';
       import { obsidianTheme } from '/src/ofm-theme.ts';
-      import { OfmMarkdownEditor } from '/src/components/ofm-markdown-editor.ts';
+      import '/src/components/ofm-markdown-editor.ts';
+      import { completionService } from '/src/completion-service.ts';
+      import { noteService } from '/src/note-service.ts';
       import '/src/components/ofm-note.ts';
 
       adoptSheet(obsidianTheme);
@@ -41,16 +43,17 @@
         'Embedded note': '# Embedded note\n\nThis note is embedded. It embeds ![[Deeper note]].\n\n## Section\n\nA section on its own. ^block',
         'Deeper note': 'One level deeper, with **formatting** and a [[Wikilink]].',
       };
-      OfmMarkdownEditor.setNoteLoader(async (name) => vault[name] ?? null);
+      // One loader for every component on the page, so Reading view shows embeds too.
+      noteService.setLoader(async (name) => vault[name]);
 
       const editor = document.querySelector('#editor');
       const log = document.querySelector('#log');
       const write = (line) => { log.textContent = `${line}\n${log.textContent}`.slice(0, 4000); };
 
-      editor.completions = async (query, kind) => {
+      completionService.setCompletions(async (query, kind) => {
         const names = kind === 'link' ? [...Object.keys(vault), 'Wikilink', 'Other note'] : ['nested/tag', 'obsidian', 'todo'];
         return names.filter((name) => name.toLowerCase().includes(query.toLowerCase()));
-      };
+      });
 
       editor.value = `---
 title: Obsidian Flavored Markdown

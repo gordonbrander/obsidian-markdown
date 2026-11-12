@@ -11,6 +11,7 @@ import { EditorSelection, EditorState, Prec } from '@codemirror/state';
 import type { Extension, StateCommand } from '@codemirror/state';
 import { EditorView, drawSelection, dropCursor, keymap, rectangularSelection, runScopeHandlers } from '@codemirror/view';
 import type { Command, KeyBinding, Panel, ViewUpdate } from '@codemirror/view';
+import type { CompletionService } from '../completion-service.ts';
 import { continueMarkup, deleteMarkupBackward } from './markup.ts';
 
 export { continueMarkup };
@@ -312,17 +313,17 @@ const openReplace: Command = (view) => {
   return openSearchPanel(view);
 };
 
-export type Completions = (query: string, kind: 'link' | 'tag') => Promise<string[]>;
-
-/** `[[` completes notes and `#` completes tags, from the host's callback. With no callback there's no popup. */
-const completionSource = (completions: () => Completions | null) => async (context: CompletionContext): Promise<CompletionResult | null> => {
-  const complete = completions();
-  if (!complete) return null;
+/**
+ * `[[` completes notes and `#` completes tags, from the completion service. It answers [] with no host function set,
+ * and CodeMirror shows no popup for an empty list, so there's nothing to check here.
+ */
+const completionSource = (service: () => CompletionService) => async (context: CompletionContext): Promise<CompletionResult | null> => {
   const link = context.matchBefore(/\[\[[^[\]|#\n]*/);
   if (link) {
     const query = link.text.slice(2);
     const closed = context.state.sliceDoc(context.pos, context.pos + 2) === ']]';
-    const names = await complete(query, 'link');
+    const names = await service().complete(query, 'link');
+    if (names.length === 0) return null;
     return {
       from: link.from + 2,
       options: names.map((label) => ({ label, apply: closed ? label : `${label}]]` })),
@@ -332,7 +333,8 @@ const completionSource = (completions: () => Completions | null) => async (conte
   const tag = context.matchBefore(/(?:^|\s)#[\p{L}\p{N}_\-/]*/u);
   if (tag) {
     const hash = tag.from + tag.text.indexOf('#');
-    const names = await complete(context.state.sliceDoc(hash + 1, context.pos), 'tag');
+    const names = await service().complete(context.state.sliceDoc(hash + 1, context.pos), 'tag');
+    if (names.length === 0) return null;
     return { from: hash + 1, options: names.map((label) => ({ label })), filter: false };
   }
   return null;
@@ -360,7 +362,7 @@ export const obsidianKeymap = (toggleReading: Command): KeyBinding[] => [
 ];
 
 /** Everything about editing: history, selection drawing, search, auto-pairs, completion and the keymaps. */
-export const editing = ({ toggleReading, completions }: { toggleReading: Command; completions: () => Completions | null }): Extension => [
+export const editing = ({ toggleReading, completions }: { toggleReading: Command; completions: () => CompletionService }): Extension => [
   history(),
   drawSelection(),
   dropCursor(),

@@ -1,125 +1,33 @@
 // Live Preview's block layer. Each block renders its own source with the reading view's <ofm-markdown>,
 // so Live Preview and reading view can't drift apart. The editor element registers the components.
 import { syntaxTree } from '@codemirror/language';
-import { StateField } from '@codemirror/state';
+import { Facet, StateField } from '@codemirror/state';
 import type { EditorState, Extension, Range } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import type { DecorationSet } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
 import { parse, parseDocument } from 'yaml';
+import { embed } from '../embeds.ts';
+import type { EmbedHost } from '../embeds.ts';
+import { noteService } from '../note-service.ts';
+import type { NoteService } from '../note-service.ts';
 import { IMAGE_EXTENSIONS } from '../ofm-inline.ts';
-import { renderer, splitFrontmatter } from '../render.ts';
 import type { Json } from '../sniff.ts';
 import { touches, unwatchSize, watchSize } from './live-preview.ts';
 
-/** Resolves a note's name to its source, or null if it doesn't exist. */
-export type NoteLoader = (target: string) => Promise<string | null>;
-
-const MAX_DEPTH = 4;
-
-let loader: NoteLoader | null = null;
-const cache = new Map<string, Promise<string | null>>();
-
-/** Set the loader every editor on the page uses for note embeds, and forget loaded notes. */
-export const setNoteLoader = (next: NoteLoader | null) => {
-  loader = next;
-  cache.clear();
-};
-
-/** Forget a loaded note, so its embeds load it again. */
-export const invalidateNote = (target: string) => {
-  cache.delete(target);
-};
-
-const md = renderer();
-
-/** The part of a note an embed names: all of it, a heading's section (`Heading`) or a block (`^id`). Null if it isn't there. */
-export const section = (note: string, sub = ''): string | null => {
-  const { content } = splitFrontmatter(note);
-  if (sub === '') return content;
-  const lines = content.split('\n');
-  const tokens = md.parse(content, {});
-  if (sub.startsWith('^')) {
-    const token = tokens.find((t) => t.map && t.attrGet('data-block-id') === sub.slice(1));
-    return token?.map ? lines.slice(...token.map).join('\n') : null;
-  }
-  const heading = tokens.findIndex((t, i) => t.type === 'heading_open' && tokens[i + 1].content.trim() === sub.trim());
-  if (heading === -1) return null;
-  const { tag, map } = tokens[heading];
-  // h1 < h2 as strings, so this finds the next heading of the same or a higher level.
-  const next = tokens.slice(heading + 1).find((t) => t.type === 'heading_open' && t.level === 0 && t.tag <= tag);
-  return lines.slice(map![0], next?.map?.[0] ?? lines.length).join('\n');
-};
-
 /**
- * The source an embed shows: a string, null when the loader says the note doesn't exist,
- * or undefined with no loader, past the depth cap, or for a note already on `stack` (a cycle).
+ * The note service block widgets load embeds through, as a getter so a service assigned later still applies.
+ * The editor element provides its class's service. Without one, widgets use the shared `noteService`.
  */
-export const resolveEmbed = async (target: string, stack: readonly string[] = []): Promise<string | null | undefined> => {
-  const [name, ...rest] = target.split('#');
-  if (!loader || stack.length >= MAX_DEPTH || stack.includes(name)) return undefined;
-  let note = cache.get(name);
-  if (!note) {
-    note = loader(name).catch(() => null);
-    cache.set(name, note);
-  }
-  const source = await note;
-  return source === null ? null : section(source, rest.join('#'));
-};
+export const noteServiceFacet = Facet.define<() => NoteService, () => NoteService>({
+  combine: (getters) => getters[0] ?? (() => noteService),
+});
 
 /** Rewrite one key of a YAML front matter body, keeping comments and key order. */
 export const setProperty = (yaml: string, key: string, value: Json): string => {
   const document = parseDocument(yaml);
   document.set(key, value);
   return document.toString();
-};
-
-type Markdown = HTMLElement & { value: string };
-
-const embed = (target: string, stack: readonly string[]) => {
-  const element = document.createElement('div');
-  element.className = 'internal-embed markdown-embed';
-  element.setAttribute('src', target);
-  const link = document.createElement('a');
-  link.className = 'markdown-embed-link internal-link';
-  link.setAttribute('data-href', target);
-  link.setAttribute('aria-label', `Open ${target}`);
-  link.addEventListener('click', (event) => {
-    event.preventDefault();
-    link.dispatchEvent(new CustomEvent('click-wikilink', { bubbles: true, composed: true, cancelable: true, detail: { target } }));
-  });
-  const content = document.createElement('div');
-  content.className = 'markdown-embed-content';
-  element.append(link, content);
-  void fill(element, content, target, stack);
-  return element;
-};
-
-const placeholder = (target: string) => {
-  const span = document.createElement('span');
-  span.className = 'internal-embed';
-  span.setAttribute('src', target);
-  return span;
-};
-
-/** Load an embed's note into `content`, then its own embeds, one level deeper. */
-const fill = async (element: HTMLElement, content: HTMLElement, target: string, stack: readonly string[]) => {
-  content.append(placeholder(target));
-  const source = await resolveEmbed(target, stack);
-  if (typeof source !== 'string') {
-    if (source === null) element.classList.add('is-unresolved');
-    return;
-  }
-  const markdown = document.createElement('ofm-markdown') as Markdown;
-  const inner = [...stack, target.split('#')[0]];
-  markdown.addEventListener('rendered', (event) => {
-    if (event.target !== markdown) return;
-    for (const span of markdown.querySelectorAll('span.internal-embed[src]')) {
-      span.replaceWith(embed(span.getAttribute('src') ?? '', inner));
-    }
-  }, { once: true });
-  markdown.value = source;
-  content.replaceChildren(markdown);
 };
 
 /** Put the cursor at the block's start, which reveals its source. Links and fold toggles keep working. */
@@ -135,18 +43,22 @@ const revealOnClick = (view: EditorView, element: HTMLElement) => {
 class MarkdownWidget extends WidgetType {
   readonly source: string;
   readonly className: string;
-  constructor(source: string, className: string) {
+  readonly service: NoteService;
+  constructor(source: string, className: string, service: NoteService) {
     super();
     this.source = source;
     this.className = className;
+    this.service = service;
   }
   eq(other: MarkdownWidget) {
-    return other.source === this.source && other.className === this.className;
+    return other.source === this.source && other.className === this.className && other.service === this.service;
   }
   toDOM(view: EditorView) {
     const element = document.createElement('div');
     element.className = `cm-embed-block ${this.className}`;
-    const markdown = document.createElement('ofm-markdown') as Markdown;
+    const markdown = document.createElement('ofm-markdown') as EmbedHost;
+    // Embeds inside a callout or table use the editor's service too.
+    markdown.noteService = this.service;
     markdown.value = this.source;
     element.append(markdown);
     revealOnClick(view, element);
@@ -159,15 +71,17 @@ class MarkdownWidget extends WidgetType {
 
 class NoteEmbedWidget extends WidgetType {
   readonly target: string;
-  constructor(target: string) {
+  readonly service: NoteService;
+  constructor(target: string, service: NoteService) {
     super();
     this.target = target;
+    this.service = service;
   }
   eq(other: NoteEmbedWidget) {
-    return other.target === this.target;
+    return other.target === this.target && other.service === this.service;
   }
   toDOM(view: EditorView) {
-    const element = embed(this.target, []);
+    const element = embed(this.target, this.service, []);
     element.classList.add('cm-embed-block');
     revealOnClick(view, element);
     return watchSize(view, element);
@@ -273,10 +187,12 @@ export const blockDecorations = (state: EditorState): DecorationSet => {
   const { doc } = state;
   const decorations: Range<Decoration>[] = [];
   let definitions: Definitions | undefined;
+  // A widget keeps its service, so a different one assigned to the editor class re-renders the block.
+  const service = state.facet(noteServiceFacet)();
   const block = (node: SyntaxNode, widget: WidgetType) =>
     decorations.push(Decoration.replace({ widget, block: true }).range(doc.lineAt(node.from).from, doc.lineAt(node.to).to));
   const rendered = (node: SyntaxNode, className: string) =>
-    block(node, new MarkdownWidget(blockSource(state, node.from, node.to, definitions ??= definitionsOf(state)), className));
+    block(node, new MarkdownWidget(blockSource(state, node.from, node.to, definitions ??= definitionsOf(state)), className, service));
 
   for (let node = syntaxTree(state).topNode.firstChild; node; node = node.nextSibling) {
     // Obsidian never shows front matter as source in Live Preview.
@@ -312,7 +228,7 @@ export const blockDecorations = (state: EditorState): DecorationSet => {
         const only = node.firstChild;
         if (only?.name !== 'Embed' || only.nextSibling || only.from !== node.from || only.to !== node.to) break;
         const target = doc.sliceString(only.from + 3, only.to - 2).split('|')[0].trim();
-        if (!isImage(target)) block(node, new NoteEmbedWidget(target));
+        if (!isImage(target)) block(node, new NoteEmbedWidget(target, service));
         break;
       }
     }
