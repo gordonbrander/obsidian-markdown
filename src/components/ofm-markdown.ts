@@ -1,7 +1,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { draw } from './draw.ts';
-import { render } from './render.ts';
+import { draw } from '../draw.ts';
+import { render } from '../render.ts';
 
 export type MarkdownWikilinkDetail = { target: string };
 

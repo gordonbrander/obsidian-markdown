@@ -1,8 +1,8 @@
 import { LitElement, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { fieldFor, formatCompact, parseCommitted, parseWikilink } from './sniff.ts';
-import type { Field, Json, Type, Wikilink } from './sniff.ts';
+import { fieldFor, formatCompact, parseCommitted, parseWikilink } from '../sniff.ts';
+import type { Field, Json, Type, Wikilink } from '../sniff.ts';
 
 export type ProprowChangeDetail = { key: string; value: Json; type: Type | undefined; effectiveType: Type };
 export type WikilinkDetail = { key: string; target: string };
