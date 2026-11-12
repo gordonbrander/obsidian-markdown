@@ -1,3 +1,12 @@
+---
+title: obsidian-markdown
+github: https://github.com/gordonbrander/obsidian-markdown
+license: https://github.com/gordonbrander/obsidian-markdown/blob/main/LICENSE-MIT
+demos:
+  - "[[ofm-note.html|ofm-note]]"
+  - "[[ofm-markdown.html|ofm-markdown]]"
+  - "[[ofm-frontmatter.html|ofm-frontmatter]]"
+---
 # obsidian-markdown
 
 A [specification](https://github.com/gordonbrander/obsidian-markdown/blob/main/SPEC.md), renderer, and complete test suite for [Obsidian-flavored Markdown](https://obsidian.md/help/syntax).
