@@ -41,7 +41,9 @@
     "./dist/components/ofm-markdown.js",
     "./dist/components/ofm-frontmatter.js",
     "./dist/components/ofm-proprow.js",
-    "./dist/tex.js"
+    "./dist/tex.js",
+    "./src/components/*.ts",
+    "./src/tex.ts"
   ],
   "customElements": "custom-elements.json",
   "scripts": {

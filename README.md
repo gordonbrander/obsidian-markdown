@@ -1,3 +1,12 @@
+---
+title: obsidian-markdown
+github: https://github.com/gordonbrander/obsidian-markdown
+license: https://github.com/gordonbrander/obsidian-markdown/blob/main/LICENSE-MIT
+demos:
+  - "[[ofm-note.html|ofm-note]]"
+  - "[[ofm-markdown.html|ofm-markdown]]"
+  - "[[ofm-frontmatter.html|ofm-frontmatter]]"
+---
 # obsidian-markdown
 
 A [specification](https://github.com/gordonbrander/obsidian-markdown/blob/main/SPEC.md), renderer, and complete test suite for [Obsidian-flavored Markdown](https://obsidian.md/help/syntax).
@@ -54,7 +63,7 @@ Display a whole note: property drawer followed by rendered Markdown. It's built 
   - **`strict-line-breaks`**: passed to `<ofm-markdown>`.
 - Events:
   - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`.
-  - **`wikilink`**: a link was clicked, in a property or the note. Bubbles up from `<ofm-frontmatter>` or `<ofm-markdown>`; `detail.target` is the link target.
+  - **`click-wikilink`**: a wikilink was clicked, in a property or the note. Bubbles up from `<ofm-frontmatter>` or `<ofm-markdown>`; `detail.target` is the link target.
 
 The Properties drawer is hidden when the note has no properties. If the front matter isn't valid YAML, the properties are skipped with a console warning and the note still renders.
 
@@ -69,7 +78,10 @@ import 'obsidian-markdown/components/ofm-markdown.js';
 <script type="module">
   const note = document.querySelector('ofm-markdown');
   note.value = '# Hello\n\nSee [[Another note]].';
-  note.addEventListener('wikilink', (event) => console.log(event.detail.target));
+  note.addEventListener('click-wikilink', (event) => {
+    event.preventDefault(); // Route the link yourself instead of following its href.
+    console.log(event.detail.target);
+  });
 </script>
 ```
 
@@ -84,7 +96,7 @@ Renders a note, drawing math (MathJax) and Mermaid diagrams, and highlighting co
     ofm-markdown:not([rendered]) { opacity: 0; }
     ```
 - Events:
-  - **`wikilink`**: an internal link was clicked. `detail.target` is the link target.
+  - **`click-wikilink`**: a wikilink was clicked. `detail.target` is the link target.
   - **`rendered`**: the new content is in the DOM and drawn.
 
 ### `<ofm-frontmatter>`
@@ -101,7 +113,7 @@ An editable property list, like Obsidian's properties view.
   - **`readonly`**: a boolean attribute that disables editing.
 - Events:
   - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`. By then, `properties` holds the edit.
-  - **`wikilink`**: a link in a property value was clicked. `detail` is `{ key, target }`.
+  - **`click-wikilink`**: a wikilink in a property value was clicked. `detail` is `{ key, target }`.
 
 `<ofm-proprow>`, a single property row, is registered along with it. Each row has two attributes for styling:
 
@@ -123,7 +135,7 @@ export function Note({ note }) {
   return (
     <ofm-note
       value={note}
-      onwikilink={(event) => console.log(event.detail.target)}
+      onclick-wikilink={(event) => console.log(event.detail.target)}
       onproprow-change={(event) => console.log(event.detail)}
     />
   );
@@ -162,7 +174,7 @@ defineProps(['note']);
 <template>
   <ofm-note
     :value="note"
-    @wikilink="(event) => console.log(event.detail.target)"
+    @click-wikilink="(event) => console.log(event.detail.target)"
     @proprow-change="(event) => console.log(event.detail)"
   />
 </template>
@@ -183,7 +195,7 @@ No setup needed in Svelte 5:
 
 <ofm-note
   value={note}
-  onwikilink={(event) => console.log(event.detail.target)}
+  onclick-wikilink={(event) => console.log(event.detail.target)}
   onproprow-change={(event) => console.log(event.detail)}
 ></ofm-note>
 ```
@@ -199,7 +211,7 @@ export function Note(props) {
   return (
     <ofm-note
       prop:value={props.note}
-      on:wikilink={(event) => console.log(event.detail.target)}
+      on:click-wikilink={(event) => console.log(event.detail.target)}
       on:proprow-change={(event) => console.log(event.detail)}
     />
   );

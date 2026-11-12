@@ -1,14 +1,14 @@
 import { LitElement, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { fieldFor, formatCompact, parseCommitted, parseWikilink } from '../sniff.ts';
-import type { Field, Json, Type, Wikilink } from '../sniff.ts';
+import { fieldFor, formatCompact, parseCommitted, parseLink } from '../sniff.ts';
+import type { Field, Json, Link, Type } from '../sniff.ts';
 
 export type ProprowChangeDetail = { key: string; value: Json; type: Type | undefined; effectiveType: Type };
-export type WikilinkDetail = { key: string; target: string };
+export type ClickWikilinkDetail = { key: string; target: string };
 
 type Editable = { key: string; readonly: boolean; commit(value: Json): void };
-type Linkable = { openLink(target: string): void };
+type Linkable = { clickWikilink(event: Event, target: string): void };
 type Extras<K extends Type> =
   K extends 'object' ? unknown :
   K extends 'list' ? Editable & Linkable :
@@ -19,8 +19,13 @@ type RowData = { [K in Type]: RowOf<K> }[Type];
 
 const inputOf = (e: Event) => e.target as HTMLInputElement;
 
-const linkButton = ({ target, label }: Wikilink, openLink: Linkable['openLink']) => html`
-  <button class="ofm-link" type="button" title=${target} @click=${() => openLink(target)}>${label}</button>
+const linkAnchor = ({ target, label, href, wiki }: Link, clickWikilink: Linkable['clickWikilink']) => html`
+  <a
+    class="ofm-link"
+    href=${href ?? nothing}
+    title=${target}
+    @click=${wiki ? (e: Event) => clickWikilink(e, target) : nothing}
+  >${label}</a>
 `;
 
 const textRow = (data: RowOf<'text'>) => html`
@@ -63,7 +68,7 @@ const checkboxRow = (data: RowOf<'checkbox'>) => html`
 `;
 
 const linkRow = (data: RowOf<'link'>) => {
-  const link = parseWikilink(data.value);
+  const link = parseLink(data.value);
   if (data.editing || !link) {
     return html`
       <input
@@ -78,7 +83,7 @@ const linkRow = (data: RowOf<'link'>) => {
     `;
   }
   return html`
-    ${linkButton(link, data.openLink)}
+    ${linkAnchor(link, data.clickWikilink)}
     ${data.readonly ? nothing : html`
       <button class="ofm-icon" type="button" aria-label="Edit ${data.key}" @click=${data.edit}>✎</button>
     `}
@@ -111,10 +116,10 @@ const datetimeRow = (data: RowOf<'datetime'>) => html`
 `;
 
 const token = (item: string | number, index: number, data: RowOf<'list'>) => {
-  const link = typeof item === 'string' ? parseWikilink(item) : null;
+  const link = typeof item === 'string' ? parseLink(item) : undefined;
   return html`
     <span class="ofm-token">
-      ${link ? linkButton(link, data.openLink) : item}
+      ${link ? linkAnchor(link, data.clickWikilink) : item}
       ${data.readonly ? nothing : html`
         <button
           class="ofm-icon"
@@ -192,7 +197,7 @@ export const row = (data: RowData): TemplateResult => {
  * The `effective-type` attribute holds the type the row draws, which can differ from the declared `type`.
  * @attr effective-type - The drawn type: text, number, checkbox, link, date, datetime, list or object.
  * @fires proprow-change - A property was edited. `detail` is `{ key, value, type, effectiveType }`.
- * @fires wikilink - A link in the value was clicked. `detail` is `{ key, target }`.
+ * @fires click-wikilink - A wikilink in the value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-proprow')
 export class OfmProprow extends LitElement {
@@ -231,12 +236,14 @@ export class OfmProprow extends LitElement {
     }));
   }
 
-  #openLink(target: string) {
-    this.dispatchEvent(new CustomEvent<WikilinkDetail>('wikilink', {
+  #clickWikilink(event: Event, target: string) {
+    const proceed = this.dispatchEvent(new CustomEvent<ClickWikilinkDetail>('click-wikilink', {
       bubbles: true,
       composed: true,
+      cancelable: true,
       detail: { key: this.key, target },
     }));
+    if (!proceed) event.preventDefault();
   }
 
   render() {
@@ -248,7 +255,7 @@ export class OfmProprow extends LitElement {
       commit: (value: Json) => this.#commit(value),
       edit: () => this.#startEdit(),
       endEdit: () => { this.editing = false; },
-      openLink: (target: string) => this.#openLink(target),
+      clickWikilink: (event: Event, target: string) => this.#clickWikilink(event, target),
     };
     return html`
       <span class="ofm-key" title=${this.key}>${this.key}</span>
