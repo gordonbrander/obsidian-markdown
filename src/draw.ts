@@ -56,8 +56,21 @@ const toNodes = (tokens: Tokens): Node[] => tokens.flatMap<Node>((token) => {
   return [span];
 });
 
+const loadRefractor = async () => {
+  const [{ refractor }, { default: jsx }, { default: tsx }] = await Promise.all([
+    import('refractor'),
+    import('refractor/jsx'),
+    import('refractor/tsx'),
+  ]);
+  refractor.register(jsx);
+  refractor.register(tsx);
+  // Prism has no Svelte or Vue grammar; markup highlights their <script> and <style> as JS and CSS.
+  refractor.alias({ markup: ['svelte', 'vue'] });
+  return refractor;
+};
+
 const drawCode = async (codes: HTMLElement[]) => {
-  refractor ??= (await import('refractor')).refractor;
+  refractor ??= await loadRefractor();
   for (const code of codes) {
     const lang = code.className.match(/language-(\S+)/)?.[1];
     // Unknown languages stay plain, as in Obsidian.
