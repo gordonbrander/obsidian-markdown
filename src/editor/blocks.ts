@@ -15,12 +15,9 @@ import { IMAGE_EXTENSIONS } from '../ofm-inline.ts';
 import type { Json } from '../sniff.ts';
 import { touches, unwatchSize, watchSize } from './live-preview.ts';
 
-/**
- * The note service block widgets load embeds through, as a getter so a service assigned later still applies.
- * The editor element provides its class's service. Without one, widgets use the shared `noteService`.
- */
-export const noteServiceFacet = Facet.define<() => NoteService, () => NoteService>({
-  combine: (getters) => getters[0] ?? (() => noteService),
+/** The note service block widgets load embeds through: the editor's, or the shared `noteService`. */
+export const noteServiceFacet = Facet.define<NoteService, NoteService>({
+  combine: (services) => services[0] ?? noteService,
 });
 
 /** Rewrite one key of a YAML front matter body, keeping comments and key order. */
@@ -188,7 +185,7 @@ export const blockDecorations = (state: EditorState): DecorationSet => {
   const decorations: Range<Decoration>[] = [];
   let definitions: Definitions | undefined;
   // A widget keeps its service, so a different one assigned to the editor class re-renders the block.
-  const service = state.facet(noteServiceFacet)();
+  const service = state.facet(noteServiceFacet);
   const block = (node: SyntaxNode, widget: WidgetType) =>
     decorations.push(Decoration.replace({ widget, block: true }).range(doc.lineAt(node.from).from, doc.lineAt(node.to).to));
   const rendered = (node: SyntaxNode, className: string) =>

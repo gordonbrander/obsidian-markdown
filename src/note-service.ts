@@ -13,12 +13,19 @@ export type NoteError =
 
 export type NoteResult = Result<string, NoteError>;
 
-/** Loads notes for embeds through the host's loader, and caches them. */
-export class NoteService {
+/** Detail of the `change` event. No `name` means every note may have changed. */
+export type NoteChangeDetail = { name?: string };
+
+/**
+ * Loads notes for embeds through the host's loader, and caches them.
+ * Fires `change` (a `CustomEvent<NoteChangeDetail>`) from `setLoader` and `clear`, so embeds on screen redraw.
+ */
+export class NoteService extends EventTarget {
   #loader: NoteLoader | undefined;
   #cache = new Map<string, Promise<NoteResult>>();
 
   constructor(loader?: NoteLoader) {
+    super();
     this.#loader = loader;
   }
 
@@ -26,6 +33,7 @@ export class NoteService {
   setLoader(loader?: NoteLoader) {
     this.#loader = loader;
     this.#cache.clear();
+    this.#changed({});
   }
 
   /** A note's source. Found and not-found results are cached; a failed load is tried again next time. */
@@ -49,6 +57,11 @@ export class NoteService {
   /** Forget one note, e.g. after it changed, so the next load asks the loader again. */
   clear(name: string) {
     this.#cache.delete(name);
+    this.#changed({ name });
+  }
+
+  #changed(detail: NoteChangeDetail) {
+    this.dispatchEvent(new CustomEvent<NoteChangeDetail>('change', { detail }));
   }
 }
 

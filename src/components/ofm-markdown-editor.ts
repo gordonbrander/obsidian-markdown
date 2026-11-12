@@ -12,10 +12,12 @@ import type { ProprowChangeDetail } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
 import { CompletionService, completionService } from '../completion-service.ts';
 import { frontmatterBody, livePreviewBlocks, noteServiceFacet, setProperty } from '../editor/blocks.ts';
+import { refreshEmbeds } from '../embeds.ts';
 import { obsidianClasses, obsidianStyleTags } from '../editor/classes.ts';
 import { editing } from '../editor/keymap.ts';
 import { livePreviewInline, touches } from '../editor/live-preview.ts';
 import { NoteService, noteService } from '../note-service.ts';
+import type { NoteChangeDetail } from '../note-service.ts';
 import { ofmMarkdown } from '../ofm-lezer.ts';
 import { parseWikilink } from '../sniff.ts';
 
@@ -36,8 +38,8 @@ const livePreview: Extension = [livePreviewInline, livePreviewBlocks];
 
 /**
  * A Markdown editor that looks and works like Obsidian's: Live Preview by default, Source mode as an option.
- * Note embeds load through `OfmMarkdownEditor.noteService`, and `[[`/`#` autocomplete comes from
- * `OfmMarkdownEditor.completionService`. Both are the shared services unless you assign others.
+ * Note embeds load through its `noteService` property, and `[[`/`#` autocomplete comes from its
+ * `completionService` property. Both are the shared services unless you assign others.
  * @fires input - The document changed. `detail.value` is the whole note.
  * @fires change - On blur, when the text changed since focus. `detail.value` is the whole note.
  * @fires click-wikilink - A wikilink was clicked: in Live Preview a plain click, in Source mode Cmd/Ctrl-click. `detail.target` is the link target. Cancelable.
@@ -47,10 +49,10 @@ const livePreview: Extension = [livePreviewInline, livePreviewBlocks];
 @customElement('ofm-markdown-editor')
 export class OfmMarkdownEditor extends LitElement {
   /** Loads note embeds like `![[Note]]` for every editor. Assign another `NoteService` to configure editors on their own. */
-  static noteService: NoteService = noteService;
+  @property({ attribute: false }) accessor noteService: NoteService = noteService;
 
   /** Suggestions for `[[` and `#` autocomplete in every editor. Assign another `CompletionService` to configure editors on their own. */
-  static completionService: CompletionService = completionService;
+  @property({ attribute: false }) accessor completionService: CompletionService = completionService;
 
   /** No shadow root, so the page's theme and Obsidian snippets reach the editor. */
   protected createRenderRoot() {
@@ -68,6 +70,21 @@ export class OfmMarkdownEditor extends LitElement {
   #view?: EditorView;
   #mode = new Compartment();
   #options = new Compartment();
+  #notes = new Compartment();
+
+  /** The service we listen to for changed notes. */
+  #subscribed?: NoteService;
+
+  /** Embeds inside callouts and tables are <ofm-markdown>s, which refresh themselves. This covers the top-level ones. */
+  #onNoteChange = (event: Event) => {
+    if (this.#view) refreshEmbeds(this.#view.contentDOM, this.noteService, [], (event as CustomEvent<NoteChangeDetail>).detail.name);
+  };
+
+  #subscribe(service?: NoteService) {
+    this.#subscribed?.removeEventListener('change', this.#onNoteChange);
+    this.#subscribed = service;
+    service?.addEventListener('change', this.#onNoteChange);
+  }
   #focusValue: string | null = null;
 
   /** The CodeMirror view, for hosts that need more. */
@@ -180,8 +197,8 @@ export class OfmMarkdownEditor extends LitElement {
         extensions: [
           ofmMarkdown({ codeLanguages: languages, extensions: [obsidianStyleTags] }),
           obsidianClasses,
-          editing({ toggleReading: this.#toggleReading, completions: () => OfmMarkdownEditor.completionService }),
-          noteServiceFacet.of(() => OfmMarkdownEditor.noteService),
+          editing({ toggleReading: this.#toggleReading, completions: () => this.completionService }),
+          this.#notes.of(noteServiceFacet.of(this.noteService)),
           foldGutter({
             markerDOM: (open) => {
               const marker = document.createElement('div');
@@ -208,6 +225,11 @@ export class OfmMarkdownEditor extends LitElement {
     if (!view) return;
     const effects = [];
     if (changed.has('mode')) effects.push(this.#mode.reconfigure(this.#modeExtension()));
+    // Block widgets compare their service, so reconfiguring rebuilds every embed with the new one.
+    if (changed.has('noteService')) {
+      effects.push(this.#notes.reconfigure(noteServiceFacet.of(this.noteService)));
+      if (this.isConnected) this.#subscribe(this.noteService);
+    }
     if (changed.has('readonly') || changed.has('spellcheck') || changed.has('placeholder')) {
       effects.push(this.#options.reconfigure(this.#optionsExtension()));
     }
@@ -229,12 +251,14 @@ export class OfmMarkdownEditor extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.#subscribe(undefined);
     this.#view?.destroy();
     this.#view = undefined;
   }
 
   connectedCallback() {
     super.connectedCallback();
+    this.#subscribe(this.noteService);
     // Removing the element destroyed its view, so a reinserted one needs a new view.
     if (this.hasUpdated && !this.#view) this.#createView();
   }

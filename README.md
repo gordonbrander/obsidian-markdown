@@ -171,15 +171,14 @@ noteService.setLoader(async (name) => {
 completionService.setCompletions(async (query, kind) => (kind === 'link' ? searchNotes(query) : searchTags(query)));
 ```
 
-Every component shares these instances, so a note loads once for all of them. Loaded notes are cached; call `noteService.clear(name)` when a note changes, or `setLoader` again to forget them all. A failed load isn't cached, so it's tried again next time.
+Every component shares these instances by default, so a note loads once for all of them. Loaded notes are cached. Call `noteService.clear(name)` when a note changes, and the embeds of that note already on screen redraw. Call `setLoader` again to forget every note and redraw all embeds. A failed load isn't cached, so it's tried again next time.
 
-To configure one component on its own, give its class another instance: `OfmNote.noteService`, `OfmMarkdown.noteService`, `OfmMarkdownEditor.noteService` and `OfmMarkdownEditor.completionService`. Elements a component creates inside itself, such as `<ofm-note>`'s body, use their owner's service.
+To configure one element on its own, set its `noteService` property, or the editor's `completionService`, to another instance. These are properties, not attributes. Elements a component creates inside itself, such as `<ofm-note>`'s body or an embed inside an editor callout, use their owner's service.
 
 ```js
 import { NoteService } from 'obsidian-markdown/note-service.js';
-import { OfmNote } from 'obsidian-markdown/components/ofm-note.js';
 
-OfmNote.noteService = new NoteService(loadPublishedNote);
+document.querySelector('ofm-note').noteService = new NoteService(loadPublishedNote);
 ```
 
 ### Using with frameworks

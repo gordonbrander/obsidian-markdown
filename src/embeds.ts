@@ -80,18 +80,32 @@ export const embed = (target: string, service: NoteService, stack: readonly stri
   });
   const content = document.createElement('div');
   content.className = 'markdown-embed-content';
-  content.append(placeholder(target));
   element.append(link, content);
-  void fill(element, content, target, service, stack);
+  refill(element, service, stack);
   return element;
+};
+
+/** Show the placeholder, then load the note again. Keeps the element, which may be an editor widget's root. */
+const refill = (element: Element, service: NoteService, stack: readonly string[]) => {
+  const target = element.getAttribute('src') ?? '';
+  const content = element.querySelector(':scope > .markdown-embed-content') as HTMLElement;
+  element.classList.remove('is-unresolved');
+  content.replaceChildren(placeholder(target));
+  void fill(element as HTMLElement, content, target, service, stack);
+};
+
+/** Elements under `root` from its own render: not inside a nested <ofm-markdown>, which handles its own. */
+const own = (root: Element | DocumentFragment, selector: string) => {
+  const owner = root instanceof Element ? root.closest('ofm-markdown') : null;
+  return [...root.querySelectorAll(selector)].filter((el) => el.parentElement?.closest('ofm-markdown') === owner);
 };
 
 /**
  * Replace the note-embed placeholders render() leaves under `root` with embeds, once the service answers.
  * With no loader set, the placeholders stay as render() made them. Image embeds are already <img>.
  */
-export const fillEmbeds = (root: ParentNode, service: NoteService, stack: readonly string[]) => {
-  for (const span of root.querySelectorAll('span.internal-embed[src]')) {
+export const fillEmbeds = (root: Element | DocumentFragment, service: NoteService, stack: readonly string[]) => {
+  for (const span of own(root, 'span.internal-embed[src]')) {
     const target = span.getAttribute('src') ?? '';
     if (isImage(target)) continue;
     // fill() loads the same note again, from the cache.
@@ -99,4 +113,16 @@ export const fillEmbeds = (root: ParentNode, service: NoteService, stack: readon
       if (result.ok || result.error.type !== 'no-loader') span.replaceWith(embed(target, service, stack));
     });
   }
+};
+
+/**
+ * Rebuild the embeds under `root` that show note `name`, after it changed. With no name, rebuild them all and fill
+ * placeholders left from when there was no loader. Nested <ofm-markdown>s refresh their own embeds.
+ */
+export const refreshEmbeds = (root: Element | DocumentFragment, service: NoteService, stack: readonly string[], name?: string) => {
+  for (const element of own(root, 'div.internal-embed.markdown-embed[src]')) {
+    const target = element.getAttribute('src') ?? '';
+    if (name === undefined || target.split('#')[0] === name) refill(element, service, stack);
+  }
+  if (name === undefined) fillEmbeds(root, service, stack);
 };

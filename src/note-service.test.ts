@@ -64,3 +64,13 @@ test('two services keep separate caches', async () => {
   await second.load('A');
   assert.equal(calls.A, 2);
 });
+
+test('setLoader and clear fire change, naming the note clear forgot', async () => {
+  const service = new NoteService(async () => { throw new Error('offline'); });
+  const names: (string | undefined)[] = [];
+  service.addEventListener('change', (event) => names.push((event as CustomEvent<{ name?: string }>).detail.name));
+  await service.load('A'); // a failed load drops its cache entry, but that's not a change
+  service.clear('A');
+  service.setLoader(async () => 'a');
+  assert.deepEqual(names, ['A', undefined]);
+});
