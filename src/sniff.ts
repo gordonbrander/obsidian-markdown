@@ -38,6 +38,24 @@ export const parseWikilink = (s: string): Wikilink | null => {
   return { target, label: parts?.[2] || target };
 };
 
+/** True when a URL names a scheme, like `javascript:`. Control characters and spaces are ignored, as browsers do. */
+export const hasScheme = (url: string) => /^[a-z][a-z0-9+.-]*:/i.test(url.replace(/[\x00-\x20]/g, ''));
+
+const WEB_URL = /^https?:\/\/\S+$/i;
+
+export type Link = { target: string; label: string; href: string | undefined; wiki: boolean };
+
+/**
+ * Parse a string that is exactly one wikilink or one http(s) URL, else undefined.
+ * A wikilink target with a scheme gets no href, so `[[javascript:...]]` can't run.
+ */
+export const parseLink = (s: string): Link | undefined => {
+  const wikilink = parseWikilink(s);
+  if (wikilink) return { ...wikilink, href: hasScheme(wikilink.target) ? undefined : wikilink.target, wiki: true };
+  if (WEB_URL.test(s)) return { target: s, label: s, href: s, wiki: false };
+  return undefined;
+};
+
 /** Format JSON on one line, like `{ compact: "single line", mode: true }`. */
 export const formatCompact = (value: Json): string => {
   if (Array.isArray(value)) return `[${value.map(formatCompact).join(', ')}]`;
@@ -55,7 +73,7 @@ export const sniff = (value: Json): Field => {
   if (typeof value === 'boolean') return { type: 'checkbox', value };
   if (typeof value === 'number') return { type: 'number', value };
   if (typeof value === 'string') {
-    if (parseWikilink(value)) return { type: 'link', value };
+    if (parseLink(value)) return { type: 'link', value };
     if (DATE.test(value) && isRealDate(value)) return { type: 'date', value };
     if (DATETIME.test(value) && isRealDate(value)) return { type: 'datetime', value };
     return { type: 'text', value };

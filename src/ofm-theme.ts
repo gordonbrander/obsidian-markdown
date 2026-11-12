@@ -290,7 +290,6 @@ export const obsidianTheme = css`
     }
     .ofm-link {
       color: var(--text-accent);
-      text-align: left;
       text-decoration: underline;
       overflow-wrap: anywhere;
     }

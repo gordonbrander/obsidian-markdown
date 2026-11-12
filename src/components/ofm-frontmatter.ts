@@ -5,7 +5,7 @@ import './ofm-proprow.ts';
 import type { ProprowChangeDetail } from './ofm-proprow.ts';
 import type { Json, Type } from '../sniff.ts';
 
-export type { ProprowChangeDetail, WikilinkDetail } from './ofm-proprow.ts';
+export type { ProprowChangeDetail, ClickWikilinkDetail } from './ofm-proprow.ts';
 
 export type Properties = Record<string, Json>;
 export type PropertyTypes = Record<string, Type>;
@@ -17,7 +17,7 @@ const isRecord = (value: unknown): value is Properties =>
 /**
  * An editable property list, like Obsidian's properties view.
  * @fires proprow-change - A property was edited. Bubbles from its row. `detail` is `{ key, value, type, effectiveType }`, and `properties` already holds the edit.
- * @fires wikilink - A link in a property value was clicked. `detail` is `{ key, target }`.
+ * @fires click-wikilink - A wikilink in a property value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-frontmatter')
 export class OfmFrontmatter extends LitElement {

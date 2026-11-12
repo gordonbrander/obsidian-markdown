@@ -19,7 +19,7 @@ const parse = (value: string): { data: Properties; content: string } => {
 /**
  * A whole note: its properties, collapsible as in Obsidian, followed by its rendered Markdown.
  * @fires proprow-change - A property was edited. Bubbles from its row. `detail` is `{ key, value, type, effectiveType }`.
- * @fires wikilink - A link was clicked, in a property or the note. `detail.target` is the link target.
+ * @fires click-wikilink - A wikilink was clicked, in a property or the note. `detail.target` is the link target. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-note')
 export class OfmNote extends LitElement {

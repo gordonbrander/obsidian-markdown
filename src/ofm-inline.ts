@@ -1,5 +1,5 @@
 import type { MarkdownIt, Delimiter, StateInline } from 'markdown-it';
-import { parseWikilink } from './sniff.ts';
+import { hasScheme, parseWikilink } from './sniff.ts';
 
 const IMAGE_EXTENSIONS = new Set(['avif', 'bmp', 'gif', 'jpeg', 'jpg', 'png', 'svg', 'webp']);
 const EMBED_SIZE = /^(\d+)(?:x(\d+))?$/;
@@ -153,8 +153,6 @@ const highlightPostProcess = (state: StateInline) => {
 };
 
 /** Browsers skip control characters and spaces in URLs, so `java\tscript:` still runs. */
-const hasScheme = (url: string) => /^[a-z][a-z0-9+.-]*:/i.test(url.replace(/[\x00-\x20]/g, ''));
-
 export const ofmInline = (md: MarkdownIt) => {
   const { escapeHtml } = md.utils;
   // Targets are vault paths and skip validateLink, so anything with a scheme gets no URL.

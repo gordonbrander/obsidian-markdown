@@ -7,17 +7,9 @@
     <style>
       :root { color-scheme: light dark; }
       body { margin: 0 auto; padding: 16px; max-width: 760px; font-family: system-ui, sans-serif; }
-      nav { margin-bottom: 12px; font-size: 14px; }
     </style>
   </head>
   <body>
-    <nav>
-      Demos:
-      <a href="ofm-note.html">ofm-note</a> ·
-      <a href="ofm-markdown.html">ofm-markdown</a> ·
-      <a href="ofm-frontmatter.html">ofm-frontmatter</a> ·
-      <a href="https://github.com/gordonbrander/obsidian-markdown">GitHub</a>
-    </nav>
     <ofm-note readonly></ofm-note>
 
     <script type="module">
@@ -26,8 +18,20 @@
       import { obsidianTheme } from '/src/ofm-theme.ts';
       import readme from '../README.md?raw';
 
+      // Page links live in front matter, so the Properties drawer shows them.
+      const frontmatter = `---
+title: obsidian-markdown
+github: https://github.com/gordonbrander/obsidian-markdown
+license: https://github.com/gordonbrander/obsidian-markdown/blob/main/LICENSE-MIT
+demos:
+  - "[[ofm-note.html|ofm-note]]"
+  - "[[ofm-markdown.html|ofm-markdown]]"
+  - "[[ofm-frontmatter.html|ofm-frontmatter]]"
+---
+`;
+
       adoptSheet(obsidianTheme);
-      document.querySelector('ofm-note').value = readme;
+      document.querySelector('ofm-note').value = frontmatter + readme;
     </script>
   </body>
 </html>
