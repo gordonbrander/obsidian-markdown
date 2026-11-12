@@ -182,12 +182,16 @@ export const ofmFootnote = (md: MarkdownIt) => {
   rules.footnote_ref = (tokens, idx) => {
     const meta = tokens[idx].meta as RefMeta;
     const number = meta.id + 1;
-    return `<sup class="footnote-ref"><a href="#fn-${number}" id="fnref-${refId(meta)}">${number}</a></sup>`;
+    const ref = `fnref-${refId(meta)}`;
+    return `<sup class="footnote-ref" data-footnote-id="${ref}"><a class="footnote-link" href="#fn-${number}" id="${ref}">${number}</a></sup>`;
   };
   rules.footnote_block_open = () => '<section class="footnotes">\n<ol>\n';
   rules.footnote_block_close = () => '</ol>\n</section>\n';
-  rules.footnote_open = (tokens, idx) => `<li id="fn-${(tokens[idx].meta as RefMeta).id + 1}">\n`;
+  rules.footnote_open = (tokens, idx) => {
+    const id = `fn-${(tokens[idx].meta as RefMeta).id + 1}`;
+    return `<li id="${id}" data-footnote-id="${id}">\n`;
+  };
   rules.footnote_close = () => '</li>\n';
   rules.footnote_anchor = (tokens, idx) =>
-    ` <a href="#fnref-${refId(tokens[idx].meta as RefMeta)}" class="footnote-backref">↩</a>`;
+    ` <a href="#fnref-${refId(tokens[idx].meta as RefMeta)}" class="footnote-backref footnote-link">↩</a>`;
 };

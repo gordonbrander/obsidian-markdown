@@ -140,7 +140,7 @@ const applyHighlights = (state: StateInline, delimiters: Delimiter[]) => {
     const color = first?.type === 'text' && HIGHLIGHT_COLORS.find(([emoji]) => first.content.startsWith(emoji));
     if (color) {
       first.content = first.content.slice(color[0].length);
-      open.attrSet('data-highlight-color', color[1]);
+      open.attrSet('data-highlight', color[1]);
     }
   }
 };
