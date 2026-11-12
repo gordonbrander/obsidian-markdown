@@ -115,6 +115,17 @@ export const obsidianTheme = css`
     --code-background: light-dark(#0000000d, #ffffff14);
     --code-size: 0.9em;
     --code-white-space: pre;
+    --code-normal: var(--text-normal);
+    --code-comment: var(--text-muted);
+    --code-function: var(--color-yellow);
+    --code-important: var(--color-orange);
+    --code-keyword: var(--color-pink);
+    --code-operator: var(--color-red);
+    --code-property: var(--color-cyan);
+    --code-punctuation: var(--text-muted);
+    --code-string: var(--color-green);
+    --code-tag: var(--color-red);
+    --code-value: var(--color-purple);
 
     --hr-color: var(--background-modifier-border);
     --hr-thickness: 1px;
@@ -417,7 +428,7 @@ export const obsidianTheme = css`
       padding: 0.1em 0.3em;
       border-radius: 4px;
       background: var(--code-background);
-      color: var(--code-normal, inherit);
+      color: var(--code-normal);
     }
     pre {
       padding: 12px;
@@ -431,6 +442,23 @@ export const obsidianTheme = css`
       background: none;
       font-size: inherit;
     }
+
+    /* Prism token colors, as in Obsidian's app.css. */
+    .token.comment, .token.prolog, .token.doctype, .token.cdata { color: var(--code-comment); }
+    .token.tag, .token.constant, .token.symbol, .token.deleted { color: var(--code-tag); }
+    .token.punctuation { color: var(--code-punctuation); }
+    .token.boolean, .token.number { color: var(--code-value); }
+    .token.selector, .token.attr-name, .token.string, .token.char, .token.inserted { color: var(--code-string); }
+    .token.operator { color: var(--code-operator); }
+    .token.entity, .token.parameter, .token.property, .token.url, .token.variable,
+    .language-css .token.string { color: var(--code-property); }
+    .token.atrule, .token.attr-value, .token.builtin, .token.function, .token.class-name, .token.property-access {
+      color: var(--code-function);
+    }
+    .token.keyword { color: var(--code-keyword); }
+    .token.regex, .token.important { color: var(--code-important); }
+    .token.important, .token.bold { font-weight: bold; }
+    .token.italic { font-style: italic; }
 
     blockquote {
       margin: 1em 0;

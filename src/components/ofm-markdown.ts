@@ -6,7 +6,7 @@ import { render } from '../render.ts';
 export type MarkdownWikilinkDetail = { target: string };
 
 /**
- * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams.
+ * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams and highlighting code.
  * @attr rendered - Set by the element once its first content is in the DOM and drawn. Style the first render with `ofm-markdown:not([rendered])`.
  * @fires rendered - The new content is in the DOM and drawn.
  * @fires wikilink - An internal link was clicked. `detail.target` is the link target. Cancelable.
