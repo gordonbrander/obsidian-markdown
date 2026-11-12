@@ -28,26 +28,26 @@
   ],
   "exports": {
     ".": "./dist/render.js",
-    "./ofm-note.js": "./dist/ofm-note.js",
-    "./ofm-markdown.js": "./dist/ofm-markdown.js",
-    "./ofm-frontmatter.js": "./dist/ofm-frontmatter.js",
-    "./ofm-proprow.js": "./dist/ofm-proprow.js",
+    "./components/ofm-note.js": "./dist/components/ofm-note.js",
+    "./components/ofm-markdown.js": "./dist/components/ofm-markdown.js",
+    "./components/ofm-frontmatter.js": "./dist/components/ofm-frontmatter.js",
+    "./components/ofm-proprow.js": "./dist/components/ofm-proprow.js",
     "./ofm-theme.js": "./dist/ofm-theme.js",
     "./adopt-sheet.js": "./dist/adopt-sheet.js",
     "./package.json": "./package.json"
   },
   "sideEffects": [
-    "./dist/ofm-note.js",
-    "./dist/ofm-markdown.js",
-    "./dist/ofm-frontmatter.js",
-    "./dist/ofm-proprow.js",
+    "./dist/components/ofm-note.js",
+    "./dist/components/ofm-markdown.js",
+    "./dist/components/ofm-frontmatter.js",
+    "./dist/components/ofm-proprow.js",
     "./dist/tex.js"
   ],
   "customElements": "custom-elements.json",
   "scripts": {
     "dev": "vite",
     "build": "rm -rf dist && tsc -p tsconfig.build.json && cem analyze",
-    "build:demo": "vite build",
+    "build:examples": "vite build",
     "prepack": "npm run build",
     "test": "node --test",
     "typecheck": "tsc"

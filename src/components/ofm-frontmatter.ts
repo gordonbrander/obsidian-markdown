@@ -3,7 +3,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './ofm-proprow.ts';
 import type { ProprowChangeDetail } from './ofm-proprow.ts';
-import type { Json, Type } from './sniff.ts';
+import type { Json, Type } from '../sniff.ts';
 
 export type { ProprowChangeDetail, WikilinkDetail } from './ofm-proprow.ts';
 

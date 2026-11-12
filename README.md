@@ -36,7 +36,7 @@ A [Custom Elements Manifest](https://custom-elements-manifest.open-wc.org) ships
 ### `<ofm-note>`
 
 ```js
-import 'obsidian-markdown/ofm-note.js';
+import 'obsidian-markdown/components/ofm-note.js';
 ```
 
 ```html
@@ -61,7 +61,7 @@ The Properties drawer is hidden when the note has no properties. If the front ma
 ### `<ofm-markdown>`
 
 ```js
-import 'obsidian-markdown/ofm-markdown.js';
+import 'obsidian-markdown/components/ofm-markdown.js';
 ```
 
 ```html
@@ -90,7 +90,7 @@ Renders a note, drawing math (MathJax) and Mermaid diagrams. Both libraries load
 ### `<ofm-frontmatter>`
 
 ```js
-import 'obsidian-markdown/ofm-frontmatter.js';
+import 'obsidian-markdown/components/ofm-frontmatter.js';
 ```
 
 An editable property list, like Obsidian's properties view.
@@ -117,7 +117,7 @@ The components are standard custom elements, so you can use them from any framew
 React 19+ sets properties on custom elements and listens to custom events through `on<event>` props. The event name is case-sensitive.
 
 ```jsx
-import 'obsidian-markdown/ofm-note.js';
+import 'obsidian-markdown/components/ofm-note.js';
 
 export function Note({ note }) {
   return (
@@ -154,7 +154,7 @@ export default defineConfig({
 
 ```vue
 <script setup>
-import 'obsidian-markdown/ofm-note.js';
+import 'obsidian-markdown/components/ofm-note.js';
 
 defineProps(['note']);
 </script>
@@ -176,7 +176,7 @@ No setup needed in Svelte 5:
 
 ```svelte
 <script>
-  import 'obsidian-markdown/ofm-note.js';
+  import 'obsidian-markdown/components/ofm-note.js';
 
   let { note } = $props();
 </script>
@@ -193,7 +193,7 @@ No setup needed in Svelte 5:
 Use `prop:` to set properties and `on:` to listen for events. `on:` keeps the event name exactly as written.
 
 ```jsx
-import 'obsidian-markdown/ofm-note.js';
+import 'obsidian-markdown/components/ofm-note.js';
 
 export function Note(props) {
   return (
