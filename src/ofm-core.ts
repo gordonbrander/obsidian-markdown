@@ -16,11 +16,11 @@ const closeOf = (tokens: Token[], open: number) => {
   return tokens.length - 1;
 };
 
-const wrapper = (state: StateCore, type: string, className: string, body: Token[]) => {
-  const open = new state.Token(`${type}_open`, 'div', 1);
+const wrapper = (state: StateCore, type: string, className: string, body: Token[], tag = 'div') => {
+  const open = new state.Token(`${type}_open`, tag, 1);
   open.attrSet('class', className);
-  const close = new state.Token(`${type}_close`, 'div', -1);
-  open.block = close.block = true;
+  const close = new state.Token(`${type}_close`, tag, -1);
+  open.block = close.block = tag !== 'span';
   return [open, ...body, close];
 };
 
@@ -38,13 +38,16 @@ const callouts = (state: StateCore) => {
     const type = rawType.toLowerCase();
     const close = closeOf(tokens, open);
 
+    // Foldable callouts are <details>, so the browser folds them with no script.
+    const tag = fold ? 'details' : 'div';
     const opening = tokens[open];
-    Object.assign(opening, { type: 'callout_open', tag: 'div' });
-    opening.attrSet('class', 'callout');
+    Object.assign(opening, { type: 'callout_open', tag });
+    opening.attrSet('class', fold ? 'callout is-collapsible' : 'callout');
     opening.attrSet('data-callout', type);
     if (fold) opening.attrSet('data-callout-fold', fold);
+    if (fold === '+') opening.attrSet('open', '');
     if (metadata !== undefined) opening.attrSet('data-callout-metadata', metadata);
-    Object.assign(tokens[close], { type: 'callout_close', tag: 'div' });
+    Object.assign(tokens[close], { type: 'callout_close', tag });
 
     const titleInline = new state.Token('inline', '', 0);
     titleInline.content = title?.trim() || type.charAt(0).toUpperCase() + type.slice(1);
@@ -55,7 +58,10 @@ const callouts = (state: StateCore) => {
     tokens.splice(
       open + 1,
       close - open - 1,
-      ...wrapper(state, 'callout_title', 'callout-title', [titleInline]),
+      ...wrapper(state, 'callout_title', 'callout-title', [
+        ...wrapper(state, 'callout_title_inner', 'callout-title-inner', [titleInline], 'span'),
+        ...(fold ? wrapper(state, 'callout_fold', 'callout-fold', [], 'span') : []),
+      ], fold ? 'summary' : 'div'),
       ...(body.length > 0 ? wrapper(state, 'callout_content', 'callout-content', body) : []),
     );
   }

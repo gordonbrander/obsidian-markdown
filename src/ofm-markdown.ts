@@ -5,18 +5,6 @@ import { render } from './render.ts';
 
 export type MarkdownWikilinkDetail = { target: string };
 
-const FOLDABLE_TITLE = '[data-callout-fold] > .callout-title';
-
-const setFolded = (title: Element, folded: boolean) => {
-  title.parentElement?.setAttribute('data-callout-fold', folded ? '-' : '+');
-  title.setAttribute('aria-expanded', String(!folded));
-  title.nextElementSibling?.toggleAttribute('hidden', folded);
-};
-
-const toggleFold = (title: Element) => {
-  setFolded(title, title.parentElement?.getAttribute('data-callout-fold') === '+');
-};
-
 /**
  * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams.
  * @attr rendered - Set by the element once its first content is in the DOM and drawn. Style the first render with `ofm-markdown:not([rendered])`.
@@ -39,11 +27,6 @@ export class OfmMarkdown extends LitElement {
     const template = document.createElement('template');
     template.innerHTML = render(value, { strictLineBreaks });
     await draw(template.content);
-    for (const title of template.content.querySelectorAll(FOLDABLE_TITLE)) {
-      title.setAttribute('role', 'button');
-      title.setAttribute('tabindex', '0');
-      setFolded(title, title.parentElement?.getAttribute('data-callout-fold') === '-');
-    }
     return template.content;
   };
 
@@ -98,27 +81,12 @@ export class OfmMarkdown extends LitElement {
       return;
     }
 
-    if (clicked.closest('.tag')) {
-      event.preventDefault();
-      return;
-    }
-
-    if (clicked.closest('a')) return;
-    const title = clicked.closest(FOLDABLE_TITLE);
-    if (title) toggleFold(title);
-  }
-
-  #onKeydown(event: KeyboardEvent) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    const target = event.target as Element;
-    if (!target.matches(FOLDABLE_TITLE)) return;
-    event.preventDefault();
-    toggleFold(target);
+    if (clicked.closest('.tag')) event.preventDefault();
   }
 
   render() {
     return html`
-      <div class="ofm-content" @click=${this.#onClick} @keydown=${this.#onKeydown}>
+      <div class="ofm-content" @click=${this.#onClick}>
         ${this.#content}
       </div>
     `;

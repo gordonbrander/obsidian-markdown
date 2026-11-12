@@ -414,9 +414,26 @@ export const obsidianTheme = css`
     .callout-content { padding: var(--callout-content-padding); background: var(--callout-content-background); }
     .callout-content > :first-child { margin-top: 0.4em; }
     .callout-content > :last-child { margin-bottom: 0; }
-    [data-callout-fold] > .callout-title { cursor: pointer; }
-    [data-callout-fold] > .callout-title::after { content: ' ▾'; }
-    [data-callout-fold='-'] > .callout-title::after { content: ' ▸'; }
+    summary.callout-title {
+      list-style: none;
+      cursor: pointer;
+      &::-webkit-details-marker { display: none; }
+    }
+    /* Browsers without ::details-content or interpolate-size toggle instantly. */
+    .callout.is-collapsible {
+      interpolate-size: allow-keywords;
+      &::details-content {
+        height: 0;
+        overflow: clip;
+        transition: height 150ms ease-out, content-visibility 150ms allow-discrete;
+      }
+      &[open]::details-content { height: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .callout.is-collapsible::details-content { transition: none; }
+    }
+    .callout-fold::after { content: ' ▾'; }
+    .callout:not([open]) > .callout-title .callout-fold::after { content: ' ▸'; }
 
     [data-callout='info'] { --callout-color: var(--callout-info); }
     [data-callout='todo'] { --callout-color: var(--callout-todo); }

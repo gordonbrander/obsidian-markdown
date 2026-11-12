@@ -40,6 +40,10 @@ test('www. and email addresses are autolinked', () => {
   assert.match(render('me@example.com'), /<a href="mailto:me@example\.com">/);
 });
 
+test('a + callout is an open details', () => {
+  assert.match(render('> [!tip]+\n> a'), /^<details class="callout is-collapsible" data-callout="tip" data-callout-fold="\+" open="">/);
+});
+
 test('strictLineBreaks keeps soft breaks soft', () => {
   assert.equal(render('a\nb', { strictLineBreaks: true }).trim(), '<p>a\nb</p>');
   assert.equal(render('a\nb').trim(), '<p>a<br />\nb</p>');
