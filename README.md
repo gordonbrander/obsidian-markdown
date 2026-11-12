@@ -108,6 +108,108 @@ An editable property list, like Obsidian's properties view.
 - **`type`**: the declared type, if any.
 - **`effective-type`**: the type the row actually draws, declared or sniffed from the value.
 
+### Using with frameworks
+
+The components are standard custom elements, so you can use them from any framework. Import the module once to register the element, then pass properties and listen for events with your framework's syntax.
+
+#### React
+
+React 19+ sets properties on custom elements and listens to custom events through `on<event>` props. The event name is case-sensitive.
+
+```jsx
+import 'obsidian-markdown/ofm-note.js';
+
+export function Note({ note }) {
+  return (
+    <ofm-note
+      value={note}
+      onwikilink={(event) => console.log(event.detail.target)}
+      onproprow-change={(event) => console.log(event.detail)}
+    />
+  );
+}
+```
+
+React 18 and earlier don't do this. Set properties and add listeners yourself through a `ref`.
+
+#### Vue
+
+Tell Vue's compiler that `ofm-` tags are custom elements:
+
+```js
+// vite.config.js
+import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: { isCustomElement: (tag) => tag.startsWith('ofm-') },
+      },
+    }),
+  ],
+});
+```
+
+```vue
+<script setup>
+import 'obsidian-markdown/ofm-note.js';
+
+defineProps(['note']);
+</script>
+
+<template>
+  <ofm-note
+    :value="note"
+    @wikilink="(event) => console.log(event.detail.target)"
+    @proprow-change="(event) => console.log(event.detail)"
+  />
+</template>
+```
+
+Vue passes bound values as properties when the element has them, so `:properties="{ title: 'Hello' }"` on `<ofm-frontmatter>` passes the object as-is.
+
+#### Svelte
+
+No setup needed in Svelte 5:
+
+```svelte
+<script>
+  import 'obsidian-markdown/ofm-note.js';
+
+  let { note } = $props();
+</script>
+
+<ofm-note
+  value={note}
+  onwikilink={(event) => console.log(event.detail.target)}
+  onproprow-change={(event) => console.log(event.detail)}
+></ofm-note>
+```
+
+#### Solid
+
+Use `prop:` to set properties and `on:` to listen for events. `on:` keeps the event name exactly as written.
+
+```jsx
+import 'obsidian-markdown/ofm-note.js';
+
+export function Note(props) {
+  return (
+    <ofm-note
+      prop:value={props.note}
+      on:wikilink={(event) => console.log(event.detail.target)}
+      on:proprow-change={(event) => console.log(event.detail)}
+    />
+  );
+}
+```
+
+#### TypeScript
+
+In TypeScript, React and Solid will reject `<ofm-*>` tags until you declare them in your app's `JSX.IntrinsicElements`.
+
 ### Styling components
 
 All components render into the light DOM, with no shadow root, so page styles apply. They're unstyled until you style them. For an Obsidian-like look, adopt the optional theme:
