@@ -160,7 +160,9 @@ export const obsidianTheme = css`
       list-style: none;
       cursor: pointer;
       user-select: none;
-      &::-webkit-details-marker { display: none; }
+      &::-webkit-details-marker {
+        display: none;
+      }
       &::before {
         content: '';
         width: 0.4em;
@@ -171,7 +173,9 @@ export const obsidianTheme = css`
         transition: transform 100ms ease-in-out;
       }
     }
-    .ofm-properties[open] > .ofm-properties-heading::before { transform: rotate(45deg); }
+    .ofm-properties[open] > .ofm-properties-heading::before {
+      transform: rotate(45deg);
+    }
   }
 
   /* Obsidian's properties view. */
@@ -214,9 +218,15 @@ export const obsidianTheme = css`
       color: inherit;
       font: inherit;
     }
-    input:not([readonly]):hover, input:not([readonly]):focus { background: var(--background-modifier-hover); }
-    input:focus { outline: 1px solid var(--text-accent); }
-    input[readonly]:focus { outline: none; }
+    input:not([readonly]):hover, input:not([readonly]):focus {
+      background: var(--background-modifier-hover);
+    }
+    input:focus {
+      outline: 1px solid var(--text-accent);
+    }
+    input[readonly]:focus {
+      outline: none;
+    }
     input[type='checkbox'] {
       flex: none;
       width: 16px;
@@ -265,7 +275,9 @@ export const obsidianTheme = css`
       text-decoration: underline;
       overflow-wrap: anywhere;
     }
-    .ofm-value > .ofm-link { margin-left: 6px; }
+    .ofm-value > .ofm-link {
+      margin-left: 6px;
+    }
     .ofm-icon {
       padding: 0 4px;
       color: var(--text-muted);
@@ -283,29 +295,94 @@ export const obsidianTheme = css`
 
   /* Variables with no default above fall back to inherit here, because --x: inherit wouldn't mean the same thing. */
   ofm-markdown {
-    p { margin-block: var(--p-spacing); }
-    strong { color: var(--bold-color, inherit); font-weight: var(--bold-weight); }
-    em { color: var(--italic-color, inherit); }
-    img, svg { max-width: 100%; }
+    p {
+      margin-block: var(--p-spacing);
+    }
+    strong {
+      color: var(--bold-color, inherit);
+      font-weight: var(--bold-weight);
+    }
+    em {
+      color: var(--italic-color, inherit);
+    }
+    img, svg {
+      max-width: 100%;
+    }
 
-    h1, h2, h3, h4, h5, h6 { margin-block: 0.8em 0.4em; }
-    h1 { color: var(--h1-color, inherit); font-family: var(--h1-font, inherit); font-size: var(--h1-size); font-style: var(--h1-style, normal); font-variant: var(--h1-variant, normal); font-weight: var(--h1-weight); line-height: var(--h1-line-height); }
-    h2 { color: var(--h2-color, inherit); font-family: var(--h2-font, inherit); font-size: var(--h2-size); font-style: var(--h2-style, normal); font-variant: var(--h2-variant, normal); font-weight: var(--h2-weight); line-height: var(--h2-line-height); }
-    h3 { color: var(--h3-color, inherit); font-family: var(--h3-font, inherit); font-size: var(--h3-size); font-style: var(--h3-style, normal); font-variant: var(--h3-variant, normal); font-weight: var(--h3-weight); line-height: var(--h3-line-height); }
-    h4 { color: var(--h4-color, inherit); font-family: var(--h4-font, inherit); font-size: var(--h4-size); font-style: var(--h4-style, normal); font-variant: var(--h4-variant, normal); font-weight: var(--h4-weight); line-height: var(--h4-line-height); }
-    h5 { color: var(--h5-color, inherit); font-family: var(--h5-font, inherit); font-size: var(--h5-size); font-style: var(--h5-style, normal); font-variant: var(--h5-variant, normal); font-weight: var(--h5-weight); line-height: var(--h5-line-height); }
-    h6 { color: var(--h6-color, inherit); font-family: var(--h6-font, inherit); font-size: var(--h6-size); font-style: var(--h6-style, normal); font-variant: var(--h6-variant, normal); font-weight: var(--h6-weight); line-height: var(--h6-line-height); }
+    h1, h2, h3, h4, h5, h6 {
+      margin-block: 0.8em 0.4em;
+    }
+    h1 {
+      color: var(--h1-color, inherit);
+      font-family: var(--h1-font, inherit);
+      font-size: var(--h1-size);
+      font-style: var(--h1-style, normal);
+      font-variant: var(--h1-variant, normal);
+      font-weight: var(--h1-weight);
+      line-height: var(--h1-line-height);
+    }
+    h2 {
+      color: var(--h2-color, inherit);
+      font-family: var(--h2-font, inherit);
+      font-size: var(--h2-size);
+      font-style: var(--h2-style, normal);
+      font-variant: var(--h2-variant, normal);
+      font-weight: var(--h2-weight);
+      line-height: var(--h2-line-height);
+    }
+    h3 {
+      color: var(--h3-color, inherit);
+      font-family: var(--h3-font, inherit);
+      font-size: var(--h3-size);
+      font-style: var(--h3-style, normal);
+      font-variant: var(--h3-variant, normal);
+      font-weight: var(--h3-weight);
+      line-height: var(--h3-line-height);
+    }
+    h4 {
+      color: var(--h4-color, inherit);
+      font-family: var(--h4-font, inherit);
+      font-size: var(--h4-size);
+      font-style: var(--h4-style, normal);
+      font-variant: var(--h4-variant, normal);
+      font-weight: var(--h4-weight);
+      line-height: var(--h4-line-height);
+    }
+    h5 {
+      color: var(--h5-color, inherit);
+      font-family: var(--h5-font, inherit);
+      font-size: var(--h5-size);
+      font-style: var(--h5-style, normal);
+      font-variant: var(--h5-variant, normal);
+      font-weight: var(--h5-weight);
+      line-height: var(--h5-line-height);
+    }
+    h6 {
+      color: var(--h6-color, inherit);
+      font-family: var(--h6-font, inherit);
+      font-size: var(--h6-size);
+      font-style: var(--h6-style, normal);
+      font-variant: var(--h6-variant, normal);
+      font-weight: var(--h6-weight);
+      line-height: var(--h6-line-height);
+    }
 
     a {
       color: var(--link-external-color);
       font-weight: var(--link-weight, inherit);
       text-decoration: var(--link-external-decoration);
-      &:hover { color: var(--link-external-color-hover); text-decoration: var(--link-external-decoration-hover); }
+      &:hover {
+        color: var(--link-external-color-hover);
+        text-decoration: var(--link-external-decoration-hover);
+      }
     }
     a.internal-link {
       color: var(--link-color);
       text-decoration: var(--link-decoration);
-      &:hover { color: var(--link-color-hover); text-decoration: var(--link-decoration-hover); }
+      &:hover {
+        color: var(--link-color-hover);
+        text-decoration: var(--link-decoration-hover);
+      }
     }
     a.tag {
       padding: var(--tag-padding-y) var(--tag-padding-x);
@@ -324,10 +401,28 @@ export const obsidianTheme = css`
       }
     }
 
-    code, pre { font-family: var(--font-monospace-theme); font-size: var(--code-size); }
-    code { padding: 0.1em 0.3em; border-radius: 4px; background: var(--code-background); color: var(--code-normal, inherit); }
-    pre { padding: 12px; overflow-x: auto; border-radius: 6px; background: var(--code-background); white-space: var(--code-white-space); }
-    pre code { padding: 0; background: none; font-size: inherit; }
+    code, pre {
+      font-family: var(--font-monospace-theme);
+      font-size: var(--code-size);
+    }
+    code {
+      padding: 0.1em 0.3em;
+      border-radius: 4px;
+      background: var(--code-background);
+      color: var(--code-normal, inherit);
+    }
+    pre {
+      padding: 12px;
+      overflow-x: auto;
+      border-radius: 6px;
+      background: var(--code-background);
+      white-space: var(--code-white-space);
+    }
+    pre code {
+      padding: 0;
+      background: none;
+      font-size: inherit;
+    }
 
     blockquote {
       margin: 1em 0;
@@ -338,9 +433,15 @@ export const obsidianTheme = css`
       font-style: var(--blockquote-font-style);
     }
 
-    hr { border: 0; border-top: var(--hr-thickness) solid var(--hr-color); }
+    hr {
+      border: 0;
+      border-top: var(--hr-thickness) solid var(--hr-color);
+    }
 
-    table { border-collapse: collapse; background: var(--table-background); }
+    table {
+      border-collapse: collapse;
+      background: var(--table-background);
+    }
     th, td {
       padding: 4px 10px;
       border: var(--table-border-width) solid var(--table-border-color);
@@ -348,7 +449,10 @@ export const obsidianTheme = css`
       vertical-align: var(--table-cell-vertical-alignment);
       white-space: var(--table-white-space);
     }
-    td { color: var(--table-text-color, inherit); font-size: var(--table-text-size, inherit); }
+    td {
+      color: var(--table-text-color, inherit);
+      font-size: var(--table-text-size, inherit);
+    }
     th {
       background: var(--table-header-background);
       color: var(--table-header-color, inherit);
@@ -357,20 +461,52 @@ export const obsidianTheme = css`
       font-weight: var(--table-header-weight);
     }
 
-    ul, ol { padding-inline-start: var(--list-indent); }
-    li { margin-block: var(--list-spacing); }
-    li::marker { color: var(--list-marker-color); }
-    li[data-task] { list-style: none; margin-left: -1.2em; }
-    li[data-task]:not([data-task='']) { color: var(--checklist-done-color); text-decoration: var(--checklist-done-decoration); }
-    input[type='checkbox'] { width: var(--checkbox-size); height: var(--checkbox-size); }
+    ul, ol {
+      padding-inline-start: var(--list-indent);
+    }
+    li {
+      margin-block: var(--list-spacing);
+    }
+    li::marker {
+      color: var(--list-marker-color);
+    }
+    li[data-task] {
+      list-style: none;
+      margin-left: -1.2em;
+    }
+    li[data-task]:not([data-task='']) {
+      color: var(--checklist-done-color);
+      text-decoration: var(--checklist-done-decoration);
+    }
+    input[type='checkbox'] {
+      width: var(--checkbox-size);
+      height: var(--checkbox-size);
+    }
 
-    mark { padding: 0 2px; border-radius: 2px; background: var(--text-highlight-bg); color: inherit; }
-    mark[data-highlight-color='red'] { background: color-mix(in srgb, var(--color-red) 35%, transparent); }
-    mark[data-highlight-color='orange'] { background: color-mix(in srgb, var(--color-orange) 35%, transparent); }
-    mark[data-highlight-color='yellow'] { background: color-mix(in srgb, var(--color-yellow) 35%, transparent); }
-    mark[data-highlight-color='green'] { background: color-mix(in srgb, var(--color-green) 35%, transparent); }
-    mark[data-highlight-color='blue'] { background: color-mix(in srgb, var(--color-blue) 35%, transparent); }
-    mark[data-highlight-color='purple'] { background: color-mix(in srgb, var(--color-purple) 35%, transparent); }
+    mark {
+      padding: 0 2px;
+      border-radius: 2px;
+      background: var(--text-highlight-bg);
+      color: inherit;
+    }
+    mark[data-highlight-color='red'] {
+      background: color-mix(in srgb, var(--color-red) 35%, transparent);
+    }
+    mark[data-highlight-color='orange'] {
+      background: color-mix(in srgb, var(--color-orange) 35%, transparent);
+    }
+    mark[data-highlight-color='yellow'] {
+      background: color-mix(in srgb, var(--color-yellow) 35%, transparent);
+    }
+    mark[data-highlight-color='green'] {
+      background: color-mix(in srgb, var(--color-green) 35%, transparent);
+    }
+    mark[data-highlight-color='blue'] {
+      background: color-mix(in srgb, var(--color-blue) 35%, transparent);
+    }
+    mark[data-highlight-color='purple'] {
+      background: color-mix(in srgb, var(--color-purple) 35%, transparent);
+    }
 
     span.internal-embed:empty::before {
       content: '↪ ' attr(src);
@@ -383,9 +519,17 @@ export const obsidianTheme = css`
       font-style: var(--embed-font-style);
     }
 
-    .math-block, .math-display { display: block; text-align: center; overflow-x: auto; }
-    .ofm-diagram { text-align: center; }
-    .ofm-diagram .internal-link { cursor: pointer; }
+    .math-block, .math-display {
+      display: block;
+      text-align: center;
+      overflow-x: auto;
+    }
+    .ofm-diagram {
+      text-align: center;
+    }
+    .ofm-diagram .internal-link {
+      cursor: pointer;
+    }
 
     .footnotes {
       margin-top: 2em;
@@ -393,7 +537,9 @@ export const obsidianTheme = css`
       border-top: 1px solid var(--background-modifier-border);
       font-size: var(--footnote-size);
     }
-    .footnote-backref { text-decoration: none; }
+    .footnote-backref {
+      text-decoration: none;
+    }
 
     .callout {
       --callout-color: var(--callout-default);
@@ -411,13 +557,22 @@ export const obsidianTheme = css`
       font-size: var(--callout-title-size, inherit);
       font-weight: var(--callout-title-weight);
     }
-    .callout-content { padding: var(--callout-content-padding); background: var(--callout-content-background); }
-    .callout-content > :first-child { margin-top: 0.4em; }
-    .callout-content > :last-child { margin-bottom: 0; }
+    .callout-content {
+      padding: var(--callout-content-padding);
+      background: var(--callout-content-background);
+    }
+    .callout-content > :first-child {
+      margin-top: 0.4em;
+    }
+    .callout-content > :last-child {
+      margin-bottom: 0;
+    }
     summary.callout-title {
       list-style: none;
       cursor: pointer;
-      &::-webkit-details-marker { display: none; }
+      &::-webkit-details-marker {
+        display: none;
+      }
     }
     /* Browsers without ::details-content or interpolate-size toggle instantly. */
     .callout.is-collapsible {
@@ -427,26 +582,60 @@ export const obsidianTheme = css`
         overflow: clip;
         transition: height 150ms ease-out, content-visibility 150ms allow-discrete;
       }
-      &[open]::details-content { height: auto; }
+      &[open]::details-content {
+        height: auto;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
-      .callout.is-collapsible::details-content { transition: none; }
+      .callout.is-collapsible::details-content {
+        transition: none;
+      }
     }
-    .callout-fold::after { content: ' ▾'; }
-    .callout:not([open]) > .callout-title .callout-fold::after { content: ' ▸'; }
+    .callout-fold::after {
+      content: ' ▾';
+    }
+    .callout:not([open]) > .callout-title .callout-fold::after {
+      content: ' ▸';
+    }
 
-    [data-callout='info'] { --callout-color: var(--callout-info); }
-    [data-callout='todo'] { --callout-color: var(--callout-todo); }
-    :is([data-callout='abstract'], [data-callout='summary'], [data-callout='tldr']) { --callout-color: var(--callout-summary); }
-    [data-callout='important'] { --callout-color: var(--callout-important); }
-    :is([data-callout='tip'], [data-callout='hint']) { --callout-color: var(--callout-tip); }
-    :is([data-callout='success'], [data-callout='check'], [data-callout='done']) { --callout-color: var(--callout-success); }
-    :is([data-callout='question'], [data-callout='help'], [data-callout='faq']) { --callout-color: var(--callout-question); }
-    :is([data-callout='warning'], [data-callout='caution'], [data-callout='attention']) { --callout-color: var(--callout-warning); }
-    :is([data-callout='failure'], [data-callout='fail'], [data-callout='missing']) { --callout-color: var(--callout-fail); }
-    :is([data-callout='danger'], [data-callout='error']) { --callout-color: var(--callout-error); }
-    [data-callout='bug'] { --callout-color: var(--callout-bug); }
-    [data-callout='example'] { --callout-color: var(--callout-example); }
-    :is([data-callout='quote'], [data-callout='cite']) { --callout-color: var(--callout-quote); }
+    [data-callout='info'] {
+      --callout-color: var(--callout-info);
+    }
+    [data-callout='todo'] {
+      --callout-color: var(--callout-todo);
+    }
+    :is([data-callout='abstract'], [data-callout='summary'], [data-callout='tldr']) {
+      --callout-color: var(--callout-summary);
+    }
+    [data-callout='important'] {
+      --callout-color: var(--callout-important);
+    }
+    :is([data-callout='tip'], [data-callout='hint']) {
+      --callout-color: var(--callout-tip);
+    }
+    :is([data-callout='success'], [data-callout='check'], [data-callout='done']) {
+      --callout-color: var(--callout-success);
+    }
+    :is([data-callout='question'], [data-callout='help'], [data-callout='faq']) {
+      --callout-color: var(--callout-question);
+    }
+    :is([data-callout='warning'], [data-callout='caution'], [data-callout='attention']) {
+      --callout-color: var(--callout-warning);
+    }
+    :is([data-callout='failure'], [data-callout='fail'], [data-callout='missing']) {
+      --callout-color: var(--callout-fail);
+    }
+    :is([data-callout='danger'], [data-callout='error']) {
+      --callout-color: var(--callout-error);
+    }
+    [data-callout='bug'] {
+      --callout-color: var(--callout-bug);
+    }
+    [data-callout='example'] {
+      --callout-color: var(--callout-example);
+    }
+    :is([data-callout='quote'], [data-callout='cite']) {
+      --callout-color: var(--callout-quote);
+    }
   }
 `;
