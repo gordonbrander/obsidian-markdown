@@ -3,7 +3,7 @@ import { customElement, property } from 'lit/decorators.js';
 import './ofm-frontmatter.ts';
 import type { Properties, PropertyTypes } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
-import { NoteService, noteService } from '../note-service.ts';
+import { NoteService, noteService } from '../services/note.ts';
 import { parseFrontmatter, splitFrontmatter } from '../render.ts';
 
 const parse = (value: string): { data: Properties; content: string } => {

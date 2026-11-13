@@ -3,8 +3,8 @@ import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { draw } from '../draw.ts';
 import { fillEmbeds, refreshEmbeds } from '../embeds.ts';
-import { NoteService, noteService } from '../note-service.ts';
-import type { NoteChangeDetail } from '../note-service.ts';
+import { NoteService, noteService } from '../services/note.ts';
+import type { NoteChangeDetail } from '../services/note.ts';
 import { render } from '../render.ts';
 
 export type MarkdownClickWikilinkDetail = { target: string };

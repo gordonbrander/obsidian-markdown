@@ -1,7 +1,7 @@
 // Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]) for <ofm-markdown> and the editor.
 // The note service loads notes; this module decides what part of a note to show, and builds the DOM.
 // It creates <ofm-markdown> by tag name, so the caller registers the element.
-import type { NoteService } from './note-service.ts';
+import type { NoteService } from './services/note.ts';
 import { IMAGE_EXTENSIONS } from './ofm-inline.ts';
 import { renderer, splitFrontmatter } from './render.ts';
 

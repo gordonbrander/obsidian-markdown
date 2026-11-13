@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { NoteService } from './note-service.ts';
+import { NoteService } from './note.ts';
 
 /** A loader over an object of notes, counting calls per name. */
 const vault = (notes: Record<string, string>) => {

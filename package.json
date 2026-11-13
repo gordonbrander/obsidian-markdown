@@ -34,7 +34,7 @@
     "./components/ofm-proprow.js": "./dist/components/ofm-proprow.js",
     "./ofm-theme.js": "./dist/ofm-theme.js",
     "./adopt-sheet.js": "./dist/adopt-sheet.js",
-    "./note-service.js": "./dist/note-service.js",
+    "./services/note.js": "./dist/services/note.js",
     "./package.json": "./package.json"
   },
   "sideEffects": [

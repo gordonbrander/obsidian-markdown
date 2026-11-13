@@ -1,4 +1,4 @@
-import type { Result } from './result.ts';
+import type { Result } from '../result.ts';
 
 /** The host's loader: a note's source, or undefined if the note doesn't exist. */
 export type NoteLoader = (name: string) => Promise<string | undefined>;

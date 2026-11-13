@@ -125,7 +125,7 @@ An editable property list, like Obsidian's properties view.
 The components can't see your vault, so note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) in `<ofm-markdown>` and `<ofm-note>` load through `noteService`. Your loader gets the note's name and returns its source, or `undefined` if it doesn't exist. Embeds nest up to four deep, and cycles stop. With no loader, embeds stay placeholders.
 
 ```js
-import { noteService } from 'obsidian-markdown/note-service.js';
+import { noteService } from 'obsidian-markdown/services/note.js';
 
 noteService.setLoader(async (name) => {
   const response = await fetch(`/notes/${encodeURIComponent(name)}.md`);
@@ -138,7 +138,7 @@ Every component shares this instance by default, so a note loads once for all of
 To configure one element on its own, set its `noteService` property to another instance. It's a property, not an attribute. Elements a component creates inside itself, such as `<ofm-note>`'s body, use their owner's service.
 
 ```js
-import { NoteService } from 'obsidian-markdown/note-service.js';
+import { NoteService } from 'obsidian-markdown/services/note.js';
 
 document.querySelector('ofm-note').noteService = new NoteService(loadPublishedNote);
 ```
