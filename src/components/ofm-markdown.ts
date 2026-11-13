@@ -1,7 +1,8 @@
 import { LitElement, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { embedsNote, renderNote } from '../embeds.ts';
+import { draw } from '../draw.ts';
+import { embedsNote, renderNoteEmbeds } from '../embeds.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import type { NoteChangeDetail } from '../services/note.ts';
 
@@ -57,7 +58,12 @@ export class OfmMarkdown extends LitElement {
     if (changed.has('noteService') && this.isConnected) this.#subscribe(this.noteService);
   }
 
-  #build = (value: string, strictLineBreaks: boolean) => renderNote(value, this.noteService, { strictLineBreaks });
+  /** Render and draw off-screen, so an update shows finished content. */
+  #build = async (value: string, strictLineBreaks: boolean) => {
+    const note = renderNoteEmbeds(value, this.noteService, { strictLineBreaks });
+    await draw(note);
+    return note;
+  };
 
   #content?: DocumentFragment;
 

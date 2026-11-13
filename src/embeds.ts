@@ -79,19 +79,20 @@ export const fillEmbeds = (root: ParentNode, service: NoteService, options: Rend
         frame.classList.add('is-unresolved');
         return;
       }
-      void renderNote(source, service, options, depth + 1).then((note) => content.append(note));
+      // Draw off-screen, so the embed appears finished.
+      const note = renderNoteEmbeds(source, service, options, depth + 1);
+      void draw(note).then(() => content.append(note));
     });
   }
 };
 
 /**
- * A note's source as drawn DOM, ready to insert. Its embeds fill in as they load, `depth` levels down.
- * Draws off-screen: a template's content is inert until it's inserted.
+ * A note's source as DOM, with its embeds filling in as they load, `depth` levels down. Not yet drawn: call draw().
+ * A template's content is inert until it's inserted, so drawing it off-screen is safe.
  */
-export const renderNote = async (source: string, service: NoteService, options: RenderOptions = {}, depth = 0) => {
+export const renderNoteEmbeds = (source: string, service: NoteService, options: RenderOptions = {}, depth = 0) => {
   const template = document.createElement('template');
   template.innerHTML = render(source, options);
   fillEmbeds(template.content, service, options, depth);
-  await draw(template.content);
   return template.content;
 };
