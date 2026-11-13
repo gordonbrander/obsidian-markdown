@@ -1,7 +1,7 @@
 import { LitElement, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { draw } from '../draw.ts';
+import { draw, highlight } from '../draw.ts';
 import { embedsNote, renderNoteEmbeds } from '../embeds.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import type { NoteChangeDetail } from '../services/note.ts';
@@ -11,9 +11,11 @@ export type MarkdownClickWikilinkDetail = { target: string };
 /**
  * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams and highlighting code.
  * Note embeds load through its `noteService` property: the shared `noteService` unless you assign another.
- * @attr rendered - Set by the element once its first content is in the DOM and drawn. Style the first render with `ofm-markdown:not([rendered])`.
- * @fires rendered - The new content is in the DOM and drawn.
- * @fires click-wikilink - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
+ * @attr rendered - Set by the element once its first content is in the DOM, with math and diagrams drawn. It stays set. Style the first render with `ofm-markdown:not([rendered])`.
+ * @attr loaded - Set while the current content is fully loaded: code highlighted and note embeds filled. Removed when new content starts rendering.
+ * @fires markdown-rendered - The new content is in the DOM, with math and diagrams drawn. Code highlighting and embeds may still be loading.
+ * @fires markdown-loaded - The new content is fully loaded: code highlighted and note embeds filled. Fires after `markdown-rendered`, unless newer content replaced it first.
+ * @fires wikilink-click - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-markdown')
 export class OfmMarkdown extends LitElement {
@@ -61,20 +63,27 @@ export class OfmMarkdown extends LitElement {
   /** Render and draw off-screen, so an update shows finished content. */
   #build = async (value: string, strictLineBreaks: boolean) => {
     const note = renderNoteEmbeds(value, this.noteService, { strictLineBreaks });
-    await draw(note);
+    await draw(note.content);
     return note;
   };
 
   #content?: DocumentFragment;
+  /** Resolves when the embeds in `#content` are filled. */
+  #embedsLoaded?: Promise<void>;
+  /** The latest render's loading, so an older one finishing late doesn't mark the element loaded. */
+  #loading?: Promise<unknown>;
 
-  /** Build before every update, so the update renders finished content and `updateComplete` waits for it. */
+  /** Build before every update, so the update renders content with math and diagrams drawn, and `updateComplete` waits for it. Code highlighting follows in `updated`. */
   protected override async scheduleUpdate() {
+    // New content is on its way, so the old content's loading no longer counts.
+    this.#loading = undefined;
+    this.removeAttribute('loaded');
     try {
       // Props can change while drawing. Those changes merge into this pending update, so rebuild until the content matches.
       let value: string, strictLineBreaks: boolean;
       do {
         ({ value, strictLineBreaks } = this);
-        this.#content = await this.#build(value ?? '', strictLineBreaks);
+        ({ content: this.#content, loaded: this.#embedsLoaded } = await this.#build(value ?? '', strictLineBreaks));
       } while (value !== this.value || strictLineBreaks !== this.strictLineBreaks);
     } finally {
       // Never skip it, or the update stays pending and the element stops updating.
@@ -84,12 +93,20 @@ export class OfmMarkdown extends LitElement {
 
   updated() {
     this.setAttribute('rendered', '');
-    this.dispatchEvent(new CustomEvent('rendered', { bubbles: true, composed: true }));
+    this.dispatchEvent(new CustomEvent('markdown-rendered', { bubbles: true, composed: true }));
+    // Highlighting only adds spans, so the note shows without waiting for the highlighter to load.
+    const loading = Promise.all([highlight(this), this.#embedsLoaded]);
+    this.#loading = loading;
+    void loading.then(() => {
+      if (this.#loading !== loading) return;
+      this.setAttribute('loaded', '');
+      this.dispatchEvent(new CustomEvent('markdown-loaded', { bubbles: true, composed: true }));
+    });
   }
 
   /** Returns false when a listener cancelled the event. */
   #clickWikilink(target: string) {
-    return this.dispatchEvent(new CustomEvent<MarkdownClickWikilinkDetail>('click-wikilink', {
+    return this.dispatchEvent(new CustomEvent<MarkdownClickWikilinkDetail>('wikilink-click', {
       bubbles: true,
       composed: true,
       cancelable: true,

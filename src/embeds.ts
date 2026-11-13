@@ -1,6 +1,6 @@
 // Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]).
 // The note service loads notes; this module decides what part of a note to show, and builds the DOM.
-import { draw } from './draw.ts';
+import { draw, highlight } from './draw.ts';
 import type { NoteService } from './services/note.ts';
 import { IMAGE_EXTENSIONS } from './ofm-inline.ts';
 import { render, renderer, splitFrontmatter } from './render.ts';
@@ -63,13 +63,14 @@ export const embedFrame = (target: string): { frame: HTMLElement; content: HTMLE
 /**
  * Replace the placeholders under `root` with embedded notes as they load, then fill their embeds one level deeper.
  * With no loader set, the placeholders stay as render() made them.
+ * Resolves once every embed, at every depth, is in place, drawn and highlighted. Never rejects.
  */
-export const fillEmbeds = (root: ParentNode, service: NoteService, options: RenderOptions = {}, depth = 0) => {
+export const fillEmbeds = async (root: ParentNode, service: NoteService, options: RenderOptions = {}, depth = 0): Promise<void> => {
   if (depth >= MAX_DEPTH) return;
-  for (const span of embedPlaceholders(root)) {
+  await Promise.all(embedPlaceholders(root).map((span) => {
     const target = span.getAttribute('src') ?? '';
     const { name, sub } = parseTarget(target);
-    void service.load(name).then((result) => {
+    return service.load(name).then(async (result) => {
       if (!result.ok && result.error.type === 'no-loader') return;
       if (!result.ok && result.error.type === 'failed') console.warn(`ofm-markdown: could not load ${name}`, result.error.cause);
       const { frame, content } = embedFrame(target);
@@ -79,20 +80,22 @@ export const fillEmbeds = (root: ParentNode, service: NoteService, options: Rend
         frame.classList.add('is-unresolved');
         return;
       }
-      // Draw off-screen, so the embed appears finished.
+      // Draw off-screen, so the embed appears with its math and diagrams. Highlighting follows, as for the note.
       const note = renderNoteEmbeds(source, service, options, depth + 1);
-      void draw(note).then(() => content.append(note));
+      await draw(note.content);
+      content.append(note.content);
+      await Promise.all([highlight(content), note.loaded]);
     });
-  }
+  }));
 };
 
 /**
  * A note's source as DOM, with its embeds filling in as they load, `depth` levels down. Not yet drawn: call draw().
+ * `loaded` resolves once the embeds are filled (see fillEmbeds).
  * A template's content is inert until it's inserted, so drawing it off-screen is safe.
  */
 export const renderNoteEmbeds = (source: string, service: NoteService, options: RenderOptions = {}, depth = 0) => {
   const template = document.createElement('template');
   template.innerHTML = render(source, options);
-  fillEmbeds(template.content, service, options, depth);
-  return template.content;
+  return { content: template.content, loaded: fillEmbeds(template.content, service, options, depth) };
 };

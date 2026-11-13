@@ -63,7 +63,7 @@ Display a whole note: property drawer followed by rendered Markdown. It's built 
   - **`strict-line-breaks`**: passed to `<ofm-markdown>`.
 - Events:
   - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`.
-  - **`click-wikilink`**: a wikilink was clicked, in a property or the note. Bubbles up from `<ofm-frontmatter>` or `<ofm-markdown>`; `detail.target` is the link target.
+  - **`wikilink-click`**: a wikilink was clicked, in a property or the note. Bubbles up from `<ofm-frontmatter>` or `<ofm-markdown>`; `detail.target` is the link target.
 
 The Properties drawer is hidden when the note has no properties. If the front matter isn't valid YAML, the properties are skipped with a console warning and the note still renders.
 
@@ -78,7 +78,7 @@ import 'obsidian-markdown/components/ofm-markdown.js';
 <script type="module">
   const note = document.querySelector('ofm-markdown');
   note.value = '# Hello\n\nSee [[Another note]].';
-  note.addEventListener('click-wikilink', (event) => {
+  note.addEventListener('wikilink-click', (event) => {
     event.preventDefault(); // Route the link yourself instead of following its href.
     console.log(event.detail.target);
   });
@@ -90,14 +90,16 @@ Renders a note, drawing math (MathML) and Mermaid diagrams (with [Pele](https://
 - Properties/attributes:
   - **`value`**: the note's Markdown source.
   - **`strict-line-breaks`**: a boolean attribute. When set, single line breaks don't become `<br>`.
-  - **`rendered`**: set by the element once its first content is in the DOM and drawn. It stays set after that. Use it to fade in the first render:
+  - **`rendered`**: set by the element once its first content is in the DOM, with math and diagrams drawn. It stays set after that. Code highlighting and note embeds don't hold it back. Use it to fade in the first render:
     ```css
     ofm-markdown { transition: opacity 150ms; }
     ofm-markdown:not([rendered]) { opacity: 0; }
     ```
+  - **`loaded`**: set while the current content is fully loaded, with code highlighted and note embeds filled. It's removed when new content starts rendering.
 - Events:
-  - **`click-wikilink`**: a wikilink was clicked. `detail.target` is the link target.
-  - **`rendered`**: the new content is in the DOM and drawn.
+  - **`wikilink-click`**: a wikilink was clicked. `detail.target` is the link target.
+  - **`markdown-rendered`**: the new content is in the DOM, with math and diagrams drawn. Code highlighting and note embeds may still be loading.
+  - **`markdown-loaded`**: the new content is fully loaded, with code highlighted and note embeds filled. It follows `markdown-rendered`, unless newer content replaces it first.
 
 ### `<ofm-frontmatter>`
 
@@ -113,7 +115,7 @@ An editable property list, like Obsidian's properties view.
   - **`readonly`**: a boolean attribute that disables editing.
 - Events:
   - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`. By then, `properties` holds the edit.
-  - **`click-wikilink`**: a wikilink in a property value was clicked. `detail` is `{ key, target }`.
+  - **`wikilink-click`**: a wikilink in a property value was clicked. `detail` is `{ key, target }`.
 
 `<ofm-proprow>`, a single property row, is registered along with it. Each row has two attributes for styling:
 
@@ -158,7 +160,7 @@ export function Note({ note }) {
   return (
     <ofm-note
       value={note}
-      onclick-wikilink={(event) => console.log(event.detail.target)}
+      onwikilink-click={(event) => console.log(event.detail.target)}
       onproprow-change={(event) => console.log(event.detail)}
     />
   );
@@ -197,7 +199,7 @@ defineProps(['note']);
 <template>
   <ofm-note
     :value="note"
-    @click-wikilink="(event) => console.log(event.detail.target)"
+    @wikilink-click="(event) => console.log(event.detail.target)"
     @proprow-change="(event) => console.log(event.detail)"
   />
 </template>
@@ -218,7 +220,7 @@ No setup needed in Svelte 5:
 
 <ofm-note
   value={note}
-  onclick-wikilink={(event) => console.log(event.detail.target)}
+  onwikilink-click={(event) => console.log(event.detail.target)}
   onproprow-change={(event) => console.log(event.detail)}
 ></ofm-note>
 ```
@@ -234,7 +236,7 @@ export function Note(props) {
   return (
     <ofm-note
       prop:value={props.note}
-      on:click-wikilink={(event) => console.log(event.detail.target)}
+      on:wikilink-click={(event) => console.log(event.detail.target)}
       on:proprow-change={(event) => console.log(event.detail)}
     />
   );

@@ -107,13 +107,15 @@ $\href{javascript:document.title='pwned'}{link}$
       const log = document.querySelector('#log');
       const show = () => { note.value = source.value; };
       source.addEventListener('input', show);
-      note.addEventListener('click-wikilink', (e) => {
+      note.addEventListener('wikilink-click', (e) => {
         e.preventDefault(); // Log the link instead of following it.
-        log.textContent = `click-wikilink ${JSON.stringify(e.detail)}\n${log.textContent}`;
+        log.textContent = `wikilink-click ${JSON.stringify(e.detail)}\n${log.textContent}`;
       });
-      note.addEventListener('rendered', () => {
-        log.textContent = `rendered\n${log.textContent}`;
-      });
+      for (const type of ['markdown-rendered', 'markdown-loaded']) {
+        note.addEventListener(type, () => {
+          log.textContent = `${type}\n${log.textContent}`;
+        });
+      }
       show();
     </script>
   </body>

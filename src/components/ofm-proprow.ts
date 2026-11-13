@@ -197,7 +197,7 @@ export const row = (data: RowData): TemplateResult => {
  * The `effective-type` attribute holds the type the row draws, which can differ from the declared `type`.
  * @attr effective-type - The drawn type: text, number, checkbox, link, date, datetime, list or object.
  * @fires proprow-change - A property was edited. `detail` is `{ key, value, type, effectiveType }`.
- * @fires click-wikilink - A wikilink in the value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
+ * @fires wikilink-click - A wikilink in the value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-proprow')
 export class OfmProprow extends LitElement {
@@ -237,7 +237,7 @@ export class OfmProprow extends LitElement {
   }
 
   #clickWikilink(event: Event, target: string) {
-    const proceed = this.dispatchEvent(new CustomEvent<ClickWikilinkDetail>('click-wikilink', {
+    const proceed = this.dispatchEvent(new CustomEvent<ClickWikilinkDetail>('wikilink-click', {
       bubbles: true,
       composed: true,
       cancelable: true,
