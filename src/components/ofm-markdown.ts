@@ -67,7 +67,6 @@ export class OfmMarkdown extends LitElement {
 
     const internal = clicked.closest('.internal-link');
     if (internal) {
-      // Mermaid nodes have no data-href. Their text is the target (SPEC 5.1).
       const target = internal.getAttribute('data-href') ?? internal.textContent?.trim() ?? '';
       if (!this.#clickWikilink(target)) event.preventDefault();
       return;

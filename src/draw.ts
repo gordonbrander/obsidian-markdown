@@ -2,7 +2,7 @@ let nextDiagramId = 0;
 
 // Skipping import() once loaded lets later renders finish in microtasks, before paint.
 let tex: typeof import('./tex.ts') | undefined;
-let mermaid: typeof import('mermaid').default | undefined;
+let pele: typeof import('pele') | undefined;
 let refractor: typeof import('refractor').refractor | undefined;
 
 type Tokens = ReturnType<NonNullable<typeof refractor>['highlight']>['children'];
@@ -23,18 +23,14 @@ const drawMath = async (elements: HTMLElement[]) => {
 };
 
 const drawDiagrams = async (codes: HTMLElement[]) => {
-  mermaid ??= (await import('mermaid')).default;
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: 'strict',
-    suppressErrorRendering: true,
-    theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
-  });
+  pele ??= await import('pele');
   for (const code of codes) {
     try {
-      const { svg } = await mermaid.render(`ofm-markdown-${++nextDiagramId}`, code.textContent ?? '');
+      // The prefix keeps SVG ids unique when a page shows several notes.
+      const { svg } = pele.render(code.textContent ?? '', { idPrefix: `ofm-markdown-${++nextDiagramId}-` });
       const diagram = document.createElement('div');
       diagram.className = 'mermaid';
+      // Pele escapes diagram text. We pass no icon or math resolver, the only unescaped inputs.
       diagram.innerHTML = svg;
       code.parentElement?.replaceWith(diagram);
     } catch (error) {
