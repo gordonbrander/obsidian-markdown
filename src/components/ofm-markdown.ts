@@ -1,11 +1,9 @@
 import { LitElement, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { draw } from '../draw.ts';
-import { embedsNote, fillEmbeds } from '../embeds.ts';
+import { embedsNote, renderNote } from '../embeds.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import type { NoteChangeDetail } from '../services/note.ts';
-import { render } from '../render.ts';
 
 export type MarkdownClickWikilinkDetail = { target: string };
 
@@ -59,14 +57,7 @@ export class OfmMarkdown extends LitElement {
     if (changed.has('noteService') && this.isConnected) this.#subscribe(this.noteService);
   }
 
-  /** Render and draw off-screen. A template's content is inert until it's inserted. */
-  #build = async (value: string, strictLineBreaks: boolean) => {
-    const template = document.createElement('template');
-    template.innerHTML = render(value, { strictLineBreaks });
-    fillEmbeds(template.content, this.noteService, { strictLineBreaks });
-    await draw(template.content);
-    return template.content;
-  };
+  #build = (value: string, strictLineBreaks: boolean) => renderNote(value, this.noteService, { strictLineBreaks });
 
   #content?: DocumentFragment;
 
