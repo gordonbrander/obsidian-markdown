@@ -107,9 +107,9 @@ $\href{javascript:document.title='pwned'}{link}$
       const log = document.querySelector('#log');
       const show = () => { note.value = source.value; };
       source.addEventListener('input', show);
-      note.addEventListener('click-wikilink', (e) => {
+      note.addEventListener('ofm-wikilink-click', (e) => {
         e.preventDefault(); // Log the link instead of following it.
-        log.textContent = `click-wikilink ${JSON.stringify(e.detail)}\n${log.textContent}`;
+        log.textContent = `ofm-wikilink-click ${JSON.stringify(e.detail)}\n${log.textContent}`;
       });
       for (const type of ['ofm-markdown-rendered', 'ofm-markdown-loaded']) {
         note.addEventListener(type, () => {

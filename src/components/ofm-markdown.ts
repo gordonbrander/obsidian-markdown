@@ -15,7 +15,7 @@ export type MarkdownClickWikilinkDetail = { target: string };
  * @attr loaded - Set while the current content is fully loaded: code highlighted and note embeds filled. Removed when new content starts rendering.
  * @fires ofm-markdown-rendered - The new content is in the DOM, with math and diagrams drawn. Code highlighting and embeds may still be loading.
  * @fires ofm-markdown-loaded - The new content is fully loaded: code highlighted and note embeds filled. Fires after `ofm-markdown-rendered`, unless newer content replaced it first.
- * @fires click-wikilink - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
+ * @fires ofm-wikilink-click - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-markdown')
 export class OfmMarkdown extends LitElement {
@@ -106,7 +106,7 @@ export class OfmMarkdown extends LitElement {
 
   /** Returns false when a listener cancelled the event. */
   #clickWikilink(target: string) {
-    return this.dispatchEvent(new CustomEvent<MarkdownClickWikilinkDetail>('click-wikilink', {
+    return this.dispatchEvent(new CustomEvent<MarkdownClickWikilinkDetail>('ofm-wikilink-click', {
       bubbles: true,
       composed: true,
       cancelable: true,

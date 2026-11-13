@@ -64,8 +64,8 @@ Escape velocity: $v_e = \sqrt{2GM/r}$.
         log.textContent = `${e.type} ${JSON.stringify(e.detail)}\n${log.textContent}`;
       };
       source.addEventListener('input', () => { note.value = source.value; });
-      note.addEventListener('proprow-change', show);
-      note.addEventListener('click-wikilink', (e) => { e.preventDefault(); show(e); });
+      note.addEventListener('ofm-proprow-change', show);
+      note.addEventListener('ofm-wikilink-click', (e) => { e.preventDefault(); show(e); });
       document.querySelector('#readonly').addEventListener('change', (e) => { note.readonly = e.target.checked; });
       document.querySelector('#strict').addEventListener('change', (e) => { note.strictLineBreaks = e.target.checked; });
       note.value = source.value;
