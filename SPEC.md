@@ -318,7 +318,9 @@ Biology --&gt; Chemistry
 
 <a id="math-block"></a>A **math block** begins with a line whose content, after at most 3 spaces of indentation, starts with `$$` and has no further `$$` on that line. It ends at the next line containing `$$`, or at the end of its container if there is none. ***[reported]*** Text before the closing `$$` belongs to the math block. Blank lines MAY appear inside. ***[chosen]***
 
-The content is LaTeX as understood by [MathJax](https://docs.mathjax.org/). It is not parsed as Markdown, and its leading and trailing whitespace is removed. A math block can interrupt a paragraph. ***[chosen]***
+The content is LaTeX as understood by [Temml](https://temml.org/). It is not parsed as Markdown, and its leading and trailing whitespace is removed. A math block can interrupt a paragraph. ***[chosen]***
+
+Macros defined with `\gdef` carry to later math in the same note. Macros defined with `\newcommand` last only for their own math block or inline span; this differs from Obsidian, where MathJax keeps them for the whole page. ***[chosen]***
 
 **Example 9**
 

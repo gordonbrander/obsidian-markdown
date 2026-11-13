@@ -85,7 +85,7 @@ import 'obsidian-markdown/components/ofm-markdown.js';
 </script>
 ```
 
-Renders a note, drawing math (MathJax) and Mermaid diagrams, and highlighting code blocks with Prism's grammars (via refractor's common set, plus `jsx` and `tsx`; `svelte` and `vue` highlight as HTML), so Obsidian snippets that style `.token.*` or `--code-*` apply. Each library loads on demand, only when a note contains math, a diagram or a code block with a language.
+Renders a note, drawing math (Temml, as MathML) and Mermaid diagrams, and highlighting code blocks with Prism's grammars (via refractor's common set, plus `jsx` and `tsx`; `svelte` and `vue` highlight as HTML), so Obsidian snippets that style `.token.*` or `--code-*` apply. Each library loads on demand, only when a note contains math, a diagram or a code block with a language.
 
 - Properties/attributes:
   - **`value`**: the note's Markdown source.
