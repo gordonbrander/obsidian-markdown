@@ -57,7 +57,7 @@
   "dependencies": {
     "lit": "^3.3.3",
     "markdown-it": "^15.0.3",
-    "mermaid": "^12.3.0",
+    "pele": "^1.13.0",
     "refractor": "^5.0.0",
     "temml": "^0.14.0",
     "yaml": "^2.9.1"

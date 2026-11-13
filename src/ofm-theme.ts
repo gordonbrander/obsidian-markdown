@@ -1021,8 +1021,19 @@ export const obsidianTheme = css`
       counter-reset: tmlEqnNo;
     }
 
+    /* Pele draws diagrams from these variables, so they follow light and dark without a redraw. */
     .mermaid {
       text-align: center;
+      --pele-bg: var(--background-primary);
+      --pele-fg: var(--text-normal);
+      --pele-muted: var(--text-muted);
+      --pele-line: var(--text-muted);
+      --pele-border: var(--background-modifier-border-focus);
+      --pele-surface: var(--background-primary-alt);
+      --pele-accent: var(--interactive-accent);
+      --pele-error: var(--color-red);
+      --pele-font: var(--font-text-theme);
+      --pele-font-mono: var(--font-monospace-theme);
     }
     .mermaid .internal-link {
       cursor: pointer;

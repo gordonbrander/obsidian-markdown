@@ -295,7 +295,7 @@ The following languages have special meaning. An application that implements the
 
 | Language | Result | Content |
 | --- | --- | --- |
-| `mermaid` | Diagram | [Mermaid](https://mermaid.js.org/) source. Nodes with the class `internal-link` become internal links whose target is the node's text. Those links do not appear in the graph. |
+| `mermaid` | Diagram | [Mermaid](https://mermaid.js.org/) source, which Obsidian draws with [Pele](https://pele.run). Nodes with the class `internal-link` become internal links whose target is the node's text. Those links do not appear in the graph. |
 | `query` | Embedded search results | An Obsidian search query, such as `embed OR search`. |
 | `base` | Embedded [Bases](https://obsidian.md/help/bases/syntax) view | YAML. Top-level keys are `filters`, `formulas`, `properties`, `summaries`, and `views`. |
 
