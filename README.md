@@ -122,7 +122,7 @@ An editable property list, like Obsidian's properties view.
 
 ### Note embeds
 
-The components can't see your vault, so note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) in `<ofm-markdown>` and `<ofm-note>` load through `noteService`. Your loader gets the note's name and returns its source, or `undefined` if it doesn't exist. Embeds nest up to four deep, and cycles stop. With no loader, embeds stay placeholders.
+The components can't see your vault, so note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) in `<ofm-markdown>` and `<ofm-note>` load through `noteService`. Your loader gets the note's name and returns its source, or `undefined` if it doesn't exist. Embeds nest up to five deep, as in Obsidian, so a note that embeds itself repeats until that depth. With no loader, embeds stay placeholders.
 
 ```js
 import { noteService } from 'obsidian-markdown/services/note.js';
@@ -133,7 +133,7 @@ noteService.setLoader(async (name) => {
 });
 ```
 
-Every component shares this instance by default, so a note loads once for all of them. Loaded notes are cached. Call `noteService.clear(name)` when a note changes, and the embeds of that note already on screen redraw. Call `setLoader` again to forget every note and redraw all embeds. A failed load isn't cached, so it's tried again next time.
+Every component shares this instance by default, so a note loads once for all of them. Loaded notes are cached. Call `noteService.clear(name)` when a note changes, and the components showing it re-render. Call `setLoader` again to forget every note and re-render them all. A failed load isn't cached, so it's tried again next time.
 
 To configure one element on its own, set its `noteService` property to another instance. It's a property, not an attribute. Elements a component creates inside itself, such as `<ofm-note>`'s body, use their owner's service.
 

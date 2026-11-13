@@ -1,14 +1,21 @@
-// Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]) for <ofm-markdown> and the editor.
+// Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]).
 // The note service loads notes; this module decides what part of a note to show, and builds the DOM.
-// It creates <ofm-markdown> by tag name, so the caller registers the element.
+import { draw } from './draw.ts';
 import type { NoteService } from './services/note.ts';
 import { IMAGE_EXTENSIONS } from './ofm-inline.ts';
-import { renderer, splitFrontmatter } from './render.ts';
+import { render, renderer, splitFrontmatter } from './render.ts';
+import type { RenderOptions } from './render.ts';
 
-/** Embeds nest at most this deep. */
-export const MAX_DEPTH = 4;
+/** Embeds nest at most this deep, as in Obsidian. Depth alone stops cycles: a note that embeds itself repeats until the cap. */
+export const MAX_DEPTH = 5;
 
 const md = renderer();
+
+/** An embed target's note name and subpath: `Note#Heading` → `{ name: 'Note', sub: 'Heading' }`. */
+export const parseTarget = (target: string): { name: string; sub: string } => {
+  const i = target.indexOf('#');
+  return i === -1 ? { name: target, sub: '' } : { name: target.slice(0, i), sub: target.slice(i + 1) };
+};
 
 /** The part of a note an embed names: all of it, a heading's section (`Heading`) or a block (`^id`). Undefined if it isn't there. */
 export const section = (note: string, sub = ''): string | undefined => {
@@ -28,101 +35,53 @@ export const section = (note: string, sub = ''): string | undefined => {
   return lines.slice(map![0], next?.map?.[0] ?? lines.length).join('\n');
 };
 
-/** Properties an owner sets on the <ofm-markdown> it creates, so it uses the owner's service. */
-export type EmbedHost = HTMLElement & { value: string; noteService?: NoteService; embedStack?: readonly string[] };
+const isImage = (name: string) => IMAGE_EXTENSIONS.has(name.split('.').pop()?.toLowerCase() ?? '');
 
-const isImage = (target: string) => IMAGE_EXTENSIONS.has(target.split('#')[0].split('.').pop()?.toLowerCase() ?? '');
+/** The note-embed placeholders render() left under `root`. */
+export const embedPlaceholders = (root: ParentNode): Element[] =>
+  [...root.querySelectorAll('span.internal-embed[src]')].filter((span) => !isImage(parseTarget(span.getAttribute('src') ?? '').name));
 
-const placeholder = (target: string) => {
-  const span = document.createElement('span');
-  span.className = 'internal-embed';
-  span.setAttribute('src', target);
-  return span;
-};
+/** Whether anything under `root` embeds note `name`, filled or not. */
+export const embedsNote = (root: ParentNode, name: string): boolean =>
+  [...root.querySelectorAll('.internal-embed[src]')].some((el) => parseTarget(el.getAttribute('src') ?? '').name === name);
 
-/** Load the note into `content`. Its own embeds fill in from the nested <ofm-markdown>, one level deeper. */
-const fill = async (element: HTMLElement, content: HTMLElement, target: string, service: NoteService, stack: readonly string[]) => {
-  const [name, ...rest] = target.split('#');
-  // Past the cap, or a note already being shown above this one: keep the placeholder, which breaks cycles.
-  if (stack.length >= MAX_DEPTH || stack.includes(name)) return;
-  const result = await service.load(name);
-  if (!result.ok) {
-    if (result.error.type === 'failed') console.warn(`ofm-markdown: could not load ${name}`, result.error.cause);
-    if (result.error.type !== 'no-loader') element.classList.add('is-unresolved');
-    return;
-  }
-  const source = section(result.value, rest.join('#'));
-  if (source === undefined) {
-    element.classList.add('is-unresolved');
-    return;
-  }
-  const markdown = document.createElement('ofm-markdown') as EmbedHost;
-  markdown.noteService = service;
-  markdown.embedStack = [...stack, name];
-  markdown.value = source;
-  content.replaceChildren(markdown);
-};
-
-/** An embed of another note, as Obsidian draws it. Shows a placeholder until the note loads. */
-export const embed = (target: string, service: NoteService, stack: readonly string[]) => {
-  const element = document.createElement('div');
-  element.className = 'internal-embed markdown-embed';
-  element.setAttribute('src', target);
+/** An embed's frame, as Obsidian draws it: a link to open the note, and an empty box for its content. */
+export const embedFrame = (target: string): { frame: HTMLElement; content: HTMLElement } => {
+  const frame = document.createElement('div');
+  frame.className = 'internal-embed markdown-embed';
+  frame.setAttribute('src', target);
   const link = document.createElement('a');
   link.className = 'markdown-embed-link internal-link';
   link.setAttribute('data-href', target);
   link.setAttribute('aria-label', `Open ${target}`);
-  // Inside <ofm-markdown>, its click handler fires click-wikilink for this link. Elsewhere, such as an editor widget, fire it here.
-  link.addEventListener('click', (event) => {
-    if (link.parentElement?.closest('ofm-markdown')) return;
-    event.preventDefault();
-    link.dispatchEvent(new CustomEvent('click-wikilink', { bubbles: true, composed: true, cancelable: true, detail: { target } }));
-  });
   const content = document.createElement('div');
   content.className = 'markdown-embed-content';
-  element.append(link, content);
-  refill(element, service, stack);
-  return element;
-};
-
-/** Show the placeholder, then load the note again. Keeps the element, which may be an editor widget's root. */
-const refill = (element: Element, service: NoteService, stack: readonly string[]) => {
-  const target = element.getAttribute('src') ?? '';
-  const content = element.querySelector(':scope > .markdown-embed-content') as HTMLElement;
-  element.classList.remove('is-unresolved');
-  content.replaceChildren(placeholder(target));
-  void fill(element as HTMLElement, content, target, service, stack);
-};
-
-/** Elements under `root` from its own render: not inside a nested <ofm-markdown>, which handles its own. */
-const own = (root: Element | DocumentFragment, selector: string) => {
-  const owner = root instanceof Element ? root.closest('ofm-markdown') : null;
-  return [...root.querySelectorAll(selector)].filter((el) => el.parentElement?.closest('ofm-markdown') === owner);
+  frame.append(link, content);
+  return { frame, content };
 };
 
 /**
- * Replace the note-embed placeholders render() leaves under `root` with embeds, once the service answers.
- * With no loader set, the placeholders stay as render() made them. Image embeds are already <img>.
+ * Replace the placeholders under `root` with embedded notes as they load, then fill their embeds one level deeper.
+ * With no loader set, the placeholders stay as render() made them.
  */
-export const fillEmbeds = (root: Element | DocumentFragment, service: NoteService, stack: readonly string[]) => {
-  for (const span of own(root, 'span.internal-embed[src]')) {
+export const fillEmbeds = (root: ParentNode, service: NoteService, options: RenderOptions = {}, depth = 0) => {
+  if (depth >= MAX_DEPTH) return;
+  for (const span of embedPlaceholders(root)) {
     const target = span.getAttribute('src') ?? '';
-    if (isImage(target)) continue;
-    // fill() loads the same note again, from the cache.
-    void service.load(target.split('#')[0]).then((result) => {
-      if (result.ok || result.error.type !== 'no-loader') span.replaceWith(embed(target, service, stack));
+    const { name, sub } = parseTarget(target);
+    void service.load(name).then((result) => {
+      if (!result.ok && result.error.type === 'no-loader') return;
+      if (!result.ok && result.error.type === 'failed') console.warn(`ofm-markdown: could not load ${name}`, result.error.cause);
+      const { frame, content } = embedFrame(target);
+      span.replaceWith(frame);
+      const source = result.ok ? section(result.value, sub) : undefined;
+      if (source === undefined) {
+        frame.classList.add('is-unresolved');
+        return;
+      }
+      content.innerHTML = render(source, options);
+      fillEmbeds(content, service, options, depth + 1);
+      void draw(content);
     });
   }
-};
-
-/**
- * Rebuild the embeds under `root` that show note `name`, after it changed. With no name, rebuild them all and fill
- * placeholders left from when there was no loader. Nested <ofm-markdown>s refresh their own embeds.
- */
-export const refreshEmbeds = (root: Element | DocumentFragment, service: NoteService, stack: readonly string[], name?: string) => {
-  for (const element of own(root, 'div.internal-embed.markdown-embed[src]')) {
-    const target = element.getAttribute('src') ?? '';
-    if (name === undefined || target.split('#')[0] === name) refill(element, service, stack);
-  }
-  if (name === undefined) fillEmbeds(root, service, stack);
 };

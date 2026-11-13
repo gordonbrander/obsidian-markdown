@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { draw } from '../draw.ts';
-import { fillEmbeds, refreshEmbeds } from '../embeds.ts';
+import { embedsNote, fillEmbeds } from '../embeds.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import type { NoteChangeDetail } from '../services/note.ts';
 import { render } from '../render.ts';
@@ -29,14 +29,13 @@ export class OfmMarkdown extends LitElement {
 
   /** Loads note embeds. Defaults to the shared `noteService`; assign another to configure this element on its own. */
   @property({ attribute: false }) accessor noteService: NoteService = noteService;
-  /** @internal The notes embedding this one, for the depth cap and cycle check. */
-  embedStack?: readonly string[];
-
   /** The service we listen to for changed notes. */
   #subscribed?: NoteService;
 
+  /** A note we show changed: rebuild. The service still caches every other note, so only that one reloads. */
   #onChange = (event: Event) => {
-    refreshEmbeds(this, this.noteService, this.embedStack ?? [], (event as CustomEvent<NoteChangeDetail>).detail.name);
+    const { name } = (event as CustomEvent<NoteChangeDetail>).detail;
+    if (name === undefined || embedsNote(this, name)) this.requestUpdate();
   };
 
   #subscribe(service?: NoteService) {
@@ -64,7 +63,7 @@ export class OfmMarkdown extends LitElement {
   #build = async (value: string, strictLineBreaks: boolean) => {
     const template = document.createElement('template');
     template.innerHTML = render(value, { strictLineBreaks });
-    fillEmbeds(template.content, this.noteService, this.embedStack ?? []);
+    fillEmbeds(template.content, this.noteService, { strictLineBreaks });
     await draw(template.content);
     return template.content;
   };
