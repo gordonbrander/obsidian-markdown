@@ -196,8 +196,8 @@ export const row = (data: RowData): TemplateResult => {
  * One property row: its key and an editor for its value.
  * The `effective-type` attribute holds the type the row draws, which can differ from the declared `type`.
  * @attr effective-type - The drawn type: text, number, checkbox, link, date, datetime, list or object.
- * @fires ofm-proprow-change - A property was edited. `detail` is `{ key, value, type, effectiveType }`.
- * @fires ofm-wikilink-click - A wikilink in the value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
+ * @fires proprow-change - A property was edited. `detail` is `{ key, value, type, effectiveType }`.
+ * @fires wikilink-click - A wikilink in the value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-proprow')
 export class OfmProprow extends LitElement {
@@ -229,7 +229,7 @@ export class OfmProprow extends LitElement {
     const value = typeof committed === 'string' && this.type !== 'text'
       ? parseCommitted(committed)
       : committed;
-    this.dispatchEvent(new CustomEvent<ProprowChangeDetail>('ofm-proprow-change', {
+    this.dispatchEvent(new CustomEvent<ProprowChangeDetail>('proprow-change', {
       bubbles: true,
       composed: true,
       detail: { key: this.key, value, type: this.type, effectiveType: this.#field.type },
@@ -237,7 +237,7 @@ export class OfmProprow extends LitElement {
   }
 
   #clickWikilink(event: Event, target: string) {
-    const proceed = this.dispatchEvent(new CustomEvent<ClickWikilinkDetail>('ofm-wikilink-click', {
+    const proceed = this.dispatchEvent(new CustomEvent<ClickWikilinkDetail>('wikilink-click', {
       bubbles: true,
       composed: true,
       cancelable: true,

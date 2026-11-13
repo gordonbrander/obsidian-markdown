@@ -16,8 +16,8 @@ const isRecord = (value: unknown): value is Properties =>
 
 /**
  * An editable property list, like Obsidian's properties view.
- * @fires ofm-proprow-change - A property was edited. Bubbles from its row. `detail` is `{ key, value, type, effectiveType }`, and `properties` already holds the edit.
- * @fires ofm-wikilink-click - A wikilink in a property value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
+ * @fires proprow-change - A property was edited. Bubbles from its row. `detail` is `{ key, value, type, effectiveType }`, and `properties` already holds the edit.
+ * @fires wikilink-click - A wikilink in a property value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-frontmatter')
 export class OfmFrontmatter extends LitElement {
@@ -42,7 +42,7 @@ export class OfmFrontmatter extends LitElement {
         .value=${value}
         .type=${isRecord(this.types) ? this.types[key] : undefined}
         .readonly=${this.readonly}
-        @ofm-proprow-change=${this.#onRowChange}
+        @proprow-change=${this.#onRowChange}
       ></ofm-proprow>
     `);
   }

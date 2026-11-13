@@ -13,9 +13,9 @@ export type MarkdownClickWikilinkDetail = { target: string };
  * Note embeds load through its `noteService` property: the shared `noteService` unless you assign another.
  * @attr rendered - Set by the element once its first content is in the DOM, with math and diagrams drawn. It stays set. Style the first render with `ofm-markdown:not([rendered])`.
  * @attr loaded - Set while the current content is fully loaded: code highlighted and note embeds filled. Removed when new content starts rendering.
- * @fires ofm-markdown-rendered - The new content is in the DOM, with math and diagrams drawn. Code highlighting and embeds may still be loading.
- * @fires ofm-markdown-loaded - The new content is fully loaded: code highlighted and note embeds filled. Fires after `ofm-markdown-rendered`, unless newer content replaced it first.
- * @fires ofm-wikilink-click - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
+ * @fires markdown-rendered - The new content is in the DOM, with math and diagrams drawn. Code highlighting and embeds may still be loading.
+ * @fires markdown-loaded - The new content is fully loaded: code highlighted and note embeds filled. Fires after `markdown-rendered`, unless newer content replaced it first.
+ * @fires wikilink-click - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-markdown')
 export class OfmMarkdown extends LitElement {
@@ -93,20 +93,20 @@ export class OfmMarkdown extends LitElement {
 
   updated() {
     this.setAttribute('rendered', '');
-    this.dispatchEvent(new CustomEvent('ofm-markdown-rendered', { bubbles: true, composed: true }));
+    this.dispatchEvent(new CustomEvent('markdown-rendered', { bubbles: true, composed: true }));
     // Highlighting only adds spans, so the note shows without waiting for the highlighter to load.
     const loading = Promise.all([highlight(this), this.#embedsLoaded]);
     this.#loading = loading;
     void loading.then(() => {
       if (this.#loading !== loading) return;
       this.setAttribute('loaded', '');
-      this.dispatchEvent(new CustomEvent('ofm-markdown-loaded', { bubbles: true, composed: true }));
+      this.dispatchEvent(new CustomEvent('markdown-loaded', { bubbles: true, composed: true }));
     });
   }
 
   /** Returns false when a listener cancelled the event. */
   #clickWikilink(target: string) {
-    return this.dispatchEvent(new CustomEvent<MarkdownClickWikilinkDetail>('ofm-wikilink-click', {
+    return this.dispatchEvent(new CustomEvent<MarkdownClickWikilinkDetail>('wikilink-click', {
       bubbles: true,
       composed: true,
       cancelable: true,

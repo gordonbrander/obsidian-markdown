@@ -45,8 +45,8 @@
       const show = (e) => {
         log.textContent = `${e.type} ${JSON.stringify(e.detail)}\n${log.textContent}`;
       };
-      demo.addEventListener('ofm-proprow-change', show);
-      demo.addEventListener('ofm-wikilink-click', (e) => { e.preventDefault(); show(e); });
+      demo.addEventListener('proprow-change', show);
+      demo.addEventListener('wikilink-click', (e) => { e.preventDefault(); show(e); });
       document.querySelector('#readonly').addEventListener('change', (e) => {
         demo.readonly = e.target.checked;
       });
