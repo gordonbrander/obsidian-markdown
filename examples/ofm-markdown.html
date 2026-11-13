@@ -94,8 +94,13 @@ $\href{javascript:document.title='pwned'}{link}$
     <script type="module">
       import { adoptSheet } from '/src/adopt-sheet.ts';
       import { obsidianTheme } from '/src/ofm-theme.ts';
+      import { noteService } from '/src/note-service.ts';
 
       adoptSheet(obsidianTheme);
+
+      // A tiny in-memory vault for note embeds.
+      const vault = { 'Embedded note': '# Embedded note\n\nAn embedded block, with **formatting**. ^block' };
+      noteService.setLoader(async (name) => vault[name]);
 
       const source = document.querySelector('#source');
       const note = document.querySelector('#note');
