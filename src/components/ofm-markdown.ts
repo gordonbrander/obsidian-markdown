@@ -1,12 +1,16 @@
 import { LitElement, html } from 'lit';
+import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { draw } from '../draw.ts';
-import { render } from '../render.ts';
+import { embedsNote, renderNoteEmbeds } from '../embeds.ts';
+import { NoteService, noteService } from '../services/note.ts';
+import type { NoteChangeDetail } from '../services/note.ts';
 
 export type MarkdownClickWikilinkDetail = { target: string };
 
 /**
  * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams and highlighting code.
+ * Note embeds load through its `noteService` property: the shared `noteService` unless you assign another.
  * @attr rendered - Set by the element once its first content is in the DOM and drawn. Style the first render with `ofm-markdown:not([rendered])`.
  * @fires rendered - The new content is in the DOM and drawn.
  * @fires click-wikilink - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
@@ -22,12 +26,43 @@ export class OfmMarkdown extends LitElement {
   @property() accessor value = '';
   @property({ type: Boolean, attribute: 'strict-line-breaks' }) accessor strictLineBreaks = false;
 
-  /** Render and draw off-screen. A template's content is inert until it's inserted. */
+  /** Loads note embeds. Defaults to the shared `noteService`; assign another to configure this element on its own. */
+  @property({ attribute: false }) accessor noteService: NoteService = noteService;
+  /** The service we listen to for changed notes. */
+  #subscribed?: NoteService;
+
+  /** A note we show changed: rebuild. The service still caches every other note, so only that one reloads. */
+  #onChange = (event: Event) => {
+    const { name } = (event as CustomEvent<NoteChangeDetail>).detail;
+    if (name === undefined || embedsNote(this, name)) this.requestUpdate();
+  };
+
+  #subscribe(service?: NoteService) {
+    this.#subscribed?.removeEventListener('change', this.#onChange);
+    this.#subscribed = service;
+    service?.addEventListener('change', this.#onChange);
+  }
+
+  override connectedCallback() {
+    super.connectedCallback();
+    this.#subscribe(this.noteService);
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    this.#subscribe(undefined);
+  }
+
+  /** A new service: listen to it instead. Every update rebuilds the content, so the embeds already use it. */
+  protected override willUpdate(changed: PropertyValues<this>) {
+    if (changed.has('noteService') && this.isConnected) this.#subscribe(this.noteService);
+  }
+
+  /** Render and draw off-screen, so an update shows finished content. */
   #build = async (value: string, strictLineBreaks: boolean) => {
-    const template = document.createElement('template');
-    template.innerHTML = render(value, { strictLineBreaks });
-    await draw(template.content);
-    return template.content;
+    const note = renderNoteEmbeds(value, this.noteService, { strictLineBreaks });
+    await draw(note);
+    return note;
   };
 
   #content?: DocumentFragment;

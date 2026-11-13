@@ -3,6 +3,7 @@ import { customElement, property } from 'lit/decorators.js';
 import './ofm-frontmatter.ts';
 import type { Properties, PropertyTypes } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
+import { NoteService, noteService } from '../services/note.ts';
 import { parseFrontmatter, splitFrontmatter } from '../render.ts';
 
 const parse = (value: string): { data: Properties; content: string } => {
@@ -18,6 +19,7 @@ const parse = (value: string): { data: Properties; content: string } => {
 
 /**
  * A whole note: its properties, collapsible as in Obsidian, followed by its rendered Markdown.
+ * Note embeds load through its `noteService` property: the shared `noteService` unless you assign another.
  * @fires proprow-change - A property was edited. Bubbles from its row. `detail` is `{ key, value, type, effectiveType }`.
  * @fires click-wikilink - A wikilink was clicked, in a property or the note. `detail.target` is the link target. Cancel it to stop the link's navigation.
  */
@@ -27,6 +29,9 @@ export class OfmNote extends LitElement {
   protected createRenderRoot() {
     return this;
   }
+
+  /** Loads note embeds. Defaults to the shared `noteService`; assign another to configure this element on its own. */
+  @property({ attribute: false }) accessor noteService: NoteService = noteService;
 
   /** The note's source, front matter included. */
   @property() accessor value = '';
@@ -44,7 +49,7 @@ export class OfmNote extends LitElement {
           <ofm-frontmatter .properties=${data} .types=${this.types} ?readonly=${this.readonly}></ofm-frontmatter>
         </details>
       ` : nothing}
-      <ofm-markdown .value=${content} ?strict-line-breaks=${this.strictLineBreaks}></ofm-markdown>
+      <ofm-markdown .noteService=${this.noteService} .value=${content} ?strict-line-breaks=${this.strictLineBreaks}></ofm-markdown>
     `;
   }
 }

@@ -1,7 +1,7 @@
 import type { MarkdownIt, Delimiter, StateInline } from 'markdown-it';
 import { hasScheme, parseWikilink } from './sniff.ts';
 
-const IMAGE_EXTENSIONS = new Set(['avif', 'bmp', 'gif', 'jpeg', 'jpg', 'png', 'svg', 'webp']);
+export const IMAGE_EXTENSIONS = new Set(['avif', 'bmp', 'gif', 'jpeg', 'jpg', 'png', 'svg', 'webp']);
 const EMBED_SIZE = /^(\d+)(?:x(\d+))?$/;
 const HIGHLIGHT_COLORS: [string, string][] = [
   ['🔴', 'red'],
