@@ -111,9 +111,11 @@ $\href{javascript:document.title='pwned'}{link}$
         e.preventDefault(); // Log the link instead of following it.
         log.textContent = `click-wikilink ${JSON.stringify(e.detail)}\n${log.textContent}`;
       });
-      note.addEventListener('rendered', () => {
-        log.textContent = `rendered\n${log.textContent}`;
-      });
+      for (const type of ['ofm-markdown-rendered', 'ofm-markdown-loaded']) {
+        note.addEventListener(type, () => {
+          log.textContent = `${type}\n${log.textContent}`;
+        });
+      }
       show();
     </script>
   </body>

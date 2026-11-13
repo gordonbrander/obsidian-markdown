@@ -90,14 +90,16 @@ Renders a note, drawing math (MathML) and Mermaid diagrams (with [Pele](https://
 - Properties/attributes:
   - **`value`**: the note's Markdown source.
   - **`strict-line-breaks`**: a boolean attribute. When set, single line breaks don't become `<br>`.
-  - **`rendered`**: set by the element once its first content is in the DOM, with math and diagrams drawn. It stays set after that. Code highlighting doesn't hold it back and may finish just after. Use it to fade in the first render:
+  - **`rendered`**: set by the element once its first content is in the DOM, with math and diagrams drawn. It stays set after that. Code highlighting and note embeds don't hold it back. Use it to fade in the first render:
     ```css
     ofm-markdown { transition: opacity 150ms; }
     ofm-markdown:not([rendered]) { opacity: 0; }
     ```
+  - **`loaded`**: set while the current content is fully loaded, with code highlighted and note embeds filled. It's removed when new content starts rendering.
 - Events:
   - **`click-wikilink`**: a wikilink was clicked. `detail.target` is the link target.
-  - **`rendered`**: the new content is in the DOM, with math and diagrams drawn. Code highlighting may finish just after.
+  - **`ofm-markdown-rendered`**: the new content is in the DOM, with math and diagrams drawn. Code highlighting and note embeds may still be loading.
+  - **`ofm-markdown-loaded`**: the new content is fully loaded, with code highlighted and note embeds filled. It follows `ofm-markdown-rendered`, unless newer content replaces it first.
 
 ### `<ofm-frontmatter>`
 
