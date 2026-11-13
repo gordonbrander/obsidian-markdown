@@ -48,19 +48,18 @@
   "customElements": "custom-elements.json",
   "scripts": {
     "dev": "vite",
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && cem analyze",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp -r src/fonts dist/ && cem analyze",
     "build:examples": "vite build",
     "prepack": "npm run build",
     "test": "node --test",
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@mathjax/mathjax-newcm-font": "^4.1.3",
-    "@mathjax/src": "^4.1.3",
     "lit": "^3.3.3",
     "markdown-it": "^15.0.3",
     "mermaid": "^12.3.0",
     "refractor": "^5.0.0",
+    "temml": "^0.14.0",
     "yaml": "^2.9.1"
   },
   "devDependencies": {

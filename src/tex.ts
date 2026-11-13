@@ -1,33 +1,20 @@
-// Loaded on demand by draw.ts, so plain notes never download MathJax.
-import { MathJaxNewcmFont } from '@mathjax/mathjax-newcm-font/js/svg.js';
-import { browserAdaptor } from '@mathjax/src/js/adaptors/browserAdaptor.js';
-import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js';
-import '@mathjax/src/js/input/tex/ams/AmsConfiguration.js';
-import '@mathjax/src/js/input/tex/base/BaseConfiguration.js';
-import '@mathjax/src/js/input/tex/newcommand/NewcommandConfiguration.js';
-import '@mathjax/src/js/input/tex/noundefined/NoUndefinedConfiguration.js';
-import { TeX } from '@mathjax/src/js/input/tex.js';
-import { mathjax } from '@mathjax/src/js/mathjax.js';
-import { SVG } from '@mathjax/src/js/output/svg.js';
-import { fontFiles } from './tex-fonts.ts';
+// Loaded on demand by draw.ts, so plain notes never download Temml or its fonts.
+import temml from 'temml';
 
-// Rarely used glyph ranges load on demand from our own bundle, never a CDN.
-mathjax.asyncLoad = (name: string) =>
-  fontFiles[name]?.() ?? Promise.reject(new Error(`Unknown MathJax file: ${name}`));
+// Fonts go on the document, so they reach math inside shadow roots too. The theme's `math` rule uses them.
+// Temml.woff2 holds the script capitals for \mathscr. Latin Modern Math is GUST-licensed (fonts/GUST-FONT-LICENSE.txt).
+for (const [family, file] of [['Latin Modern Math', 'latinmodernmath.woff2'], ['Temml', 'Temml.woff2']]) {
+  document.fonts.add(new FontFace(family, `url(${new URL(`./fonts/${file}`, import.meta.url)})`));
+}
 
-RegisterHTMLHandler(browserAdaptor());
-
-// Notes are untrusted. The html package defines \href, \style, \class and \cssId,
-// and require and autoload fetch code, so all three stay out.
-const texDocument = mathjax.document(document, {
-  InputJax: new TeX({ packages: ['base', 'ams', 'newcommand', 'noundefined'] }),
-  OutputJax: new SVG({ fontData: MathJaxNewcmFont, fontCache: 'none' }),
-});
-
-/** Convert LaTeX to a self-contained element holding an SVG. */
-export const renderTex = async (latex: string, display: boolean): Promise<Element> => {
-  const drawing = await texDocument.convertPromise(latex, { display }) as Element;
-  // Browsers clip inner SVGs by default, which cuts off tall glyphs.
-  drawing.querySelector('svg')?.setAttribute('overflow', 'visible');
-  return drawing;
+/**
+ * Replace an element's LaTeX with MathML. Throws on invalid or unsupported input, leaving the element as it was.
+ * Notes are untrusted, so `trust` stays off and \href, \url, \class and friends are rejected.
+ * `\gdef` writes to `macros`, so pass the same object to share definitions across a note.
+ */
+export const renderTex = (latex: string, display: boolean, element: HTMLElement, macros: Record<string, unknown>) => {
+  // temml.render empties its target before parsing, so draw off to the side and swap in only on success.
+  const scratch = document.createElement('span');
+  temml.render(latex, scratch, { displayMode: display, throwOnError: true, annotate: true, macros });
+  element.replaceChildren(...scratch.childNodes);
 };

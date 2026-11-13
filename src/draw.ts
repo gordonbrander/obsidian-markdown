@@ -12,13 +12,10 @@ const warn = (what: string, error: unknown) => console.warn(`ofm-markdown: could
 const drawMath = async (elements: HTMLElement[]) => {
   tex ??= await import('./tex.ts');
   const { renderTex } = tex;
+  const macros = {}; // One per note, so \gdef carries from one formula to the next.
   for (const element of elements) {
-    const latex = element.textContent ?? '';
     try {
-      const drawing = await renderTex(latex, !element.classList.contains('math-inline'));
-      element.replaceChildren(drawing);
-      element.setAttribute('role', 'img');
-      element.setAttribute('aria-label', latex);
+      renderTex(element.textContent ?? '', !element.classList.contains('math-inline'), element, macros);
     } catch (error) {
       warn('math', error);
     }
