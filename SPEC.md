@@ -320,8 +320,6 @@ Biology --&gt; Chemistry
 
 The content is LaTeX as understood by [Temml](https://temml.org/). It is not parsed as Markdown, and its leading and trailing whitespace is removed. A math block can interrupt a paragraph. ***[chosen]***
 
-Macros defined with `\gdef` carry to later math in the same note. Macros defined with `\newcommand` last only for their own math block or inline span; this differs from Obsidian, where MathJax keeps them for the whole page. ***[chosen]***
-
 **Example 9**
 
 ```````````````````````````````` example
