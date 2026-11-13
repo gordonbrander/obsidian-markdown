@@ -62,9 +62,12 @@ const loadRefractor = async () => {
   return refractor;
 };
 
-const drawCode = async (codes: HTMLElement[]) => {
+const CODE = 'pre > code[class*="language-"]:not(.language-mermaid)';
+
+const drawCode = async (root: ParentNode) => {
   refractor ??= await loadRefractor();
-  for (const code of codes) {
+  // Query after loading, so a slow first load highlights the content that's live by then.
+  for (const code of root.querySelectorAll<HTMLElement>(CODE)) {
     const lang = code.className.match(/language-(\S+)/)?.[1];
     // Unknown languages stay plain, as in Obsidian.
     if (!lang || !refractor.registered(lang)) continue;
@@ -77,14 +80,21 @@ const drawCode = async (codes: HTMLElement[]) => {
   }
 };
 
-/** Replace math and Mermaid markup with drawings, and highlight code. Never rejects. On failure the source stays in place. */
+/** Replace math and Mermaid markup with drawings. Never rejects. On failure the source stays in place. */
 export const draw = async (root: ParentNode) => {
   const math = [...root.querySelectorAll<HTMLElement>('.math')];
   const diagrams = [...root.querySelectorAll<HTMLElement>('code.language-mermaid')];
-  const codes = [...root.querySelectorAll<HTMLElement>('pre > code[class*="language-"]:not(.language-mermaid)')];
   await Promise.all([
     math.length > 0 ? drawMath(math).catch((error) => warn('math', error)) : null,
     diagrams.length > 0 ? drawDiagrams(diagrams).catch((error) => warn('diagrams', error)) : null,
-    codes.length > 0 ? drawCode(codes).catch((error) => warn('code', error)) : null,
   ]);
+};
+
+/**
+ * Highlight code blocks in place. Never rejects. On failure the code stays plain.
+ * Highlighting doesn't change layout, so callers can run it after the content is shown. Running it again is harmless.
+ */
+export const highlight = async (root: ParentNode) => {
+  if (!root.querySelector(CODE)) return;
+  await drawCode(root).catch((error) => warn('code', error));
 };

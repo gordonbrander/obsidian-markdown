@@ -1,6 +1,6 @@
 // Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]).
 // The note service loads notes; this module decides what part of a note to show, and builds the DOM.
-import { draw } from './draw.ts';
+import { draw, highlight } from './draw.ts';
 import type { NoteService } from './services/note.ts';
 import { IMAGE_EXTENSIONS } from './ofm-inline.ts';
 import { render, renderer, splitFrontmatter } from './render.ts';
@@ -79,9 +79,12 @@ export const fillEmbeds = (root: ParentNode, service: NoteService, options: Rend
         frame.classList.add('is-unresolved');
         return;
       }
-      // Draw off-screen, so the embed appears finished.
+      // Draw off-screen, so the embed appears with its math and diagrams. Highlighting follows, as for the note.
       const note = renderNoteEmbeds(source, service, options, depth + 1);
-      void draw(note).then(() => content.append(note));
+      void draw(note).then(() => {
+        content.append(note);
+        return highlight(content);
+      });
     });
   }
 };

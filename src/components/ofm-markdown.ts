@@ -1,7 +1,7 @@
 import { LitElement, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { draw } from '../draw.ts';
+import { draw, highlight } from '../draw.ts';
 import { embedsNote, renderNoteEmbeds } from '../embeds.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import type { NoteChangeDetail } from '../services/note.ts';
@@ -11,8 +11,8 @@ export type MarkdownClickWikilinkDetail = { target: string };
 /**
  * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams and highlighting code.
  * Note embeds load through its `noteService` property: the shared `noteService` unless you assign another.
- * @attr rendered - Set by the element once its first content is in the DOM and drawn. Style the first render with `ofm-markdown:not([rendered])`.
- * @fires rendered - The new content is in the DOM and drawn.
+ * @attr rendered - Set by the element once its first content is in the DOM, with math and diagrams drawn. Code highlighting may finish just after. Style the first render with `ofm-markdown:not([rendered])`.
+ * @fires rendered - The new content is in the DOM, with math and diagrams drawn. Code highlighting may finish just after.
  * @fires click-wikilink - A wikilink was clicked. `detail.target` is the link target. Cancel it to stop the link's navigation.
  */
 @customElement('ofm-markdown')
@@ -67,7 +67,7 @@ export class OfmMarkdown extends LitElement {
 
   #content?: DocumentFragment;
 
-  /** Build before every update, so the update renders finished content and `updateComplete` waits for it. */
+  /** Build before every update, so the update renders content with math and diagrams drawn, and `updateComplete` waits for it. Code highlighting follows in `updated`. */
   protected override async scheduleUpdate() {
     try {
       // Props can change while drawing. Those changes merge into this pending update, so rebuild until the content matches.
@@ -85,6 +85,8 @@ export class OfmMarkdown extends LitElement {
   updated() {
     this.setAttribute('rendered', '');
     this.dispatchEvent(new CustomEvent('rendered', { bubbles: true, composed: true }));
+    // Highlighting only adds spans, so the note shows without waiting for the highlighter to load.
+    void highlight(this);
   }
 
   /** Returns false when a listener cancelled the event. */
