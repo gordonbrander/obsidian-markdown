@@ -4,7 +4,7 @@ import { parse } from 'yaml';
 import { ofmBlock } from './ofm-block.ts';
 import { ofmCore } from './ofm-core.ts';
 import { ofmFootnote } from './ofm-footnote.ts';
-import { imageEmbed, isImagePath, ofmInline } from './ofm-inline.ts';
+import { IMAGE_SIZE, imageEmbed, isImagePath, ofmInline } from './ofm-inline.ts';
 
 // The canonical output uses align, where markdown-it writes a style (SPEC Example 14).
 const cellOpen: RendererRule = (tokens, idx, options, _env, self) => {
@@ -13,8 +13,6 @@ const cellOpen: RendererRule = (tokens, idx, options, _env, self) => {
   if (typeof style === 'string') token.attrs = [['align', style.replace('text-align:', '')]];
   return self.renderToken(tokens, idx, options);
 };
-
-const IMAGE_SIZE = /^(?:(.*)\|)?(\d+)(?:x(\d+))?$/;
 
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 

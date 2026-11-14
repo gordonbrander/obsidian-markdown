@@ -2,7 +2,8 @@ import type { MarkdownIt, Delimiter, StateInline } from 'markdown-it';
 import { hasScheme, parseWikilink } from './sniff.ts';
 
 export const IMAGE_EXTENSIONS = new Set(['avif', 'bmp', 'gif', 'jpeg', 'jpg', 'png', 'svg', 'webp']);
-const EMBED_SIZE = /^(\d+)(?:x(\d+))?$/;
+/** A description that ends with a size, `Alt|100` or `Alt|100x145`, or is only a size. Split at the last `|`, as Obsidian does. */
+export const IMAGE_SIZE = /^(?:(.*)\|)?(\d+)(?:x(\d+))?$/;
 
 const escapeAttr = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -207,7 +208,7 @@ export const ofmInline = (md: MarkdownIt) => {
     if (!isImagePath(target)) {
       return `<span class="internal-embed" src="${escapeHtml(target)}" alt="${escapeHtml(label)}"></span>`;
     }
-    const size = label.match(EMBED_SIZE);
-    return imageEmbed(target, size || label === target ? target : label, size?.[1], size?.[2]);
+    const size = label.match(IMAGE_SIZE);
+    return imageEmbed(target, size ? size[1] ?? target : label, size?.[2], size?.[3]);
   };
 };

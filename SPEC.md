@@ -1246,7 +1246,7 @@ An embed renders as `<span class="internal-embed" src="TARGET" alt="DISPLAY"></s
 <p><span class="internal-embed" src="My canvas.canvas" alt="My canvas.canvas"></span></p>
 ````````````````````````````````
 
-For an image, display text matching `^[0-9]+(x[0-9]+)?$` gives dimensions. Other display text is the image's alternative text, which otherwise defaults to the target. ***[chosen]***
+For an image, display text matching `^[0-9]+(x[0-9]+)?$` gives dimensions. So does that pattern after the last `|` of the display text, and then the text before that `|` is the alternative text, as in Obsidian: `![[Engelbart.jpg|A portrait|100x145]]`. Other display text is the image's alternative text, which otherwise defaults to the target.
 
 **Example 64**
 
@@ -1258,11 +1258,14 @@ For an image, display text matching `^[0-9]+(x[0-9]+)?$` gives dimensions. Other
 ![[Engelbart.jpg|100x145]]
 
 ![[Engelbart.jpg|A portrait]]
+
+![[Engelbart.jpg|A portrait|100x145]]
 .
 <p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="Engelbart.jpg"><img src="Engelbart.jpg" alt="Engelbart.jpg" /></span></p>
 <p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="Engelbart.jpg" width="100"><img src="Engelbart.jpg" alt="Engelbart.jpg" width="100" /></span></p>
 <p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="Engelbart.jpg" width="100" height="145"><img src="Engelbart.jpg" alt="Engelbart.jpg" width="100" height="145" /></span></p>
 <p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="A portrait"><img src="Engelbart.jpg" alt="A portrait" /></span></p>
+<p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="A portrait" width="100" height="145"><img src="Engelbart.jpg" alt="A portrait" width="100" height="145" /></span></p>
 ````````````````````````````````
 
 An application that expands embeds MUST NOT recurse without limit when notes embed one another. ***[chosen]***
