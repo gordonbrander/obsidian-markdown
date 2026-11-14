@@ -9,9 +9,13 @@ demos:
 ---
 # obsidian-markdown
 
-A [specification](https://github.com/gordonbrander/obsidian-markdown/blob/main/SPEC.md), renderer, and complete test suite for [Obsidian-flavored Markdown](https://obsidian.md/help/syntax).
+Display [Obsidian-flavored Markdown](https://obsidian.md/help/syntax) in your app or website:
 
-Ships with a spec-complete [markdown-it](https://github.com/markdown-it/markdown-it) renderer, as well as some optional lightweight web components for displaying Obsidian-flavored Markdown.
+- **Markdown renderer**: OFM plugin stack for [markdown-it](https://github.com/markdown-it/markdown-it).
+- **Components**: lightweight web components that work with React, or any other framework.
+- **Spec**: a full [specification](https://github.com/gordonbrander/obsidian-markdown/blob/main/SPEC.md) reverse-engineered from Obsidian, along with a complete test suite.
+
+## Installing
 
 ```sh
 npm install obsidian-markdown
@@ -20,31 +24,29 @@ npm install obsidian-markdown
 ## Basic use
 
 ```js
-import { render, parseFrontmatter } from 'obsidian-markdown';
+import { render } from 'obsidian-markdown';
 
-const html = render(note); // front matter is skipped
-const { data, content } = parseFrontmatter(note); // data is the parsed YAML properties
+const html = render(note);
 ```
 
 | Export | Description |
 |---|---|
-| `render(src, { strictLineBreaks? })` | Render a note to HTML. Single line breaks become `<br>` unless `strictLineBreaks` is set. |
+| `render(src, { strictLineBreaks? })` | Render Markdown to HTML. Frontmatter is skipped. Single line breaks become `<br>` unless `strictLineBreaks` is set. |
 | `renderer()` | Returns a new markdown-it instance configured for Obsidian Flavored Markdown. |
 | `config(md)` | Configure an existing markdown-it instance. Mutates and returns it. |
-| `splitFrontmatter(text)` | `{ frontmatter, content }`, where `frontmatter` is the raw YAML (`''` if there is none). |
-| `parseFrontmatter(text)` | `{ data, content }`, where `data` is the parsed YAML (`{}` if there is none). Throws on invalid YAML. |
-
-Raw HTML in notes is escaped.
+| `splitFrontmatter(text)` | `{ frontmatter, content }`, where `frontmatter` is the raw frontmatter string (`''` if there is none). |
+| `parseFrontmatter(text)` | `{ data, content }`, where `data` is the parsed YAML frontmatter (`{}` if there is none). Throws on invalid YAML. |
 
 ## Web components
 
-`obsidian-markdown` offers several lightweight components for displaying Obsidian-flavored markdown in your app. The components ship as lightweight web components that will happily work within your framework of choice. Each component ships as a separate module, and will only be included in your bundle if you import it. Importing a module registers the element.
+`obsidian-markdown` offers several lightweight components for displaying an Obsidian-style Markdown viewer in your app or website. The components work in React, Svelte, Solid, Vue, or vanilla JS.
 
-A [Custom Elements Manifest](https://custom-elements-manifest.open-wc.org) ships in `custom-elements.json` for editors and documentation tools.
+Each component ships as a separate module, and will only be included in your bundle if you import it. A [Custom Elements Manifest](https://custom-elements-manifest.open-wc.org) ships in `custom-elements.json` for editors and documentation tools.
 
 ### `<ofm-note>`
 
 ```js
+// Import module to auto-register component
 import 'obsidian-markdown/components/ofm-note.js';
 ```
 
@@ -55,7 +57,7 @@ title: Hello
 # Hello"></ofm-note>
 ```
 
-Display a whole note: property drawer followed by rendered Markdown. It's built from `<ofm-frontmatter>` and `<ofm-markdown>`, and importing it registers both.
+Display a whole note: property drawer followed by rendered Markdown. It's built from `<ofm-frontmatter>` and `<ofm-markdown>`.
 
 - Properties/attributes:
   - **`value`**: the note's source, front matter included.
@@ -65,7 +67,7 @@ Display a whole note: property drawer followed by rendered Markdown. It's built 
   - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`.
   - **`wikilink-click`**: a wikilink was clicked, in a property or the note. Bubbles up from `<ofm-frontmatter>` or `<ofm-markdown>`; `detail.target` is the link target.
 
-The Properties drawer is hidden when the note has no properties. If the front matter isn't valid YAML, the properties are skipped with a console warning and the note still renders.
+The Properties drawer is hidden when a note has no properties. If the front matter isn't valid YAML, the properties are skipped and the note still renders.
 
 ### `<ofm-markdown>`
 
@@ -74,18 +76,18 @@ import 'obsidian-markdown/components/ofm-markdown.js';
 ```
 
 ```html
-<ofm-markdown></ofm-markdown>
-<script type="module">
-  const note = document.querySelector('ofm-markdown');
-  note.value = '# Hello\n\nSee [[Another note]].';
-  note.addEventListener('wikilink-click', (event) => {
-    event.preventDefault(); // Route the link yourself instead of following its href.
-    console.log(event.detail.target);
-  });
-</script>
+<ofm-markdown value="# Hello
+
+See [[Another note]]."></ofm-markdown>
 ```
 
-Renders a note, drawing math (MathML) and Mermaid diagrams (with [Pele](https://pele.run)), and highlighting code blocks with Prism's grammars (via refractor's common set, plus `jsx` and `tsx`; `svelte` and `vue` highlight as HTML), so Obsidian snippets that style `.token.*` or `--code-*` apply. Each library loads on demand, only when a note contains math, a diagram or a code block with a language.
+Renders a note, drawing...
+
+- Math as MathML with [Temml](https://temml.org/)
+- Mermaid diagrams with [Pele](https://pele.run)
+- Highlighted code blocks with Prism (common set, plus `jsx` and `tsx`)
+
+The component is rendered in the light DOM so page styles apply. Rendered HTML and class names mirror Obsidian's reading view wherever feasible, allowing you to easily port styles from your Obsidian theme to the component.
 
 - Properties/attributes:
   - **`value`**: the note's Markdown source.
@@ -122,9 +124,9 @@ An editable property list, like Obsidian's properties view.
 - **`type`**: the declared type, if any.
 - **`effective-type`**: the type the row actually draws, declared or sniffed from the value.
 
-### Note embeds
+### Note embeds (transcludes)
 
-The components can't see your vault, so note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) in `<ofm-markdown>` and `<ofm-note>` load through `noteService`. Your loader gets the note's name and returns its source, or `undefined` if it doesn't exist. Embeds nest up to five deep, as in Obsidian, so a note that embeds itself repeats until that depth. With no loader, embeds stay placeholders.
+Note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) are loaded through a shared `noteService`. Configure the `noteService` to tell components how to find and load your notes:
 
 ```js
 import { noteService } from 'obsidian-markdown/services/note.js';
@@ -135,9 +137,9 @@ noteService.setLoader(async (name) => {
 });
 ```
 
-Every component shares this instance by default, so a note loads once for all of them. Loaded notes are cached. Call `noteService.clear(name)` when a note changes, and the components showing it re-render. Call `setLoader` again to forget every note and re-render them all. A failed load isn't cached, so it's tried again next time.
+Embeds nest up to five deep, as in Obsidian, so a note that embeds itself repeats until that depth. If no loader is configured, note embeds stay placeholders.
 
-To configure one element on its own, set its `noteService` property to another instance. It's a property, not an attribute. Elements a component creates inside itself, such as `<ofm-note>`'s body, use their owner's service.
+Every component shares the same `noteService` instance, so you only have to configure the service once. If you want to further customize behavior, you can extend or override the component instance's `noteService` property.
 
 ```js
 import { NoteService } from 'obsidian-markdown/services/note.js';
@@ -147,7 +149,7 @@ document.querySelector('ofm-note').noteService = new NoteService(loadPublishedNo
 
 ### Using with frameworks
 
-The components are standard custom elements, so you can use them from any framework. Import the module once to register the element, then pass properties and listen for events with your framework's syntax.
+Components are standard custom elements, so you can use them from any framework. Import the module once to register the element, then pass properties and listen for events with your framework's syntax.
 
 #### React
 
@@ -249,7 +251,7 @@ In TypeScript, React and Solid will reject `<ofm-*>` tags until you declare them
 
 ### Styling components
 
-All components render into the light DOM, with no shadow root, so page styles apply. They're unstyled until you style them. For an Obsidian-like look, adopt the optional theme:
+All components render into the light DOM, with no shadow root, so page styles apply. Components are unstyled until you style them. For an Obsidian-like look, you can adopt the optional theme:
 
 ```js
 import { obsidianTheme } from 'obsidian-markdown/ofm-theme.js';
