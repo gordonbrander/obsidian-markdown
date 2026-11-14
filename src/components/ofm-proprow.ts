@@ -1,7 +1,9 @@
 import { LitElement, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { drawIcon, resolveIcon } from '../services/icons.ts';
+import { consume } from '@lit/context';
+import { iconContext } from './ofm-context.ts';
+import { drawIcon, lucideIcons } from '../services/icons.ts';
 import type { IconResolver } from '../services/icons.ts';
 import { fieldFor, parseCommitted, parseLink, reservedType } from '../sniff.ts';
 import type { Field, Json, Link, Type } from '../sniff.ts';
@@ -277,8 +279,9 @@ export class OfmProprow extends LitElement {
   /** The declared type. Unset, `tags` and `aliases` take their type from their name, and the rest from their value. */
   @property({ reflect: true }) accessor type: Type | undefined = undefined;
   @property({ type: Boolean }) accessor readonly = false;
-  /** Turns an icon id into its SVG. Defaults to the shared `resolveIcon`; assign another to configure this element on its own. */
-  @property({ attribute: false }) accessor resolveIcon: IconResolver = resolveIcon;
+  /** Turns an icon id into its SVG: the nearest `<ofm-context>`'s, or Lucide's. */
+  @consume({ context: iconContext, subscribe: true })
+  @state() private accessor resolveIcon: IconResolver = lucideIcons;
   @state() private accessor editing = false;
   #field: Field = fieldFor(null);
 

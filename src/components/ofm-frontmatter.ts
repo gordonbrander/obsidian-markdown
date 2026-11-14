@@ -3,8 +3,6 @@ import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './ofm-proprow.ts';
 import type { ProprowChangeDetail } from './ofm-proprow.ts';
-import { resolveIcon } from '../services/icons.ts';
-import type { IconResolver } from '../services/icons.ts';
 import type { Json, Type } from '../sniff.ts';
 
 export type { ProprowChangeDetail, ClickWikilinkDetail } from './ofm-proprow.ts';
@@ -32,8 +30,6 @@ export class OfmFrontmatter extends LitElement {
   @property({ type: Object }) accessor properties: Properties | null = null;
   @property({ type: Object }) accessor types: PropertyTypes | null = null;
   @property({ type: Boolean }) accessor readonly = false;
-  /** Turns an icon id into its SVG. Defaults to the shared `resolveIcon`; assign another to configure this element on its own. */
-  @property({ attribute: false }) accessor resolveIcon: IconResolver = resolveIcon;
 
   #onRowChange({ detail: { key, value } }: CustomEvent<ProprowChangeDetail>) {
     this.properties = { ...this.properties, [key]: value };
@@ -52,7 +48,6 @@ export class OfmFrontmatter extends LitElement {
         .value=${value}
         .type=${isRecord(this.types) ? this.types[key] : undefined}
         .readonly=${this.readonly}
-        .resolveIcon=${this.resolveIcon}
         @proprow-change=${this.#onRowChange}
       ></ofm-proprow>
     `);

@@ -4,8 +4,6 @@ import type { Result } from '../result.ts';
 export type NoteLoader = (name: string) => Promise<string | undefined>;
 
 export type NoteError =
-  /** No loader is set, so embeds keep their placeholder. */
-  | { type: 'no-loader' }
   /** The loader returned undefined. */
   | { type: 'not-found' }
   /** The loader threw or rejected. */
@@ -13,36 +11,33 @@ export type NoteError =
 
 export type NoteResult = Result<string, NoteError>;
 
-/** Detail of the `change` event. No `name` means every note may have changed. */
-export type NoteChangeDetail = { name?: string };
+/** What the components need from a note service. Any object of this shape will do. */
+export type TNoteService = {
+  /** A note's source, by name. */
+  load: (name: string) => Promise<NoteResult>;
+  /** Forget one note, so the next load asks again. */
+  clear: (name: string) => void;
+  /** Forget every note. */
+  clearAll: () => void;
+};
 
 /**
- * Loads notes for embeds through the host's loader, and caches them.
- * Fires `change` (a `CustomEvent<NoteChangeDetail>`) from `setLoader` and `clear`, so embeds on screen redraw.
+ * Loads notes through the host's loader, and caches them.
+ * Clearing doesn't redraw notes on screen: they reload on their next render. To reload them now, give `<ofm-context>` a new service.
  */
-export class NoteService extends EventTarget {
-  #loader: NoteLoader | undefined;
+export class NoteService implements TNoteService {
+  #loader: NoteLoader;
   #cache = new Map<string, Promise<NoteResult>>();
 
-  constructor(loader?: NoteLoader) {
-    super();
+  constructor(loader: NoteLoader) {
     this.#loader = loader;
-  }
-
-  /** Set the loader, or remove it with no argument. Forgets every loaded note. */
-  setLoader(loader?: NoteLoader) {
-    this.#loader = loader;
-    this.#cache.clear();
-    this.#changed({});
   }
 
   /** A note's source. Found and not-found results are cached; a failed load is tried again next time. */
   load(name: string): Promise<NoteResult> {
-    const loader = this.#loader;
-    if (!loader) return Promise.resolve({ ok: false, error: { type: 'no-loader' } });
     const cached = this.#cache.get(name);
     if (cached) return cached;
-    const result: Promise<NoteResult> = loader(name).then(
+    const result: Promise<NoteResult> = this.#loader(name).then(
       (source) => (source === undefined ? { ok: false, error: { type: 'not-found' } } : { ok: true, value: source }),
       (cause) => {
         // Only drop our own entry: a clear() and a newer load may have replaced it.
@@ -54,16 +49,11 @@ export class NoteService extends EventTarget {
     return result;
   }
 
-  /** Forget one note, e.g. after it changed, so the next load asks the loader again. */
   clear(name: string) {
     this.#cache.delete(name);
-    this.#changed({ name });
   }
 
-  #changed(detail: NoteChangeDetail) {
-    this.dispatchEvent(new CustomEvent<NoteChangeDetail>('change', { detail }));
+  clearAll() {
+    this.#cache.clear();
   }
 }
-
-/** The service every component uses unless its class is given another, so they share one cache. */
-export const noteService = new NoteService();

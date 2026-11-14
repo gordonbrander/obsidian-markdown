@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { lucideIcons, resolveIcon, setIconResolver } from './icons.ts';
+import { lucideIcons } from './icons.ts';
 
 test('lucideIcons answers Obsidian\'s ids', async () => {
   assert.match(await lucideIcons('lucide-flame') ?? '', /^<svg [^>]*class="lucide-flame"/);
@@ -23,16 +23,4 @@ test('every icon the theme and the property rows name is built in', async () => 
     const name = id.replace(/^lucide-/, '').replace('quote-glyph', 'quote');
     assert.ok(builtIn.includes(`'${name}':`), id);
   }
-});
-
-test('setIconResolver replaces the shared resolver, and removes it', async () => {
-  try {
-    setIconResolver(async (id) => `<svg data-id="${id}"/>`);
-    assert.equal(await resolveIcon('star'), '<svg data-id="star"/>');
-    setIconResolver();
-    assert.equal(await resolveIcon('lucide-flame'), undefined);
-  } finally {
-    setIconResolver(lucideIcons);
-  }
-  assert.match(await resolveIcon('lucide-flame') ?? '', /^<svg/);
 });

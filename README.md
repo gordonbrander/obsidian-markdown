@@ -124,55 +124,60 @@ An editable property list, like Obsidian's properties view.
 - **`type`**: the declared type, if any.
 - **`effective-type`**: the type the row actually draws, declared or sniffed from the value.
 
+### `<ofm-context>`
+
+`<ofm-context>` gives the components inside it the services they share: the note service that loads note embeds, and the icon resolver that draws icons. One context is one vault. It doesn't affect layout.
+
+```html
+<ofm-context id="vault">
+  <ofm-note></ofm-note>
+  <ofm-markdown></ofm-markdown>
+</ofm-context>
+```
+
+Assigning either property re-renders everything inside. Components outside any context draw Lucide icons and leave note embeds as placeholders.
+
 ### Note embeds (transcludes)
 
-Note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) are loaded through a shared `noteService`. Configure the `noteService` to tell components how to find and load your notes:
+Note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) load through the context's `noteService`. Give it a `NoteService` that knows how to find your notes:
 
 ```js
-import { noteService } from 'obsidian-markdown/services/note.js';
+import { NoteService } from 'obsidian-markdown/services/note.js';
 
-noteService.setLoader(async (name) => {
+document.querySelector('#vault').noteService = new NoteService(async (name) => {
   const response = await fetch(`/notes/${encodeURIComponent(name)}.md`);
   return response.ok ? response.text() : undefined;
 });
 ```
 
-Embeds nest up to five deep, as in Obsidian, so a note that embeds itself repeats until that depth. If no loader is configured, note embeds stay placeholders.
+Embeds nest up to five deep, as in Obsidian, so a note that embeds itself repeats until that depth. With no `noteService`, note embeds stay placeholders.
 
-Every component shares the same `noteService` instance, so you only have to configure the service once. If you want to further customize behavior, you can extend or override the component instance's `noteService` property.
+A `NoteService` caches the notes it loads. `clear(name)` and `clearAll()` empty the cache, and the notes reload the next time they render. To reload the notes on screen now, assign a new service.
 
-```js
-import { NoteService } from 'obsidian-markdown/services/note.js';
-
-document.querySelector('ofm-note').noteService = new NoteService(loadPublishedNote);
-```
+To load notes your own way, assign any object of the `TNoteService` shape: `load(name)`, which resolves to `{ ok: true, value: source }` or `{ ok: false, error }`, plus `clear(name)` and `clearAll()`.
 
 ### Icons
 
-Callouts, properties and embeds show icons. Which icon goes where follows Obsidian: a callout's comes from the theme's `--callout-icon`, and the rest are fixed. How an icon's id becomes an SVG is one function, the icon resolver, which you can replace.
+Callouts, properties and embeds show icons. Which icon goes where follows Obsidian: a callout's comes from the theme's `--callout-icon`, and the rest are fixed. How an icon's id becomes an SVG is one function, the context's `resolveIcon`, which you can replace.
 
 By default it draws [Lucide](https://lucide.dev) icons, as Obsidian does. The icons the components and the theme use are built in, so showing them loads nothing. Any other Lucide icon, such as one a CSS snippet names, loads the `lucide` package on first use.
 
 ```js
-import { setIconResolver, lucideIcons } from 'obsidian-markdown/services/icons.js';
+import { lucideIcons } from 'obsidian-markdown/services/icons.js';
+
+const vault = document.querySelector('#vault');
 
 // Your own icons. The id is Obsidian's: "lucide-flame", "quote-glyph", or a name from your CSS.
-setIconResolver(async (id) => myIcons[id]);
+vault.resolveIcon = async (id) => myIcons[id];
 
 // Some of your own, Lucide for the rest.
-setIconResolver(async (id) => myIcons[id] ?? lucideIcons(id));
+vault.resolveIcon = async (id) => myIcons[id] ?? lucideIcons(id);
 
 // No icons.
-setIconResolver();
+vault.resolveIcon = async () => undefined;
 ```
 
 A resolver returns a promise of `<svg>` markup, or of `undefined` for no icon. The markup is inserted with scripts and event handlers removed, and with the class `svg-icon`.
-
-Set the resolver before notes render: a note already on screen keeps its icons until it renders again. To configure one element on its own, assign its `resolveIcon` property:
-
-```js
-document.querySelector('ofm-note').resolveIcon = async (id) => myIcons[id];
-```
 
 To change which icon a callout shows, set `--callout-icon` in CSS, to an icon id or a quoted `<svg>`, as in Obsidian:
 
@@ -181,6 +186,10 @@ To change which icon a callout shows, set `--callout-icon` in CSS, to an icon id
 ```
 
 The fold arrow of a foldable callout is part of `render()`'s output, so the resolver doesn't draw it. Restyle or hide it with CSS (`.callout-fold svg`).
+
+### Custom providers
+
+`<ofm-context>` provides two contexts from [`@lit/context`](https://lit.dev/docs/data/context/), `noteContext` and `iconContext`, exported from `obsidian-markdown/components/ofm-context.js`. You can provide either one yourself. Each is answered by the nearest provider of that context, so a provider of icons alone, inside an `<ofm-context>`, replaces the icons and keeps the context's notes.
 
 ### Using with frameworks
 

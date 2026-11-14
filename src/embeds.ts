@@ -1,7 +1,7 @@
 // Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]).
 // The note service loads notes; this module decides what part of a note to show, and builds the DOM.
 import { draw, highlight } from './draw.ts';
-import type { NoteService } from './services/note.ts';
+import type { TNoteService } from './services/note.ts';
 import { isImagePath } from './ofm-inline.ts';
 import { render, renderer, splitFrontmatter } from './render.ts';
 import type { RenderOptions } from './render.ts';
@@ -41,10 +41,6 @@ export const embedPlaceholders = (root: ParentNode): Element[] =>
   [...root.querySelectorAll('span.internal-embed[src]:not(.image-embed)')]
     .filter((span) => !isImagePath(span.getAttribute('src') ?? ''));
 
-/** Whether anything under `root` embeds note `name`, filled or not. */
-export const embedsNote = (root: ParentNode, name: string): boolean =>
-  [...root.querySelectorAll('.internal-embed[src]')].some((el) => parseTarget(el.getAttribute('src') ?? '').name === name);
-
 const element = (tag: string, className: string) => {
   const el = document.createElement(tag);
   el.className = className;
@@ -83,16 +79,15 @@ export const missingEmbed = (target: string): HTMLElement => {
 
 /**
  * Replace the placeholders under `root` with embedded notes as they load, then fill their embeds one level deeper.
- * With no loader set, the placeholders stay as render() made them.
+ * With no service, the placeholders stay as render() made them.
  * Resolves once every embed, at every depth, is in place, drawn and highlighted. Never rejects.
  */
-export const fillEmbeds = async (root: ParentNode, service: NoteService, options: RenderOptions = {}, depth = 0): Promise<void> => {
-  if (depth >= MAX_DEPTH) return;
+export const fillEmbeds = async (root: ParentNode, service: TNoteService | undefined, options: RenderOptions = {}, depth = 0): Promise<void> => {
+  if (!service || depth >= MAX_DEPTH) return;
   await Promise.all(embedPlaceholders(root).map((span) => {
     const target = span.getAttribute('src') ?? '';
     const { name, sub } = parseTarget(target);
     return service.load(name).then(async (result) => {
-      if (!result.ok && result.error.type === 'no-loader') return;
       if (!result.ok && result.error.type === 'failed') console.warn(`ofm-markdown: could not load ${name}`, result.error.cause);
       const source = result.ok ? section(result.value, sub) : undefined;
       if (source === undefined) {
@@ -115,7 +110,7 @@ export const fillEmbeds = async (root: ParentNode, service: NoteService, options
  * `loaded` resolves once the embeds are filled (see fillEmbeds).
  * A template's content is inert until it's inserted, so drawing it off-screen is safe.
  */
-export const renderNoteEmbeds = (source: string, service: NoteService, options: RenderOptions = {}, depth = 0) => {
+export const renderNoteEmbeds = (source: string, service: TNoteService | undefined, options: RenderOptions = {}, depth = 0) => {
   const template = document.createElement('template');
   template.innerHTML = render(source, options);
   return { content: template.content, loaded: fillEmbeds(template.content, service, options, depth) };

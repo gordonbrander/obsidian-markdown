@@ -55,16 +55,6 @@ export const lucideIcons: IconResolver = async (id) => {
   return svg(name, paths.join(''));
 };
 
-let resolver: IconResolver | undefined = lucideIcons;
-
-/** Set how every component turns an icon id into an SVG. With no argument, components draw no icons. */
-export const setIconResolver = (next?: IconResolver) => {
-  resolver = next;
-};
-
-/** The shared resolver: whatever `setIconResolver` last set. Components use it unless given another. */
-export const resolveIcon: IconResolver = async (id) => resolver?.(id);
-
 /** Parse `<svg>` markup, without anything that could run. */
 const parseSvg = (source: string): Element | undefined => {
   const root = new DOMParser().parseFromString(source, 'image/svg+xml').documentElement;

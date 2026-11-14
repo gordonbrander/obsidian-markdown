@@ -23,16 +23,17 @@
     </nav>
     <main>
       <textarea id="source" aria-label="Note source" spellcheck="false"></textarea>
-      <ofm-note id="note" types='{"published": "date", "chapters": "number"}'></ofm-note>
+      <ofm-context id="vault"><ofm-note id="note" types='{"published": "date", "chapters": "number"}'></ofm-note></ofm-context>
     </main>
     <pre id="log"></pre>
 
     <script type="module">
       import { adoptSheet } from '/src/adopt-sheet.ts';
       import { obsidianTheme } from '/src/ofm-theme.ts';
-      import { doc } from './demo.js';
+      import { doc, noteService } from './demo.js';
 
       adoptSheet(obsidianTheme);
+      document.querySelector('#vault').noteService = noteService;
 
       const source = document.querySelector('#source');
       const note = document.querySelector('#note');

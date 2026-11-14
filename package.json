@@ -32,6 +32,7 @@
     "./components/ofm-markdown.js": "./dist/components/ofm-markdown.js",
     "./components/ofm-frontmatter.js": "./dist/components/ofm-frontmatter.js",
     "./components/ofm-proprow.js": "./dist/components/ofm-proprow.js",
+    "./components/ofm-context.js": "./dist/components/ofm-context.js",
     "./ofm-theme.js": "./dist/ofm-theme.js",
     "./adopt-sheet.js": "./dist/adopt-sheet.js",
     "./services/note.js": "./dist/services/note.js",
@@ -43,6 +44,7 @@
     "./dist/components/ofm-markdown.js",
     "./dist/components/ofm-frontmatter.js",
     "./dist/components/ofm-proprow.js",
+    "./dist/components/ofm-context.js",
     "./dist/tex.js",
     "./src/components/*.ts",
     "./src/tex.ts"
@@ -57,6 +59,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@lit/context": "^1.1.6",
     "lit": "^3.3.3",
     "lucide": "^1.73.0",
     "markdown-it": "^15.0.3",
