@@ -633,9 +633,14 @@ export const obsidianTheme = css`
   }
 
   /* Not Obsidian's: icons load after the note shows, so their holders keep the icon's width and nothing shifts. */
-  :is(.callout-icon, .metadata-property-icon, .markdown-embed-link, .multi-select-pill-remove-button, .metadata-link-flair):empty::after {
+  :is(.callout-icon, .callout-fold, .metadata-property-icon, .markdown-embed-link, .multi-select-pill-remove-button, .metadata-link-flair):empty::after {
     flex: none;
     width: var(--icon-size);
+  }
+  .metadata-properties-heading .collapse-indicator:empty::after {
+    content: "";
+    flex: none;
+    width: 10px;
   }
   :is(.metadata-property-icon, .markdown-embed-link, .multi-select-pill-remove-button, .metadata-link-flair):empty::after {
     content: "";

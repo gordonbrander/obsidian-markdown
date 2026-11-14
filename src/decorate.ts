@@ -22,6 +22,7 @@ export const drawIcons = async (root: ParentNode, resolve: IconResolver): Promis
     const value = callout.getAttribute('data-callout-icon') || getComputedStyle(callout).getPropertyValue('--callout-icon');
     if (value.trim()) jobs.push(drawCalloutIcon(icon, value, resolve));
   }
+  for (const fold of root.querySelectorAll('.callout > .callout-title > .callout-fold:empty')) jobs.push(drawIcon(fold, 'lucide-chevron-down', resolve));
   for (const link of root.querySelectorAll('.markdown-embed-link:empty')) jobs.push(drawIcon(link, 'lucide-maximize-2', resolve));
   await Promise.all(jobs.map((job) => job.catch(warn)));
 };

@@ -135,6 +135,6 @@ test('an image in the vault is an embed, however it is written', () => {
 test('a callout folded at first is marked collapsed', () => {
   const html = render('> [!faq]- Q\n> A');
   assert.match(html, /^<details class="callout is-collapsible is-collapsed"/);
-  assert.match(html, /<div class="callout-fold is-collapsed"><svg [^>]*class="svg-icon lucide-chevron-down"/);
+  assert.match(html, /<div class="callout-fold is-collapsed"><\/div>/);
   assert.doesNotMatch(render('> [!faq]+ Q\n> A'), /is-collapsed/);
 });

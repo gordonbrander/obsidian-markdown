@@ -1,8 +1,12 @@
+import { consume } from '@lit/context';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import './ofm-frontmatter.ts';
 import type { Properties, PropertyTypes } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
+import { iconContext } from './ofm-context.ts';
+import { drawIcon, lucideIcons } from '../services/icons.ts';
+import type { IconResolver } from '../services/icons.ts';
 import { parseFrontmatter, splitFrontmatter } from '../render.ts';
 
 const parse = (value: string): { data: Properties; content: string } => {
@@ -29,6 +33,10 @@ export class OfmNote extends LitElement {
     return this;
   }
 
+  /** Turns an icon id into its SVG: the nearest `<ofm-context>`'s, or Lucide's. */
+  @consume({ context: iconContext, subscribe: true })
+  @state() private accessor resolveIcon: IconResolver = lucideIcons;
+
   /** The note's source, front matter included. */
   @property() accessor value = '';
   @property({ type: Boolean, attribute: 'strict-line-breaks' }) accessor strictLineBreaks = false;
@@ -36,6 +44,11 @@ export class OfmNote extends LitElement {
   @property({ type: Object }) accessor types: PropertyTypes | null = null;
   /** Mirrors the <details>, for Obsidian's is-collapsed class. */
   @state() private accessor collapsed = false;
+
+  updated() {
+    const arrow = this.querySelector(':scope > .metadata-container > .metadata-properties-heading > .collapse-indicator');
+    if (arrow) void drawIcon(arrow, 'right-triangle', this.resolveIcon).catch((error) => console.warn('ofm-note: could not draw icon', error));
+  }
 
   render() {
     // ponytail: ofm-markdown strips front matter again, so content that itself opens with a --- block loses it.
@@ -52,9 +65,7 @@ export class OfmNote extends LitElement {
           @toggle=${(e: Event) => { this.collapsed = !(e.currentTarget as HTMLDetailsElement).open; }}
         >
           <summary class="metadata-properties-heading">
-            <div class="collapse-indicator collapse-icon ${collapsed}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"/></svg>
-            </div>
+            <div class="collapse-indicator collapse-icon ${collapsed}"></div>
             <div class="metadata-properties-title">Properties</div>
           </summary>
           <div class="metadata-content">

@@ -667,7 +667,7 @@ The captures are, in order:
 
 1. The **type identifier**. It is case-insensitive. It is normalized as Obsidian does: trimmed, lowercased, and each run of whitespace replaced with one `-`, so `[!My type]` has the type `my-type`. A type that is empty after trimming is not a callout.
 2. **Metadata**, an optional string after `|` that themes can use for styling. The canonical rendering stores it in `data-callout-metadata`. ***[reported]***
-3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. The canonical rendering of a foldable callout is a `details` element with the class `is-collapsible`, plus `open` when the marker is `+`. Its title is a `summary` that ends with a `.callout-fold` element holding the fold arrow, Lucide's `chevron-down` icon. When the marker is `-`, both the callout and its `.callout-fold` have the class `is-collapsed`, as in Obsidian; an application that lets the callout toggle keeps that class in step. Obsidian renders `div`s and folds them with script. Every title begins with an empty `.callout-icon` element, as in Obsidian, which an application fills with the icon named by the theme. ***[chosen]***
+3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. The canonical rendering of a foldable callout is a `details` element with the class `is-collapsible`, plus `open` when the marker is `+`. Its title is a `summary` that ends with an empty `.callout-fold` element, which an application fills with the fold arrow, Lucide's `chevron-down` icon, as Obsidian does. When the marker is `-`, both the callout and its `.callout-fold` have the class `is-collapsed`, as in Obsidian; an application that lets the callout toggle keeps that class in step. Obsidian renders `div`s and folds them with script. Every title begins with an empty `.callout-icon` element, as in Obsidian, which an application fills with the icon named by the theme. ***[chosen]***
 4. The **title**, parsed as inline content. ***[chosen]***
 
 This first line is removed from the paragraph. Remaining lines, and the remaining children of the block quote, are the callout's **content**. Content is parsed as ordinary blocks, so callouts can contain lists, code, wikilinks, and embeds.
@@ -723,7 +723,7 @@ The fold marker must directly follow `]`:
 > Yes!
 .
 <details class="callout is-collapsible is-collapsed" data-callout="faq" data-callout-fold="-">
-<summary class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Are callouts foldable?</div><div class="callout-fold is-collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg></div></summary>
+<summary class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Are callouts foldable?</div><div class="callout-fold is-collapsed"></div></summary>
 <div class="callout-content">
 <p>Yes!</p>
 </div>
