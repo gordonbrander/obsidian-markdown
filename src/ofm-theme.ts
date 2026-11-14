@@ -1,12 +1,21 @@
 import { css } from 'lit';
 
 /**
- * An optional look for `<ofm-note>`, `<ofm-markdown>` and `<ofm-frontmatter>`, using Obsidian's CSS variable names.
- * Callout colors are full colors, not Obsidian's `r, g, b` triples, which can't go through `light-dark()`.
+ * An optional look for `<ofm-note>`, `<ofm-markdown>` and `<ofm-frontmatter>`: Obsidian's default theme, with its
+ * variable names, values, class names and selectors, so CSS snippets written for Obsidian apply here too.
  */
 export const obsidianTheme = css`
-  /* Zero specificity, so a host's own ofm-markdown { --x: y } wins over this adopted sheet. */
-  :where(ofm-note, ofm-markdown, ofm-frontmatter) {
+  /* Obsidian 1.15's variables, copied with their expressions and declared on body as Obsidian does, so a snippet
+     written for Obsidian (body { --h1-size: 2em }) applies unchanged. Zero specificity, so such a rule wins whatever the order. */
+  :where(body) {
+    --direction: 1;
+
+    /* Base colors. Light and dark are Obsidian's .theme-light and .theme-dark values. */
+    --accent-h: 258;
+    --accent-s: 88%;
+    --accent-l: 66%;
+    --mono-0: light-dark(white, black);
+    --mono-100: light-dark(black, white);
     --color-red: light-dark(#e93147, #fb464c);
     --color-orange: light-dark(#ec7500, #e9973f);
     --color-yellow: light-dark(#e0ac00, #e0de71);
@@ -15,80 +24,235 @@ export const obsidianTheme = css`
     --color-blue: light-dark(#086ddd, #027aff);
     --color-purple: light-dark(#7852ee, #a882ff);
     --color-pink: light-dark(#d53984, #fa99cd);
+    --color-base-00: light-dark(#ffffff, #1C1C1C);
+    --color-base-05: light-dark(#fcfcfc, #212121);
+    --color-base-10: light-dark(#fafafa, #232323);
+    --color-base-20: light-dark(#f6f6f6, #282828);
+    --color-base-25: light-dark(#efefef, #2e2e2e);
+    --color-base-30: light-dark(#e4e4e4, #333333);
+    --color-base-35: light-dark(#dadada, #3f3f3f);
+    --color-base-40: light-dark(#bdbdbd, #555555);
+    --color-base-50: light-dark(#ababab, #666666);
+    --color-base-60: light-dark(#707070, #999999);
+    --color-base-70: light-dark(#5c5c5c, #b3b3b3);
+    --color-base-100: light-dark(#222222, #dadada);
+    --color-accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+    --color-accent-1: light-dark(hsl(calc(var(--accent-h) - 1), calc(var(--accent-s) * 1.01), calc(var(--accent-l) * 1.075)), hsl(calc(var(--accent-h) - 3), calc(var(--accent-s) * 1.02), calc(var(--accent-l) * 1.15)));
+    --color-accent-2: light-dark(hsl(calc(var(--accent-h) - 3), calc(var(--accent-s) * 1.02), calc(var(--accent-l) * 1.15)), hsl(calc(var(--accent-h) - 5), calc(var(--accent-s) * 1.05), calc(var(--accent-l) * 1.29)));
+    --color-accent-hsl: var(--accent-h), var(--accent-s), var(--accent-l);
 
-    /* Obsidian 1.15's base and accent colors, with its hsl() accent math resolved to hex. */
-    --text-normal: light-dark(#222222, #dadada);
-    --text-muted: light-dark(#5c5c5c, #b3b3b3);
-    --text-faint: light-dark(#ababab, #666666);
-    --text-accent: light-dark(#8a5cf5, #a68af9);
-    --text-accent-hover: light-dark(#a68af9, #c5b6fc);
-    --interactive-accent: light-dark(#9873f7, #8a5cf5);
-    --interactive-accent-hover: light-dark(#a68af9, #a68af9);
-    --background-primary: light-dark(#ffffff, #1c1c1c);
-    --background-primary-alt: light-dark(#fafafa, #232323);
-    --background-secondary: light-dark(#f6f6f6, #282828);
-    --background-modifier-border: light-dark(#e4e4e4, #333333);
-    --background-modifier-border-hover: light-dark(#dadada, #3f3f3f);
-    --background-modifier-border-focus: light-dark(#bdbdbd, #555555);
-    --radius-s: 4px;
-    --background-modifier-hover: light-dark(#00000011, #ffffff11);
+    /* Semantic colors */
+    --background-primary: var(--color-base-00);
+    --background-primary-alt: var(--color-base-10);
+    --background-secondary: var(--color-base-20);
+    --background-modifier-hover: color-mix(in oklch, var(--mono-100) 6.7%, transparent);
+    --background-modifier-active-hover: color-mix(in oklch, var(--interactive-accent) 10%, transparent);
+    --background-modifier-border: var(--color-base-30);
+    --background-modifier-border-hover: var(--color-base-35);
+    --background-modifier-border-focus: var(--color-base-40);
+    --background-modifier-error: var(--color-red);
+    --background-modifier-warning: var(--color-orange);
+    --background-modifier-error-hover: var(--color-red);
+    --background-modifier-warning-hover: var(--color-orange);
+    --background-modifier-success: var(--color-green);
+    --background-modifier-form-field: light-dark(var(--color-base-00), var(--color-base-25));
+    --background-modifier-form-field-hover: var(--background-modifier-form-field);
+    --text-normal: var(--color-base-100);
+    --text-muted: var(--color-base-70);
+    --text-faint: var(--color-base-50);
+    --text-on-accent: white;
+    --text-on-accent-inverted: black;
+    --text-error: var(--color-red);
+    --text-warning: var(--color-orange);
+    --text-success: var(--color-green);
+    --text-selection: light-dark(color-mix(in oklch, var(--interactive-accent) 20%, transparent), color-mix(in oklch, var(--interactive-accent) 33%, transparent));
+    --text-accent: light-dark(var(--color-accent), var(--color-accent-1));
+    --text-accent-hover: var(--color-accent-2);
+    --interactive-normal: light-dark(var(--color-base-00), var(--color-base-30));
+    --interactive-hover: light-dark(var(--color-base-10), var(--color-base-35));
+    --interactive-accent: light-dark(var(--color-accent-1), var(--color-accent));
+    --interactive-accent-hover: light-dark(var(--color-accent-2), var(--color-accent-1));
+    --interactive-accent-hsl: var(--color-accent-hsl);
+    --background-modifier-error-rgb: var(--color-red-rgb);
+    --background-modifier-success-rgb: var(--color-green-rgb);
+    --background-secondary-alt: light-dark(var(--color-base-05), var(--color-base-30));
+
+    /* Highlights */
     --highlight-opacity: 30%;
+    --highlight-background: var(--text-highlight-bg, var(--highlight-background-yellow));
     --highlight-background-red: color-mix(in oklch, var(--color-red) var(--highlight-opacity), transparent);
     --highlight-background-orange: color-mix(in oklch, var(--color-orange) var(--highlight-opacity), transparent);
     --highlight-background-yellow: color-mix(in oklch, var(--color-yellow) var(--highlight-opacity), transparent);
     --highlight-background-green: color-mix(in oklch, var(--color-green) var(--highlight-opacity), transparent);
     --highlight-background-blue: color-mix(in oklch, var(--color-blue) var(--highlight-opacity), transparent);
     --highlight-background-purple: color-mix(in oklch, var(--color-purple) var(--highlight-opacity), transparent);
-    /* As in Obsidian, --text-highlight-bg is an optional override with no default. */
-    --highlight-background: var(--text-highlight-bg, var(--highlight-background-yellow));
 
-    --font-text-theme: ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', 'Google Sans Flex',
-      Roboto, 'Inter Variable', 'Inter', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
-    --font-monospace-theme: ui-monospace, SFMono-Regular, 'Cascadia Mono', 'Roboto Mono', 'DejaVu Sans Mono',
-      'Liberation Mono', Menlo, Monaco, 'Consolas', 'Source Code Pro', monospace;
-    --font-interface: var(--font-text-theme);
-    --font-text-size: 16px;
+    /* Sizes */
+    --anim-duration-none: 0;
+    --anim-duration-superfast: 70ms;
+    --anim-duration-fast: .14s;
+    --anim-duration-moderate: .3s;
+    --anim-duration-slow: .56s;
+    --anim-motion-smooth: cubic-bezier(.45, .05, .55, .95);
+    --anim-motion-delay: cubic-bezier(.65, .05, .36, 1);
+    --anim-motion-jumpy: cubic-bezier(.68, -.55, .27, 1.55);
+    --anim-motion-swing: cubic-bezier(0, .55, .45, 1);
+    --anim-motion-spring: cubic-bezier(.36, .7, 0, 1);
+    --border-width: 1px;
+    --cursor: default;
+    --cursor-link: pointer;
+    --icon-size: var(--icon-m);
+    --icon-stroke: var(--icon-m-stroke-width);
+    --icon-xs: 14px;
+    --icon-s: 16px;
+    --icon-m: 16px;
+    --icon-l: 18px;
+    --icon-xl: 32px;
+    --icon-xs-stroke-width: 2px;
+    --icon-s-stroke-width: 2px;
+    --icon-m-stroke-width: 2px;
+    --icon-l-stroke-width: 1.75px;
+    --icon-xl-stroke-width: 1.25px;
+    --icon-color: var(--text-muted);
+    --icon-color-hover: var(--text-muted);
+    --icon-color-active: var(--text-accent);
+    --icon-color-focused: var(--text-normal);
+    --icon-opacity: .85;
+    --icon-opacity-hover: 1;
+    --icon-opacity-active: 1;
+    --clickable-icon-radius: var(--radius-s);
+    --indent-size: 4;
+    --indent-unit: .5625em;
+    --corner-shape: round;
+    --radius-s: 4px;
+    --radius-m: 8px;
+    --radius-l: 12px;
+    --radius-xl: 24px;
+    --size-2-1: 2px;
+    --size-2-2: 4px;
+    --size-2-3: 6px;
+    --size-4-1: 4px;
+    --size-4-2: 8px;
+    --size-4-3: 12px;
+    --size-4-4: 16px;
+    --size-4-5: 20px;
+    --size-4-6: 24px;
+    --size-4-8: 32px;
+    --size-4-9: 36px;
+    --size-4-10: 40px;
+    --size-4-12: 48px;
+    --size-4-16: 64px;
+    --size-4-18: 72px;
+
+    /* Fonts */
+    --font-smallest: .8em;
+    --font-smaller: .875em;
+    --font-small: .933em;
+    --font-ui-smaller: 12px;
+    --font-ui-small: 13px;
+    --font-ui-medium: 15px;
+    --font-ui-large: 20px;
     --line-height-normal: 1.5;
     --line-height-tight: 1.3;
-    --p-spacing: 1rem;
-    --heading-spacing: calc(var(--p-spacing) * 2.5);
-    --bold-weight: 600;
+    --font-default: ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", "Google Sans Flex", Roboto, "Inter Variable", "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    --font-monospace-default: ui-monospace, SFMono-Regular, "Cascadia Mono", "Roboto Mono", "DejaVu Sans Mono", "Liberation Mono", Menlo, Monaco, "Consolas", "Source Code Pro", monospace;
+    --font-interface-override: "??";
+    --font-interface-theme: "??";
+    --font-interface: var(--font-interface-override), var(--font-interface-theme), var(--default-font, "??"), var(--font-default);
+    --font-text-override: "??";
+    --font-text-theme: "??";
+    --font-text: var(--font-text-override), var(--font-text-theme), var(--font-default);
+    --font-monospace-override: "??";
+    --font-monospace-theme: "??";
+    --font-monospace: var(--font-monospace-override), var(--font-monospace-theme), var(--font-monospace-default);
+    --font-text-size: 16px;
+    --font-preferred-size: var(--font-text-size);
+    --font-mermaid: var(--font-text);
 
-    --h1-size: 1.618em;
-    --h2-size: 1.462em;
-    --h3-size: 1.318em;
-    --h4-size: 1.188em;
-    --h5-size: 1.076em;
-    --h6-size: 1em;
-    --h1-weight: 700;
-    --h2-weight: 680;
-    --h3-weight: 660;
-    --h4-weight: 640;
-    --h5-weight: 620;
-    --h6-weight: 600;
+    /* Weights */
+    --bold-modifier: 200;
+    --bold-color: inherit;
+    --bold-weight: calc(var(--font-weight) + var(--bold-modifier));
+    --font-weight: var(--font-normal);
+    --font-thin: 100;
+    --font-extralight: 200;
+    --font-light: 300;
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --font-extrabold: 800;
+    --font-black: 900;
+    --italic-color: inherit;
+    --italic-weight: inherit;
+
+    /* Paragraphs and headings */
+    --heading-spacing: calc(var(--p-spacing) * 2.5);
+    --h1-color: inherit;
+    --h2-color: inherit;
+    --h3-color: inherit;
+    --h4-color: inherit;
+    --h5-color: inherit;
+    --h6-color: inherit;
+    --h1-font: inherit;
+    --h2-font: inherit;
+    --h3-font: inherit;
+    --h4-font: inherit;
+    --h5-font: inherit;
+    --h6-font: inherit;
+    --h1-letter-spacing: -.015em;
+    --h2-letter-spacing: -.011em;
+    --h3-letter-spacing: -.008em;
+    --h4-letter-spacing: -.005em;
+    --h5-letter-spacing: -.002em;
+    --h6-letter-spacing: 0em;
     --h1-line-height: 1.2;
     --h2-line-height: 1.2;
     --h3-line-height: 1.3;
     --h4-line-height: 1.4;
     --h5-line-height: var(--line-height-normal);
     --h6-line-height: var(--line-height-normal);
-    --h1-letter-spacing: -0.015em;
-    --h2-letter-spacing: -0.011em;
-    --h3-letter-spacing: -0.008em;
-    --h4-letter-spacing: -0.005em;
-    --h5-letter-spacing: -0.002em;
-    --h6-letter-spacing: 0em;
+    --h1-size: 1.618em;
+    --h2-size: 1.462em;
+    --h3-size: 1.318em;
+    --h4-size: 1.188em;
+    --h5-size: 1.076em;
+    --h6-size: 1em;
+    --h1-style: normal;
+    --h2-style: normal;
+    --h3-style: normal;
+    --h4-style: normal;
+    --h5-style: normal;
+    --h6-style: normal;
+    --h1-variant: normal;
+    --h2-variant: normal;
+    --h3-variant: normal;
+    --h4-variant: normal;
+    --h5-variant: normal;
+    --h6-variant: normal;
+    --p-spacing: 1rem;
+    --p-spacing-empty: 0rem;
 
+    /* Links */
     --link-color: var(--text-accent);
     --link-color-hover: var(--text-accent-hover);
     --link-decoration: underline;
     --link-decoration-hover: underline;
+    --link-decoration-thickness: auto;
+    --link-weight: var(--font-weight);
     --link-external-color: var(--text-accent);
     --link-external-color-hover: var(--text-accent-hover);
     --link-external-decoration: underline;
     --link-external-decoration-hover: underline;
+    --link-external-filter: none;
+    --link-unresolved-color: var(--text-accent);
+    --link-unresolved-opacity: .7;
+    --link-unresolved-filter: none;
+    --link-unresolved-decoration-style: solid;
+    --link-unresolved-decoration-color: color-mix(in oklch, var(--interactive-accent) 30%, transparent);
 
-    --tag-size: 0.875em;
+    /* Tags */
+    --tag-size: var(--font-smaller);
     --tag-color: var(--text-accent);
     --tag-color-hover: var(--text-accent);
     --tag-decoration: none;
@@ -98,45 +262,72 @@ export const obsidianTheme = css`
     --tag-border-color: color-mix(in oklch, var(--interactive-accent) 15%, transparent);
     --tag-border-color-hover: color-mix(in oklch, var(--interactive-accent) 15%, transparent);
     --tag-border-width: 0px;
-    --tag-padding-x: 0.65em;
-    --tag-padding-y: 0.25em;
+    --tag-padding-x: .65em;
+    --tag-padding-y: .25em;
     --tag-radius: 2em;
+    --tag-corner-shape: round;
+    --tag-weight: inherit;
 
+    /* Pills */
+    --pill-color: var(--text-muted);
+    --pill-color-hover: var(--text-normal);
+    --pill-color-remove: var(--text-faint);
+    --pill-color-remove-hover: var(--text-accent);
+    --pill-decoration: none;
+    --pill-decoration-hover: none;
+    --pill-background: transparent;
+    --pill-background-hover: transparent;
+    --pill-border-color: var(--background-modifier-border);
+    --pill-border-color-hover: var(--background-modifier-border-hover);
+    --pill-border-width: var(--border-width);
+    --pill-padding-x: .65em;
+    --pill-padding-y: .25em;
+    --pill-radius: 2em;
+    --pill-weight: inherit;
+    --pill-focus-width: calc(100% + 6px);
+    --pill-focus-left-adjust: -4px;
+
+    /* Callouts */
     --callout-border-width: 0px;
-    --callout-border-opacity: 0.25;
-    --callout-padding: 12px 12px 12px 24px;
-    --callout-radius: 4px;
-    /* Obsidian uses darken (light) / lighten (dark). A keyword can't follow light-dark(), and over a plain page it looks the same. */
-    --callout-blend-mode: normal;
+    --callout-border-opacity: .25;
+    --callout-padding: var(--size-4-3) var(--size-4-3) var(--size-4-3) var(--size-4-6);
+    --callout-radius: var(--radius-s);
+    --callout-blend-mode: var(--highlight-mix-blend-mode);
+    --callout-title-color: inherit;
     --callout-title-padding: 0;
-    --callout-title-weight: 600;
+    --callout-title-size: inherit;
+    --callout-title-weight: calc(var(--font-weight) + var(--bold-modifier));
     --callout-content-padding: 0;
     --callout-content-background: transparent;
-    --callout-default: var(--color-blue);
-    --callout-info: var(--color-blue);
-    --callout-todo: var(--color-blue);
-    --callout-summary: var(--color-cyan);
-    --callout-important: var(--color-cyan);
-    --callout-tip: var(--color-cyan);
-    --callout-success: var(--color-green);
-    --callout-question: var(--color-orange);
-    --callout-warning: var(--color-orange);
-    --callout-fail: var(--color-red);
-    --callout-error: var(--color-red);
     --callout-bug: var(--color-red);
+    --callout-default: var(--color-blue);
+    --callout-error: var(--color-red);
     --callout-example: var(--color-purple);
+    --callout-fail: var(--color-red);
+    --callout-important: var(--color-cyan);
+    --callout-info: var(--color-blue);
+    --callout-question: var(--color-orange);
+    --callout-success: var(--color-green);
+    --callout-summary: var(--color-cyan);
+    --callout-tip: var(--color-cyan);
+    --callout-todo: var(--color-blue);
+    --callout-warning: var(--color-orange);
     --callout-quote: #9e9e9e;
 
-    --blockquote-background-color: transparent;
+    /* Blockquotes */
     --blockquote-border-thickness: 2px;
     --blockquote-border-color: var(--interactive-accent);
     --blockquote-font-style: normal;
     --blockquote-color: inherit;
+    --blockquote-background-color: transparent;
 
-    --code-background: var(--background-primary-alt);
-    --code-radius: 4px;
-    --code-size: 0.875em;
+    /* Code */
     --code-white-space: pre-wrap;
+    --code-border-width: 0px;
+    --code-border-color: var(--background-modifier-border);
+    --code-radius: var(--radius-s);
+    --code-size: var(--font-smaller);
+    --code-background: var(--background-primary-alt);
     --code-normal: var(--text-normal);
     --code-comment: var(--text-faint);
     --code-function: var(--color-yellow);
@@ -149,43 +340,212 @@ export const obsidianTheme = css`
     --code-tag: var(--color-red);
     --code-value: var(--color-purple);
 
+    /* Horizontal rules */
     --hr-color: var(--background-modifier-border);
     --hr-thickness: 2px;
 
+    /* Tables */
     --table-background: transparent;
     --table-border-width: 1px;
     --table-border-color: var(--background-modifier-border);
-    --table-header-background: transparent;
-    --table-header-color: var(--text-normal);
-    --table-header-weight: 600;
-    --table-line-height: var(--line-height-tight);
-    --table-cell-vertical-alignment: top;
     --table-white-space: break-spaces;
+    --table-header-background: var(--table-background);
+    --table-header-background-hover: inherit;
+    --table-header-border-width: var(--table-border-width);
+    --table-header-border-color: var(--table-border-color);
+    --table-header-font: inherit;
+    --table-header-size: var(--table-text-size);
+    --table-header-weight: calc(var(--font-weight) + var(--bold-modifier));
+    --table-header-color: var(--text-normal);
+    --table-line-height: var(--line-height-tight);
+    --table-text-size: var(--font-preferred-size);
+    --table-text-color: inherit;
+    --table-column-min-width: 6ch;
+    --table-column-max-width: none;
+    --table-column-alt-background: var(--table-background);
+    --table-column-first-border-width: var(--table-border-width);
+    --table-column-last-border-width: var(--table-border-width);
+    --table-row-background-hover: var(--table-background);
+    --table-row-alt-background: var(--table-background);
+    --table-row-alt-background-hover: var(--table-background);
+    --table-row-last-border-width: var(--table-border-width);
+    --table-cell-vertical-alignment: top;
 
-    --list-indent: 2.25em;
-    --list-spacing: 0.075em;
-    --list-marker-color: var(--text-faint);
-    --checkbox-size: 1em;
-    --checkbox-radius: 4px;
+    /* Lists and checkboxes */
+    --checkbox-radius: var(--radius-s);
+    --checkbox-size: var(--font-preferred-size);
+    --checkbox-marker-color: var(--background-primary);
     --checkbox-color: var(--interactive-accent);
     --checkbox-color-hover: var(--interactive-accent-hover);
     --checkbox-border-color: var(--text-faint);
-    --checkbox-marker-color: var(--background-primary);
-    --checklist-done-color: var(--text-muted);
+    --checkbox-border-color-hover: var(--text-muted);
+    --checkbox-margin-inline-start: .85em;
     --checklist-done-decoration: line-through;
+    --checklist-done-color: var(--text-muted);
+    --list-indent: calc(var(--indent-unit) * var(--indent-size));
+    --list-spacing: .075em;
+    --list-marker-color: var(--text-faint);
+    --list-marker-color-hover: var(--text-muted);
+    --list-marker-color-collapsed: var(--text-accent);
+    --list-bullet-border: none;
+    --list-bullet-radius: 50%;
+    --list-bullet-size: .3em;
+    --list-bullet-transform: none;
+    --list-numbered-style: decimal;
+    --list-bullet-end-padding: 1.3rem;
 
-    --footnote-size: 0.875em;
+    /* Footnotes */
+    --footnote-divider-color-active: var(--metadata-divider-color-focus);
+    --footnote-divider-color: var(--metadata-divider-color);
+    --footnote-divider-width: var(--border-width);
+    --footnote-gap: var(--size-4-1);
+    --footnote-id-color-no-occurrences: var(--text-faint);
+    --footnote-id-color: var(--text-muted);
+    --footnote-id-delimiter: ".";
+    --footnote-input-background-active: var(--metadata-input-background-active);
+    --footnote-input-background: var(--metadata-input-background);
+    --footnote-line-height: var(--line-height-normal);
+    --footnote-padding-block: var(--size-2-3);
+    --footnote-padding-inline: var(--size-2-3);
+    --footnote-radius: var(--radius-s);
+    --footnote-size: var(--font-smaller);
 
-    --embed-background: transparent;
-    --embed-padding: 2px 8px;
-    --embed-font-style: normal;
+    /* Embeds and images */
+    --embed-max-height: 4000px;
+    --embed-background: inherit;
+    --embed-border-start: 2px solid var(--interactive-accent);
+    --embed-border-end: none;
+    --embed-border-top: none;
+    --embed-border-bottom: none;
+    --embed-padding: 0 0 0 var(--size-4-6);
+    --embed-font-style: inherit;
+    --embed-block-shadow-hover: 0 0 0 1px var(--background-modifier-border), inset 0 0 0 1px var(--background-modifier-border);
+    --image-radius: 4px;
+
+    /* Diagrams */
+    --mermaid-background: var(--background-primary);
+    --mermaid-text-color: var(--text-normal);
+    --mermaid-muted-color: var(--text-muted);
+    --mermaid-line-color: var(--text-normal);
+    --mermaid-surface: var(--background-secondary);
+    --mermaid-surface-alt: var(--background-primary-alt);
+    --mermaid-border-color: var(--background-modifier-border-hover);
+    --mermaid-accent: var(--interactive-accent);
+    --mermaid-critical: var(--color-red);
+    --mermaid-error: var(--text-error);
+    --mermaid-radius: var(--radius-s);
+    --mermaid-title-weight: var(--font-semibold);
+    --mermaid-heading-weight: var(--font-semibold);
+    --mermaid-bold-weight: var(--bold-weight);
+    --mermaid-color-1: var(--color-blue);
+    --mermaid-color-2: var(--color-orange);
+    --mermaid-color-3: var(--color-green);
+    --mermaid-color-4: var(--color-red);
+    --mermaid-color-5: var(--color-cyan);
+    --mermaid-color-6: var(--color-yellow);
+    --mermaid-color-7: var(--color-purple);
+    --mermaid-color-8: var(--color-pink);
+
+    /* Properties */
+    --collapse-icon-color: var(--text-faint);
+    --collapse-icon-color-collapsed: var(--text-accent);
+    --input-height: 30px;
+    --input-padding: var(--size-4-1) var(--size-4-2);
+    --input-radius: 5px;
+    --input-corner-shape: var(--corner-shape);
+    --input-font-weight: var(--font-normal);
+    --input-border-width: var(--border-width);
+    --input-border-width-focus: 2px;
+    --input-placeholder-color: var(--text-faint);
+
+    /* Without variable fonts; the @supports block below has the usual values. */
+    --h1-weight: 700;
+    --h2-weight: 600;
+    --h3-weight: 600;
+    --h4-weight: 600;
+    --h5-weight: 600;
+    --h6-weight: 600;
+
+    /* Not colors, so they can't go through light-dark(). They follow the OS, or a .theme-light / .theme-dark class. */
+    --highlight-mix-blend-mode: darken;
+    --mono-rgb-0: 255, 255, 255;
+    --mono-rgb-100: 0, 0, 0;
+    --color-red-rgb: 233, 49, 71;
+    --color-orange-rgb: 236, 117, 0;
+    --color-yellow-rgb: 224, 172, 0;
+    --color-green-rgb: 8, 185, 78;
+    --color-cyan-rgb: 0, 191, 188;
+    --color-blue-rgb: 8, 109, 221;
+    --color-purple-rgb: 120, 82, 238;
+    --color-pink-rgb: 213, 57, 132;
+  }
+  :where([dir='rtl']) {
+    --direction: -1;
+  }
+  @supports (font-variation-settings: normal) {
+    :where(body) {
+      --h1-weight: 700;
+      --h2-weight: 680;
+      --h3-weight: 660;
+      --h4-weight: 640;
+      --h5-weight: 620;
+      --h6-weight: 600;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :where(body) {
+      --highlight-mix-blend-mode: lighten;
+      --mono-rgb-0: 0, 0, 0;
+      --mono-rgb-100: 255, 255, 255;
+      --color-red-rgb: 251, 70, 76;
+      --color-orange-rgb: 233, 151, 63;
+      --color-yellow-rgb: 224, 222, 113;
+      --color-green-rgb: 68, 207, 110;
+      --color-cyan-rgb: 83, 223, 221;
+      --color-blue-rgb: 2, 122, 255;
+      --color-purple-rgb: 168, 130, 255;
+      --color-pink-rgb: 250, 153, 205;
+    }
+  }
+  :where(.theme-light) {
+    --highlight-mix-blend-mode: darken;
+    --mono-rgb-0: 255, 255, 255;
+    --mono-rgb-100: 0, 0, 0;
+    --color-red-rgb: 233, 49, 71;
+    --color-orange-rgb: 236, 117, 0;
+    --color-yellow-rgb: 224, 172, 0;
+    --color-green-rgb: 8, 185, 78;
+    --color-cyan-rgb: 0, 191, 188;
+    --color-blue-rgb: 8, 109, 221;
+    --color-purple-rgb: 120, 82, 238;
+    --color-pink-rgb: 213, 57, 132;
+  }
+  :where(.theme-dark) {
+    --highlight-mix-blend-mode: lighten;
+    --mono-rgb-0: 0, 0, 0;
+    --mono-rgb-100: 255, 255, 255;
+    --color-red-rgb: 251, 70, 76;
+    --color-orange-rgb: 233, 151, 63;
+    --color-yellow-rgb: 224, 222, 113;
+    --color-green-rgb: 68, 207, 110;
+    --color-cyan-rgb: 83, 223, 221;
+    --color-blue-rgb: 2, 122, 255;
+    --color-purple-rgb: 168, 130, 255;
+    --color-pink-rgb: 250, 153, 205;
+  }
+  /* Obsidian's theme classes force a scheme, which light-dark() then follows. */
+  .theme-light :is(ofm-note, ofm-markdown, ofm-frontmatter) {
+    color-scheme: light;
+  }
+  .theme-dark :is(ofm-note, ofm-markdown, ofm-frontmatter) {
+    color-scheme: dark;
   }
 
   ofm-note, ofm-markdown {
     display: block;
     color-scheme: light dark;
     color: var(--text-normal);
-    font-family: var(--font-text-theme);
+    font-family: var(--font-text);
     font-size: var(--font-text-size);
     line-height: var(--line-height-normal);
   }
@@ -344,7 +704,7 @@ export const obsidianTheme = css`
       padding: 4px 6px;
       overflow-x: auto;
       color: var(--text-muted);
-      font: 12px/1.4 var(--font-monospace-theme);
+      font: 12px/1.4 var(--font-monospace);
     }
   }
 
@@ -484,7 +844,7 @@ export const obsidianTheme = css`
     }
 
     code, pre {
-      font-family: var(--font-monospace-theme);
+      font-family: var(--font-monospace);
       font-size: var(--code-size);
     }
     code {
@@ -1047,8 +1407,8 @@ export const obsidianTheme = css`
       --pele-series-6: var(--color-yellow);
       --pele-series-7: var(--color-purple);
       --pele-series-8: var(--color-pink);
-      --pele-font: var(--font-text-theme);
-      --pele-font-mono: var(--font-monospace-theme);
+      --pele-font: var(--font-text);
+      --pele-font-mono: var(--font-monospace);
     }
     .mermaid .internal-link {
       cursor: pointer;
