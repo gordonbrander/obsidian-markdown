@@ -16,16 +16,17 @@
   <body>
     <main>
       <textarea id="source" aria-label="Markdown source" spellcheck="false"></textarea>
-      <ofm-markdown id="note"></ofm-markdown>
+      <ofm-context id="vault"><ofm-markdown id="note"></ofm-markdown></ofm-context>
     </main>
     <pre id="log"></pre>
 
     <script type="module">
       import { adoptSheet } from '/src/adopt-sheet.ts';
       import { obsidianTheme } from '/src/ofm-theme.ts';
-      import { doc } from './demo.js';
+      import { doc, noteService } from './demo.js';
 
       adoptSheet(obsidianTheme);
+      document.querySelector('#vault').noteService = noteService;
 
       const source = document.querySelector('#source');
       const note = document.querySelector('#note');

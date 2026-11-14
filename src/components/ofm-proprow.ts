@@ -1,7 +1,11 @@
 import { LitElement, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { fieldFor, formatCompact, parseCommitted, parseLink } from '../sniff.ts';
+import { consume } from '@lit/context';
+import { iconContext } from './ofm-context.ts';
+import { drawIcon, lucideIcons } from '../services/icons.ts';
+import type { IconResolver } from '../services/icons.ts';
+import { fieldFor, parseCommitted, parseLink, reservedType } from '../sniff.ts';
 import type { Field, Json, Link, Type } from '../sniff.ts';
 
 export type ProprowChangeDetail = { key: string; value: Json; type: Type | undefined; effectiveType: Type };
@@ -10,38 +14,95 @@ export type ClickWikilinkDetail = { key: string; target: string };
 type Editable = { key: string; readonly: boolean; commit(value: Json): void };
 type Linkable = { clickWikilink(event: Event, target: string): void };
 type Extras<K extends Type> =
-  K extends 'object' ? unknown :
-  K extends 'list' ? Editable & Linkable :
-  K extends 'link' ? Editable & Linkable & { editing: boolean; edit(): void; endEdit(): void } :
+  K extends 'unknown' ? unknown :
+  K extends 'multitext' | 'tags' | 'aliases' ? Editable & Linkable :
+  K extends 'text' ? Editable & Linkable & { editing: boolean; edit(): void; endEdit(): void } :
   Editable;
 type RowOf<K extends Type> = Extract<Field, { type: K }> & Extras<K>;
 type RowData = { [K in Type]: RowOf<K> }[Type];
 
-const inputOf = (e: Event) => e.target as HTMLInputElement;
+/** The icon Obsidian shows for each property type. */
+const ICONS: Record<Type, string> = {
+  text: 'lucide-text',
+  multitext: 'lucide-list',
+  number: 'lucide-binary',
+  checkbox: 'lucide-check-square',
+  date: 'lucide-calendar',
+  datetime: 'lucide-clock',
+  aliases: 'lucide-forward',
+  tags: 'lucide-tags',
+  unknown: 'lucide-file-question',
+};
 
-const linkAnchor = ({ target, label, href, wiki }: Link, clickWikilink: Linkable['clickWikilink']) => html`
+const inputOf = (e: Event) => e.target as HTMLInputElement;
+const textOf = (e: Event) => (e.target as HTMLElement).textContent ?? '';
+
+/** A link is an anchor where Obsidian has a div, so it opens, focuses and reads as a link without script. */
+const linkAnchor = (className: string, { target, label, href, wiki }: Link, clickWikilink: Linkable['clickWikilink']) => html`
   <a
-    class="ofm-link"
+    class="${className} ${wiki ? 'internal-link' : 'external-link'}"
+    data-href=${target}
     href=${href ?? nothing}
-    title=${target}
     @click=${wiki ? (e: Event) => clickWikilink(e, target) : nothing}
   >${label}</a>
 `;
 
-const textRow = (data: RowOf<'text'>) => html`
-  <input
-    type="text"
-    aria-label=${data.key}
-    .value=${data.value ?? ''}
-    ?readonly=${data.readonly}
-    @change=${(e: Event) => data.commit(inputOf(e).value)}
-  />
-`;
+const textRow = (data: RowOf<'text'>) => {
+  const link = data.value === null ? undefined : parseLink(data.value);
+  if (link && !data.editing) {
+    return html`
+      <div class="metadata-link" @click=${(e: Event) => !data.readonly && !e.defaultPrevented && !(e.target as Element).closest('a') && data.edit()}>
+        ${linkAnchor('metadata-link-inner', link, data.clickWikilink)}
+        ${data.readonly ? nothing : html`
+          <div
+            class="metadata-link-flair"
+            role="button"
+            tabindex="0"
+            aria-label="Edit ${data.key}"
+            data-icon="lucide-pencil"
+            @keydown=${(e: KeyboardEvent) => e.key === 'Enter' && data.edit()}
+          ></div>
+        `}
+      </div>
+    `;
+  }
+  // Obsidian's text field is an editable div, so it can wrap.
+  return html`
+    <div
+      class="metadata-input-longtext"
+      role="textbox"
+      tabindex="0"
+      placeholder="Empty"
+      aria-label=${data.key}
+      contenteditable=${data.readonly ? 'false' : 'plaintext-only'}
+      .textContent=${data.value ?? ''}
+      @keydown=${(e: KeyboardEvent) => {
+        const field = e.target as HTMLElement;
+        if (e.isComposing) return;
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          field.blur();
+        } else if (e.key === 'Escape') {
+          field.textContent = data.value ?? '';
+          field.blur();
+        }
+      }}
+      @blur=${(e: Event) => {
+        const text = textOf(e).trimEnd();
+        if (text !== (data.value ?? '')) data.commit(text);
+        data.endEdit();
+      }}
+    ></div>
+  `;
+};
 
 const numberRow = (data: RowOf<'number'>) => html`
   <input
+    class="metadata-input metadata-input-number"
     type="number"
     step="any"
+    inputmode="decimal"
+    placeholder="Empty"
     aria-label=${data.key}
     .value=${data.value ?? ''}
     ?readonly=${data.readonly}
@@ -59,6 +120,7 @@ const numberRow = (data: RowOf<'number'>) => html`
 
 const checkboxRow = (data: RowOf<'checkbox'>) => html`
   <input
+    class="metadata-input-checkbox"
     type="checkbox"
     aria-label=${data.key}
     .checked=${data.value}
@@ -67,32 +129,12 @@ const checkboxRow = (data: RowOf<'checkbox'>) => html`
   />
 `;
 
-const linkRow = (data: RowOf<'link'>) => {
-  const link = parseLink(data.value);
-  if (data.editing || !link) {
-    return html`
-      <input
-        data-editing
-        type="text"
-        aria-label=${data.key}
-        .value=${data.value}
-        @change=${(e: Event) => data.commit(inputOf(e).value)}
-        @blur=${data.endEdit}
-        @keydown=${(e: KeyboardEvent) => e.key === 'Enter' && inputOf(e).blur()}
-      />
-    `;
-  }
-  return html`
-    ${linkAnchor(link, data.clickWikilink)}
-    ${data.readonly ? nothing : html`
-      <button class="ofm-icon" type="button" aria-label="Edit ${data.key}" @click=${data.edit}>✎</button>
-    `}
-  `;
-};
-
 const dateRow = (data: RowOf<'date'>) => html`
   <input
+    class="metadata-input metadata-input-text mod-date"
     type="date"
+    max="9999-12-31"
+    placeholder="Empty"
     aria-label=${data.key}
     .value=${data.value ?? ''}
     ?readonly=${data.readonly}
@@ -102,8 +144,11 @@ const dateRow = (data: RowOf<'date'>) => html`
 
 const datetimeRow = (data: RowOf<'datetime'>) => html`
   <input
+    class="metadata-input metadata-input-text mod-datetime"
     type="datetime-local"
     step="1"
+    max="9999-12-31T23:59"
+    placeholder="Empty"
     aria-label=${data.key}
     .value=${data.value ?? ''}
     ?readonly=${data.readonly}
@@ -115,29 +160,45 @@ const datetimeRow = (data: RowOf<'datetime'>) => html`
   />
 `;
 
-const token = (item: string | number, index: number, data: RowOf<'list'>) => {
-  const link = typeof item === 'string' ? parseLink(item) : undefined;
+type Multi = RowOf<'multitext'> | RowOf<'tags'> | RowOf<'aliases'>;
+
+const pill = (item: string | number, index: number, data: Multi) => {
+  const remove = () => data.commit(data.value.toSpliced(index, 1));
+  const link = typeof item === 'string' && data.type !== 'tags' ? parseLink(item) : undefined;
+  // Obsidian shows a tag without its #.
+  const text = data.type === 'tags' ? String(item).replace(/^#/, '') : item;
   return html`
-    <span class="ofm-token">
-      ${link ? linkAnchor(link, data.clickWikilink) : item}
+    <div
+      class="multi-select-pill"
+      tabindex="0"
+      @keydown=${(e: KeyboardEvent) => {
+        if (data.readonly || e.target !== e.currentTarget || (e.key !== 'Backspace' && e.key !== 'Delete')) return;
+        e.preventDefault();
+        remove();
+      }}
+    >
+      ${link
+        ? linkAnchor('multi-select-pill-content', link, data.clickWikilink)
+        : html`<div class="multi-select-pill-content"><span>${text}</span></div>`}
       ${data.readonly ? nothing : html`
-        <button
-          class="ofm-icon"
-          type="button"
+        <div
+          class="multi-select-pill-remove-button"
+          role="button"
           aria-label="Remove ${item}"
-          @click=${() => data.commit(data.value.toSpliced(index, 1))}
-        >×</button>
+          data-icon="lucide-x"
+          @click=${remove}
+        ></div>
       `}
-    </span>
+    </div>
   `;
 };
 
-const listRow = (data: RowOf<'list'>) => {
+const multiRow = (data: Multi) => {
   const { key, value, readonly, commit } = data;
 
-  const add = (input: HTMLInputElement) => {
-    const text = input.value.trim();
-    input.value = '';
+  const add = (input: HTMLElement) => {
+    const text = (input.textContent ?? '').trim();
+    input.textContent = '';
     if (!text) return;
     const stayNumeric = value.length > 0
       && value.every((item) => typeof item === 'number')
@@ -146,33 +207,38 @@ const listRow = (data: RowOf<'list'>) => {
   };
 
   const onKeydown = (e: KeyboardEvent) => {
-    const input = inputOf(e);
+    const input = e.target as HTMLElement;
+    const text = input.textContent ?? '';
+    if (e.isComposing) return;
     // A comma inside a [[link]] being typed is part of the link.
-    if (e.key === 'Enter' || (e.key === ',' && !input.value.startsWith('[['))) {
+    if (e.key === 'Enter' || (e.key === ',' && !text.startsWith('[['))) {
       e.preventDefault();
       add(input);
-    } else if (e.key === 'Backspace' && input.value === '' && value.length > 0) {
+    } else if (e.key === 'Backspace' && text === '' && value.length > 0) {
       commit(value.slice(0, -1));
     }
   };
 
   return html`
-    <div class="ofm-tokens">
-      ${value.map((item, index) => token(item, index, data))}
+    <div class="multi-select-container">
+      ${value.map((item, index) => pill(item, index, data))}
       ${readonly ? nothing : html`
-        <input
-          type="text"
+        <div
+          class="multi-select-input"
+          role="textbox"
+          tabindex="0"
+          contenteditable="plaintext-only"
           aria-label="Add to ${key}"
           @keydown=${onKeydown}
-          @blur=${(e: Event) => add(inputOf(e))}
-        />
+          @blur=${(e: Event) => add(e.target as HTMLElement)}
+        ></div>
       `}
     </div>
   `;
 };
 
-const objectRow = (data: RowOf<'object'>) => html`
-  <pre>${formatCompact(data.value)}</pre>
+const unknownRow = (data: RowOf<'unknown'>) => html`
+  <span class="metadata-property-value-item mod-unknown" tabindex="0">${JSON.stringify(data.value)}</span>
 `;
 
 export const row = (data: RowData): TemplateResult => {
@@ -180,11 +246,12 @@ export const row = (data: RowData): TemplateResult => {
     case 'text': return textRow(data);
     case 'number': return numberRow(data);
     case 'checkbox': return checkboxRow(data);
-    case 'link': return linkRow(data);
     case 'date': return dateRow(data);
     case 'datetime': return datetimeRow(data);
-    case 'list': return listRow(data);
-    case 'object': return objectRow(data);
+    case 'multitext':
+    case 'tags':
+    case 'aliases': return multiRow(data);
+    case 'unknown': return unknownRow(data);
     default: {
       const unhandled: never = data;
       throw new Error(`Unknown property type: ${JSON.stringify(unhandled)}`);
@@ -193,9 +260,10 @@ export const row = (data: RowData): TemplateResult => {
 };
 
 /**
- * One property row: its key and an editor for its value.
+ * One property row: its key and an editor for its value, with the DOM and classes of a row in Obsidian's properties view.
+ * The element is the row itself: it has the class `metadata-property`, and `data-property-key` holds its key in lowercase.
  * The `effective-type` attribute holds the type the row draws, which can differ from the declared `type`.
- * @attr effective-type - The drawn type: text, number, checkbox, link, date, datetime, list or object.
+ * @attr effective-type - The drawn type: text, multitext, number, checkbox, date, datetime, tags, aliases or unknown.
  * @fires proprow-change - A property was edited. `detail` is `{ key, value, type, effectiveType }`.
  * @fires wikilink-click - A wikilink in the value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
  */
@@ -208,21 +276,32 @@ export class OfmProprow extends LitElement {
 
   @property({ attribute: false }) accessor key = '';
   @property({ attribute: false }) accessor value: Json = null;
-  /** The declared type. Unset, the type is sniffed from the value. */
+  /** The declared type. Unset, `tags` and `aliases` take their type from their name, and the rest from their value. */
   @property({ reflect: true }) accessor type: Type | undefined = undefined;
   @property({ type: Boolean }) accessor readonly = false;
+  /** Turns an icon id into its SVG: the nearest `<ofm-context>`'s, or Lucide's. */
+  @consume({ context: iconContext, subscribe: true })
+  @state() private accessor resolveIcon: IconResolver = lucideIcons;
   @state() private accessor editing = false;
   #field: Field = fieldFor(null);
 
   willUpdate() {
-    this.#field = fieldFor(this.value, this.type);
+    this.#field = fieldFor(this.value, this.type ?? reservedType(this.key));
+    this.classList.add('metadata-property');
+    this.setAttribute('data-property-key', this.key.toLowerCase());
     this.setAttribute('effective-type', this.#field.type);
+  }
+
+  updated() {
+    for (const icon of this.querySelectorAll<HTMLElement>('[data-icon]')) {
+      void drawIcon(icon, icon.dataset.icon!, this.resolveIcon).catch((error) => console.warn('ofm-proprow: could not draw icon', error));
+    }
   }
 
   async #startEdit() {
     this.editing = true;
     await this.updateComplete;
-    this.renderRoot.querySelector<HTMLInputElement>('[data-editing]')?.focus();
+    this.renderRoot.querySelector<HTMLElement>('.metadata-input-longtext')?.focus();
   }
 
   #commit(committed: Json) {
@@ -257,9 +336,21 @@ export class OfmProprow extends LitElement {
       endEdit: () => { this.editing = false; },
       clickWikilink: (event: Event, target: string) => this.#clickWikilink(event, target),
     };
+    // Obsidian's key is an input, for renaming. Here it only shows the name.
     return html`
-      <span class="ofm-key" title=${this.key}>${this.key}</span>
-      <div class="ofm-value">${row(data)}</div>
+      <div class="metadata-property-key">
+        <span class="metadata-property-icon" data-icon=${ICONS[this.#field.type]}></span>
+        <input
+          class="metadata-property-key-input"
+          type="text"
+          autocapitalize="none"
+          readonly
+          aria-label="Property name"
+          title=${this.key}
+          .value=${this.key}
+        />
+      </div>
+      <div class="metadata-property-value" data-property-type=${this.#field.type}>${row(data)}</div>
     `;
   }
 }

@@ -1,6 +1,6 @@
 import type { MarkdownIt, StateCore, Token } from 'markdown-it';
 
-const CALLOUT = /^\[!([^\]|\s]+)(?:\|([^\]]*))?\]([+-]?)(?:[ \t]+(.*))?$/;
+const CALLOUT = /^\[!([^\]|]+)(?:\|([^\]]*))?\]([+-]?)(?:[ \t]+(.*))?$/;
 const BLOCK_ID = /(?:^|[ \t\n])\^([A-Za-z0-9-]+)[ \t]*$/;
 const TASK = /^\[(.)\](?=[ \t\n]|$)/u;
 
@@ -16,11 +16,12 @@ const closeOf = (tokens: Token[], open: number) => {
   return tokens.length - 1;
 };
 
-const wrapper = (state: StateCore, type: string, className: string, body: Token[], tag = 'div') => {
+/** `block` puts the element's tags on their own lines. Leave it off around inline content, which a newline would pad. */
+const wrapper = (state: StateCore, type: string, className: string, body: Token[], tag = 'div', block = true) => {
   const open = new state.Token(`${type}_open`, tag, 1);
   open.attrSet('class', className);
   const close = new state.Token(`${type}_close`, tag, -1);
-  open.block = close.block = tag !== 'span';
+  open.block = close.block = block;
   return [open, ...body, close];
 };
 
@@ -35,14 +36,18 @@ const callouts = (state: StateCore) => {
     if (!match) continue;
 
     const [, rawType, metadata, fold, title] = match;
-    const type = rawType.toLowerCase();
+    // As Obsidian normalizes it: `[!My type]` is the type my-type.
+    const type = rawType.trim().toLowerCase().replace(/\s+/g, '-');
+    if (type === '') continue;
     const close = closeOf(tokens, open);
 
     // Foldable callouts are <details>, so the browser folds them with no script.
     const tag = fold ? 'details' : 'div';
     const opening = tokens[open];
     Object.assign(opening, { type: 'callout_open', tag });
-    opening.attrSet('class', fold ? 'callout is-collapsible' : 'callout');
+    // Obsidian marks a callout that starts folded. A page that lets it toggle must keep the class in step.
+    const collapsed = fold === '-' ? ' is-collapsed' : '';
+    opening.attrSet('class', fold ? `callout is-collapsible${collapsed}` : 'callout');
     opening.attrSet('data-callout', type);
     if (fold) opening.attrSet('data-callout-fold', fold);
     if (fold === '+') opening.attrSet('open', '');
@@ -50,7 +55,8 @@ const callouts = (state: StateCore) => {
     Object.assign(tokens[close], { type: 'callout_close', tag });
 
     const titleInline = new state.Token('inline', '', 0);
-    titleInline.content = title?.trim() || type.charAt(0).toUpperCase() + type.slice(1);
+    const words = type.replaceAll('-', ' ');
+    titleInline.content = title?.trim() || words.charAt(0).toUpperCase() + words.slice(1);
     titleInline.children = [];
 
     paragraph.content = rest.join('\n');
@@ -59,8 +65,9 @@ const callouts = (state: StateCore) => {
       open + 1,
       close - open - 1,
       ...wrapper(state, 'callout_title', 'callout-title', [
-        ...wrapper(state, 'callout_title_inner', 'callout-title-inner', [titleInline], 'span'),
-        ...(fold ? wrapper(state, 'callout_fold', 'callout-fold', [], 'span') : []),
+        ...wrapper(state, 'callout_icon', 'callout-icon', [], 'div', false),
+        ...wrapper(state, 'callout_title_inner', 'callout-title-inner', [titleInline], 'div', false),
+        ...(fold ? wrapper(state, 'callout_fold', `callout-fold${collapsed}`, [], 'div', false) : []),
       ], fold ? 'summary' : 'div'),
       ...(body.length > 0 ? wrapper(state, 'callout_content', 'callout-content', body) : []),
     );
@@ -119,6 +126,13 @@ const tasks = (state: StateCore) => {
     const checked = match[1] !== ' ';
     tokens[i].attrSet('class', checked ? 'task-list-item is-checked' : 'task-list-item');
     tokens[i].attrSet('data-task', checked ? match[1] : '');
+    // The list that holds the item: the nearest one opened a level up.
+    for (let j = i - 1; j >= 0; j--) {
+      if (tokens[j].level === tokens[i].level - 1 && tokens[j].type.endsWith('_list_open')) {
+        tokens[j].attrSet('class', 'contains-task-list');
+        break;
+      }
+    }
     const checkbox = new state.Token('task_checkbox', 'input', 0);
     checkbox.meta = { checked, hasText: inline.content !== '' };
     tokens.splice(i + 2, 0, checkbox);
@@ -141,6 +155,16 @@ export const ofmCore = (md: MarkdownIt) => {
   md.core.ruler.after('ofm_callouts', 'ofm_block_ids', blockIds);
   md.core.ruler.after('ofm_block_ids', 'ofm_tasks', tasks);
   md.core.ruler.after('inline', 'ofm_empty_paragraphs', dropEmptyParagraphs);
+
+  // Obsidian draws its own bullets: a span in each item of a bullet list, which the theme styles in place of the marker.
+  md.renderer.rules.bullet_list_open = (tokens, idx, options, _env, self) => {
+    tokens[idx].attrJoin('class', 'has-list-bullet');
+    return self.renderToken(tokens, idx, options);
+  };
+  md.renderer.rules.list_item_open = (tokens, idx, options, _env, self) => {
+    const bullet = '-*+'.includes(tokens[idx].markup) ? '<span class="list-bullet"></span>' : '';
+    return self.renderToken(tokens, idx, options) + bullet;
+  };
 
   md.renderer.rules.task_checkbox = (tokens, idx) => {
     const { checked, hasText } = tokens[idx].meta as { checked: boolean; hasText: boolean };

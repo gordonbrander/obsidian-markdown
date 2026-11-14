@@ -41,7 +41,7 @@ test('www. and email addresses are autolinked', () => {
 });
 
 test('only links with a scheme are external', () => {
-  assert.match(render('[x](Note.md)'), /<a href="Note\.md">/);
+  assert.match(render('[x](Note.md)'), /<a href="Note\.md" class="internal-link" data-href="Note\.md">/);
   assert.match(render('[x](obsidian://open)'), /<a href="obsidian:\/\/open" class="external-link">/);
 });
 
@@ -70,7 +70,11 @@ test('targets with a scheme get no URL', () => {
     assert.doesNotMatch(html, /\shref=/, source);
     assert.match(html, /data-href=/, source);
   }
-  assert.doesNotMatch(render('![[javascript:x.png]]'), /\ssrc=/);
+  // The span's src is only a name. The <img>, which would load it, has none.
+  for (const source of ['![[javascript:x.png]]', '![[java\tscript:x.png]]', '![a](<java\tscript:x.png>)']) {
+    assert.doesNotMatch(render(source), /<img[^>]*\ssrc=/, source);
+  }
+  assert.doesNotMatch(render('![a](javascript:x.png)'), /<img|<span/);
 });
 
 test('content cannot break out of an attribute', () => {
@@ -89,7 +93,8 @@ test('content cannot break out of an attribute', () => {
   ];
   for (const source of sources) {
     const html = render(source);
-    assert.doesNotMatch(html, /<img(?! class="internal-embed")/, source);
+    // The only <img> is the one an image embed wraps.
+    assert.doesNotMatch(html, /(?<!<span class="internal-embed media-embed image-embed is-loaded"[^>]*>)<img/, source);
     assert.doesNotMatch(html, /\sonclick="y"|\sonerror="y/, source);
   }
 });
@@ -102,4 +107,34 @@ test('front matter is split off and parsed', () => {
   assert.deepEqual(splitFrontmatter('---\n---\nBody'), { frontmatter: '', content: 'Body' });
   assert.deepEqual(parseFrontmatter('Body'), { data: {}, content: 'Body' });
   assert.throws(() => parseFrontmatter('---\na: [\n---\n'));
+});
+
+test('a callout type is normalized as Obsidian does', () => {
+  assert.match(render('> [!My Type]\n> Body'), /data-callout="my-type".*callout-title-inner">My type</s);
+});
+
+test('a list holding a task is marked, and only that list', () => {
+  const html = render('- a\n  - [ ] b');
+  assert.match(html, /^<ul class="has-list-bullet">\n<li><span class="list-bullet"><\/span>a\n<ul class="contains-task-list has-list-bullet">/);
+});
+
+test('bullet list items carry Obsidian\'s bullet, and ordered ones do not', () => {
+  assert.equal(render('- a'), '<ul class="has-list-bullet">\n<li><span class="list-bullet"></span>a</li>\n</ul>\n');
+  assert.match(render('- a\n\n- b'), /<li>\n<span class="list-bullet"><\/span><p>a<\/p>/);
+  assert.equal(render('1. a'), '<ol>\n<li>a</li>\n</ol>\n');
+  assert.match(render('- [ ] a'), /^<ul class="contains-task-list has-list-bullet">\n<li class="task-list-item" data-task=""><span class="list-bullet">/);
+});
+
+test('an image in the vault is an embed, however it is written', () => {
+  const embed = '<span class="internal-embed media-embed image-embed is-loaded" src="my pic.png" alt="A" width="80"><img src="my%20pic.png" alt="A" width="80" /></span>';
+  assert.equal(render('![A|80](my%20pic.png)'), `<p>${embed}</p>\n`);
+  assert.match(render('![[pic.png|80]]'), /<span class="internal-embed media-embed image-embed is-loaded" src="pic.png" alt="pic.png" width="80"><img src="pic.png"/);
+  assert.equal(render('![A](https://example.com/a.png)'), '<p><img src="https://example.com/a.png" alt="A" /></p>\n');
+});
+
+test('a callout folded at first is marked collapsed', () => {
+  const html = render('> [!faq]- Q\n> A');
+  assert.match(html, /^<details class="callout is-collapsible is-collapsed"/);
+  assert.match(html, /<div class="callout-fold is-collapsed"><\/div>/);
+  assert.doesNotMatch(render('> [!faq]+ Q\n> A'), /is-collapsed/);
 });

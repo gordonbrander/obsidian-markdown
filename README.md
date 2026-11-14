@@ -113,7 +113,7 @@ An editable property list, like Obsidian's properties view.
 
 - Properties/attributes:
   - **`properties`**: the note's properties, as an object or JSON attribute.
-  - **`types`**: optional declared types per property: `text`, `number`, `checkbox`, `link`, `date`, `datetime`, `list` or `object`. A value that the declared type can't show without losing data keeps the type sniffed from it.
+  - **`types`**: optional declared types per property, with Obsidian's type names: `text`, `multitext` (a list), `number`, `checkbox`, `date`, `datetime`, `tags` or `aliases`. Properties named `tags` and `aliases` get those types without being declared, as in Obsidian. A value that the declared type can't show without losing data keeps the type sniffed from it, and a value no type can show has the type `unknown`. A text value that is one wikilink or URL shows as a link.
   - **`readonly`**: a boolean attribute that disables editing.
 - Events:
   - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`. By then, `properties` holds the edit.
@@ -124,28 +124,71 @@ An editable property list, like Obsidian's properties view.
 - **`type`**: the declared type, if any.
 - **`effective-type`**: the type the row actually draws, declared or sniffed from the value.
 
-### Note embeds (transcludes)
+### `<ofm-context>`
 
-Note embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`) are loaded through a shared `noteService`. Configure the `noteService` to tell components how to find and load your notes:
+`<ofm-context>` provides shared configuration and context to components.
 
-```js
-import { noteService } from 'obsidian-markdown/services/note.js';
+```html
+<ofm-context id="vault">
+  <ofm-note></ofm-note>
+  <ofm-markdown></ofm-markdown>
+</ofm-context>
+```
 
-noteService.setLoader(async (name) => {
-  const response = await fetch(`/notes/${encodeURIComponent(name)}.md`);
-  return response.ok ? response.text() : undefined;
+Think of `<ofm-context>` as the vault for your components. Vault-level settings and capabilities are all provided by the context.
+
+- `noteService`: loads and caches vault notes when rendering transclusions/embeds (`![[Other note]]`, `![[Other note#Heading]]`, `![[Other note#^block-id]]`).
+- `resolveIcon`: turns icon names into SVGs during component rendering. Uses Lucide icons by default.
+
+Components that are not wrapped in a context draw Lucide icons and leave note embeds as placeholders.
+
+You can customize the context by setting its properties. In React:
+
+```jsx
+// Load embedded notes from your server.
+const noteService = new NoteService(async (name) => {
+  // ...Load .md file from your server by name
 });
+
+// Customize icons
+const resolveMaterialIcon = (id) => {
+  // ...Get Material icon for id
+};
+
+export function Vault({ note }) {
+  return (
+    <ofm-context noteService={noteService} resolveIcon={resolveMaterialIcon}>
+      <ofm-note value={note} />
+    </ofm-context>
+  );
+}
 ```
 
-Embeds nest up to five deep, as in Obsidian, so a note that embeds itself repeats until that depth. If no loader is configured, note embeds stay placeholders.
+Or in vanilla DOM:
 
-Every component shares the same `noteService` instance, so you only have to configure the service once. If you want to further customize behavior, you can extend or override the component instance's `noteService` property.
+```html
+<ofm-context id="vault">
+  <ofm-note></ofm-note>
+</ofm-context>
 
-```js
-import { NoteService } from 'obsidian-markdown/services/note.js';
+<script type="module">
+  const vault = document.querySelector('#vault');
 
-document.querySelector('ofm-note').noteService = new NoteService(loadPublishedNote);
+  // Load embedded notes from your server.
+  vault.noteService = new NoteService(async (name) => {
+    // ...Load .md file from your server by name
+  });
+
+  // Customize icons
+  vault.resolveIcon = (id) => {
+    // ...Get Material icon for id
+  };
+</script>
 ```
+
+### Custom providers
+
+`<ofm-context>` provides two contexts from [`@lit/context`](https://lit.dev/docs/data/context/), `noteContext` and `iconContext`, exported from `obsidian-markdown/components/ofm-context.js`. You can provide either one yourself. Each is answered by the nearest provider of that context, so a provider of icons alone, inside an `<ofm-context>`, replaces the icons and keeps the context's notes.
 
 ### Using with frameworks
 
@@ -260,7 +303,28 @@ import { adoptSheet } from 'obsidian-markdown/adopt-sheet.js';
 adoptSheet(obsidianTheme);
 ```
 
-The theme uses Obsidian's CSS variable names (`--text-normal`, `--text-accent`, `--link-color`, …), so you can restyle it by setting those variables.
+#### CSS snippets from Obsidian
+
+The theme copies Obsidian's default theme: the same CSS variables with the same values, declared on `body`, and the same rules with the same selectors. `render()` emits the markup and classes of Obsidian's reading view (`.callout`, `.list-bullet`, `.internal-embed`, …), so its output takes the theme on its own inside any element with the class `markdown-rendered`. The components add what needs a live page, such as icons and loaded embeds, and render Obsidian's properties view (`.metadata-container`, `.metadata-property`, `.multi-select-pill`, …). So a CSS snippet written for Obsidian works when you paste it into your page:
+
+```css
+body { --h1-size: 3em; --accent-h: 120; }
+.callout[data-callout="tip"] { --callout-icon: lucide-rocket; }
+.metadata-property[data-property-key="tags"] { display: none; }
+```
+
+The theme sits in a cascade layer, `ofm-theme`, so your rules win whatever their specificity or order, as snippets do in Obsidian. The page's other unlayered rules win too: a reset such as `* { margin: 0 }` applies inside a note.
+
+Where it differs from Obsidian:
+
+- **Light and dark** follow `color-scheme`, through `light-dark()`. Obsidian's `theme-light` and `theme-dark` classes also work, on `body` or any ancestor of a component, and snippets scoped to them need one of them set.
+- **Scope**: rules Obsidian applies to the whole app, such as `a` or `table`, apply only inside the components.
+- **Math** is MathML drawn by Temml, not MathJax, so `mjx-*` snippets have nothing to match.
+- **Folding**: foldable callouts and the properties list are `<details>` elements. Obsidian's `is-collapsed` class is kept in sync on them.
+- **Links** are not resolved against a vault, so `is-unresolved` is never set on a link.
+- **Not editable**: task checkboxes are disabled, property names can't be renamed, and there is no "Add property" button.
+- **Icons**: only the icons Obsidian draws by default are built in. Another Lucide id in `--callout-icon` draws nothing unless your `resolveIcon` supplies it.
+- **Image embeds** have the class `is-loaded` from the start, where Obsidian adds it once the image has loaded.
 
 ## License
 

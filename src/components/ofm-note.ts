@@ -1,9 +1,12 @@
+import { consume } from '@lit/context';
 import { LitElement, html, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import './ofm-frontmatter.ts';
 import type { Properties, PropertyTypes } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
-import { NoteService, noteService } from '../services/note.ts';
+import { iconContext } from './ofm-context.ts';
+import { drawIcon, lucideIcons } from '../services/icons.ts';
+import type { IconResolver } from '../services/icons.ts';
 import { parseFrontmatter, splitFrontmatter } from '../render.ts';
 
 const parse = (value: string): { data: Properties; content: string } => {
@@ -19,7 +22,7 @@ const parse = (value: string): { data: Properties; content: string } => {
 
 /**
  * A whole note: its properties, collapsible as in Obsidian, followed by its rendered Markdown.
- * Note embeds load through its `noteService` property: the shared `noteService` unless you assign another.
+ * Note embeds and icons come from the nearest `<ofm-context>`.
  * @fires proprow-change - A property was edited. Bubbles from its row. `detail` is `{ key, value, type, effectiveType }`.
  * @fires wikilink-click - A wikilink was clicked, in a property or the note. `detail.target` is the link target. Cancel it to stop the link's navigation.
  */
@@ -30,26 +33,47 @@ export class OfmNote extends LitElement {
     return this;
   }
 
-  /** Loads note embeds. Defaults to the shared `noteService`; assign another to configure this element on its own. */
-  @property({ attribute: false }) accessor noteService: NoteService = noteService;
+  /** Turns an icon id into its SVG: the nearest `<ofm-context>`'s, or Lucide's. */
+  @consume({ context: iconContext, subscribe: true })
+  @state() private accessor resolveIcon: IconResolver = lucideIcons;
 
   /** The note's source, front matter included. */
   @property() accessor value = '';
   @property({ type: Boolean, attribute: 'strict-line-breaks' }) accessor strictLineBreaks = false;
   @property({ type: Boolean }) accessor readonly = false;
   @property({ type: Object }) accessor types: PropertyTypes | null = null;
+  /** Mirrors the <details>, for Obsidian's is-collapsed class. */
+  @state() private accessor collapsed = false;
+
+  updated() {
+    const arrow = this.querySelector(':scope > .metadata-container > .metadata-properties-heading > .collapse-indicator');
+    if (arrow) void drawIcon(arrow, 'right-triangle', this.resolveIcon).catch((error) => console.warn('ofm-note: could not draw icon', error));
+  }
 
   render() {
     // ponytail: ofm-markdown strips front matter again, so content that itself opens with a --- block loses it.
     const { data, content } = parse(this.value ?? '');
+    const count = Object.keys(data).length;
+    const collapsed = this.collapsed ? 'is-collapsed' : '';
+    // Obsidian's properties view, as a <details> where Obsidian folds a div with script. The arrow is its right-triangle icon.
     return html`
-      ${Object.keys(data).length > 0 ? html`
-        <details class="ofm-properties" open>
-          <summary class="ofm-properties-heading">Properties</summary>
-          <ofm-frontmatter .properties=${data} .types=${this.types} ?readonly=${this.readonly}></ofm-frontmatter>
+      ${count > 0 ? html`
+        <details
+          class="metadata-container ${collapsed}"
+          data-property-count=${count}
+          ?open=${!this.collapsed}
+          @toggle=${(e: Event) => { this.collapsed = !(e.currentTarget as HTMLDetailsElement).open; }}
+        >
+          <summary class="metadata-properties-heading">
+            <div class="collapse-indicator collapse-icon ${collapsed}"></div>
+            <div class="metadata-properties-title">Properties</div>
+          </summary>
+          <div class="metadata-content">
+            <ofm-frontmatter .properties=${data} .types=${this.types} ?readonly=${this.readonly}></ofm-frontmatter>
+          </div>
         </details>
       ` : nothing}
-      <ofm-markdown .noteService=${this.noteService} .value=${content} ?strict-line-breaks=${this.strictLineBreaks}></ofm-markdown>
+      <ofm-markdown .value=${content} ?strict-line-breaks=${this.strictLineBreaks}></ofm-markdown>
     `;
   }
 }

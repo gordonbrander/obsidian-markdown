@@ -185,7 +185,7 @@ export const ofmFootnote = (md: MarkdownIt) => {
     const ref = `fnref-${refId(meta)}`;
     return `<sup class="footnote-ref" data-footnote-id="${ref}"><a class="footnote-link" href="#fn-${number}" id="${ref}">${number}</a></sup>`;
   };
-  rules.footnote_block_open = () => '<section class="footnotes">\n<ol>\n';
+  rules.footnote_block_open = () => '<section class="footnotes">\n<hr />\n<ol>\n';
   rules.footnote_block_close = () => '</ol>\n</section>\n';
   rules.footnote_open = (tokens, idx) => {
     const id = `fn-${(tokens[idx].meta as RefMeta).id + 1}`;

@@ -2,7 +2,7 @@
 const toDist = (path) => path.replace(/^src\//, 'dist/').replace(/\.ts$/, '.js');
 
 export default {
-  globs: ['src/components/ofm-note.ts', 'src/components/ofm-markdown.ts', 'src/components/ofm-frontmatter.ts', 'src/components/ofm-proprow.ts'],
+  globs: ['src/components/ofm-note.ts', 'src/components/ofm-markdown.ts', 'src/components/ofm-frontmatter.ts', 'src/components/ofm-proprow.ts', 'src/components/ofm-context.ts'],
   litelement: true,
   plugins: [
     {

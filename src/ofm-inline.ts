@@ -2,7 +2,26 @@ import type { MarkdownIt, Delimiter, StateInline } from 'markdown-it';
 import { hasScheme, parseWikilink } from './sniff.ts';
 
 export const IMAGE_EXTENSIONS = new Set(['avif', 'bmp', 'gif', 'jpeg', 'jpg', 'png', 'svg', 'webp']);
-const EMBED_SIZE = /^(\d+)(?:x(\d+))?$/;
+/** A description that ends with a size, `Alt|100` or `Alt|100x145`, or is only a size. Split at the last `|`, as Obsidian does. */
+export const IMAGE_SIZE = /^(?:(.*)\|)?(\d+)(?:x(\d+))?$/;
+
+const escapeAttr = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+export const isImagePath = (path: string) =>
+  IMAGE_EXTENSIONS.has(path.split('#')[0].split('.').pop()?.toLowerCase() ?? '');
+
+/**
+ * An embedded image, as Obsidian's Read view has it once loaded: the embed's span around a bare <img>.
+ * `url` is the image's address when it differs from the target, as a percent-encoded one does.
+ * A target with a scheme gets no URL, so `![[javascript:...]]` can't run.
+ */
+export const imageEmbed = (target: string, alt: string, width?: string, height?: string, url = target) => {
+  const size = `${width ? ` width="${width}"` : ''}${height ? ` height="${height}"` : ''}`;
+  const described = ` alt="${escapeAttr(alt)}"${size}`;
+  const src = hasScheme(url) || hasScheme(target) ? '' : ` src="${escapeAttr(url)}"`;
+  return `<span class="internal-embed media-embed image-embed is-loaded" src="${escapeAttr(target)}"${described}><img${src}${described} /></span>`;
+};
 const HIGHLIGHT_COLORS: [string, string][] = [
   ['🔴', 'red'],
   ['🟠', 'orange'],
@@ -171,7 +190,7 @@ export const ofmInline = (md: MarkdownIt) => {
   rules.math_inline = (tokens, idx) =>
     `<span class="math math-inline">${escapeHtml(tokens[idx].content)}</span>`;
   rules.math_display = (tokens, idx) =>
-    `<span class="math math-display">${escapeHtml(tokens[idx].content)}</span>`;
+    `<span class="math math-block">${escapeHtml(tokens[idx].content)}</span>`;
 
   rules.tag = (tokens, idx) => {
     const name = escapeHtml(tokens[idx].content);
@@ -186,14 +205,10 @@ export const ofmInline = (md: MarkdownIt) => {
 
   rules.embed = (tokens, idx) => {
     const { target, label } = tokens[idx].meta as { target: string; label: string };
-    const extension = target.split('#')[0].split('.').pop()?.toLowerCase() ?? '';
-    if (!IMAGE_EXTENSIONS.has(extension)) {
-      return `<span class="internal-embed" src="${escapeHtml(target)}"></span>`;
+    if (!isImagePath(target)) {
+      return `<span class="internal-embed" src="${escapeHtml(target)}" alt="${escapeHtml(label)}"></span>`;
     }
-    const size = label.match(EMBED_SIZE);
-    const alt = size || label === target ? target : label;
-    const width = size ? ` width="${size[1]}"` : '';
-    const height = size?.[2] ? ` height="${size[2]}"` : '';
-    return `<img class="internal-embed"${urlAttr('src', target)} alt="${escapeHtml(alt)}"${width}${height} />`;
+    const size = label.match(IMAGE_SIZE);
+    return imageEmbed(target, size ? size[1] ?? target : label, size?.[2], size?.[3]);
   };
 };

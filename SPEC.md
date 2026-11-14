@@ -67,7 +67,7 @@ Obsidian's own behavior is known with varying confidence, so rules carry a prove
 
 Like CommonMark, this document alternates prose with numbered examples. Each example shows Markdown input, a line containing a single `.`, and the expected HTML output. The `→` character represents a tab.
 
-The HTML is a **canonical rendering**. It represents structure for testing and is not the DOM that Obsidian produces, which has additional attributes, icons, and wrappers. Conforming implementations need not produce HTML at all. When comparing against the examples, attribute order is not significant.
+The HTML is a **canonical rendering**. It follows the DOM of Obsidian's Read view wherever that DOM is static: the same elements, classes and attributes, so that CSS written for Obsidian applies to it. It leaves out what Obsidian adds with script once a note is on screen, such as the icons a theme names, loaded embeds, and drawn math and diagrams. Conforming implementations need not produce HTML at all. When comparing against the examples, attribute order is not significant.
 
 Examples use a block format compatible with CommonMark's `spec.txt`, so they can be extracted mechanically: an opening fence of 32 backticks with the info string `example`, and a closing fence of 32 backticks.
 
@@ -463,7 +463,7 @@ a | b
 <tbody>
 <tr>
 <td><a class="internal-link" data-href="Note" href="Note">Alias</a></td>
-<td><img class="internal-embed" src="pic.png" alt="pic.png" width="200" /></td>
+<td><span class="internal-embed media-embed image-embed is-loaded" src="pic.png" alt="pic.png" width="200"><img src="pic.png" alt="pic.png" width="200" /></span></td>
 </tr>
 </tbody>
 </table>
@@ -562,9 +562,9 @@ If the marker is alone in its own paragraph, it names the **previous sibling blo
 
 ^my-list-id
 .
-<ul data-block-id="my-list-id">
-<li>list item 1</li>
-<li>list item 2</li>
+<ul class="has-list-bullet" data-block-id="my-list-id">
+<li><span class="list-bullet"></span>list item 1</li>
+<li><span class="list-bullet"></span>list item 2</li>
 </ul>
 ````````````````````````````````
 
@@ -601,9 +601,9 @@ A marker in a list item's paragraph names that **list item**:
 - Gemmy ^item-1
 - Unhelpful assistant
 .
-<ul>
-<li data-block-id="item-1">Gemmy</li>
-<li>Unhelpful assistant</li>
+<ul class="has-list-bullet">
+<li data-block-id="item-1"><span class="list-bullet"></span>Gemmy</li>
+<li><span class="list-bullet"></span>Unhelpful assistant</li>
 </ul>
 ````````````````````````````````
 
@@ -614,9 +614,9 @@ A marker in a list item's paragraph names that **list item**:
     ^37006f
 - Unhelpful assistant
 .
-<ul>
-<li data-block-id="37006f">Gemmy</li>
-<li>Unhelpful assistant</li>
+<ul class="has-list-bullet">
+<li data-block-id="37006f"><span class="list-bullet"></span>Gemmy</li>
+<li><span class="list-bullet"></span>Unhelpful assistant</li>
 </ul>
 ````````````````````````````````
 
@@ -630,7 +630,7 @@ Parts of quotations and callouts cannot be linked. A marker in a paragraph insid
 ^my-callout
 .
 <div class="callout" data-callout="tip" data-block-id="my-callout">
-<div class="callout-title"><span class="callout-title-inner">Tip</span></div>
+<div class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Tip</div></div>
 <div class="callout-content">
 <p>Body</p>
 </div>
@@ -660,14 +660,14 @@ Block quotes are as in CommonMark, except that a block quote can be a callout.
 <a id="callout"></a>A **callout** is a block quote whose first child is a paragraph whose first line matches:
 
 ```
-^\[!([^\]|\s]+)(?:\|([^\]]*))?\]([+-]?)(?:[ \t]+(.*))?$
+^\[!([^\]|]+)(?:\|([^\]]*))?\]([+-]?)(?:[ \t]+(.*))?$
 ```
 
 The captures are, in order:
 
-1. The **type identifier**. It is case-insensitive and is normalized to lowercase.
+1. The **type identifier**. It is case-insensitive. It is normalized as Obsidian does: trimmed, lowercased, and each run of whitespace replaced with one `-`, so `[!My type]` has the type `my-type`. A type that is empty after trimming is not a callout.
 2. **Metadata**, an optional string after `|` that themes can use for styling. The canonical rendering stores it in `data-callout-metadata`. ***[reported]***
-3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. The canonical rendering of a foldable callout is a `details` element with the class `is-collapsible`, plus `open` when the marker is `+`. Its title is a `summary` that ends with an empty `.callout-fold` element. Obsidian renders `div`s and folds them with script. ***[chosen]***
+3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. The canonical rendering of a foldable callout is a `details` element with the class `is-collapsible`, plus `open` when the marker is `+`. Its title is a `summary` that ends with an empty `.callout-fold` element, which an application fills with the fold arrow, Lucide's `chevron-down` icon, as Obsidian does. When the marker is `-`, both the callout and its `.callout-fold` have the class `is-collapsed`, as in Obsidian; an application that lets the callout toggle keeps that class in step. Obsidian renders `div`s and folds them with script. Every title begins with an empty `.callout-icon` element, as in Obsidian, which an application fills with the icon named by the theme. ***[chosen]***
 4. The **title**, parsed as inline content. ***[chosen]***
 
 This first line is removed from the paragraph. Remaining lines, and the remaining children of the block quote, are the callout's **content**. Content is parsed as ordinary blocks, so callouts can contain lists, code, wikilinks, and embeds.
@@ -679,14 +679,14 @@ This first line is removed from the paragraph. Remaining lines, and the remainin
 > Here's a callout block.
 .
 <div class="callout" data-callout="info">
-<div class="callout-title"><span class="callout-title-inner">Here's a callout title</span></div>
+<div class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Here's a callout title</div></div>
 <div class="callout-content">
 <p>Here's a callout block.</p>
 </div>
 </div>
 ````````````````````````````````
 
-With no title, the default title is the type identifier in title case, meaning its first character is uppercased and the rest stays lowercase. ***[chosen for identifiers with several words]***
+With no title, the default title is the type identifier with each `-` replaced by a space and its first character uppercased, as in Obsidian.
 
 **Example 29**
 
@@ -695,7 +695,7 @@ With no title, the default title is the type identifier in title case, meaning i
 > Careful.
 .
 <div class="callout" data-callout="warning">
-<div class="callout-title"><span class="callout-title-inner">Warning</span></div>
+<div class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Warning</div></div>
 <div class="callout-content">
 <p>Careful.</p>
 </div>
@@ -710,7 +710,7 @@ A callout may have no content:
 > [!tip] Title-only callout
 .
 <div class="callout" data-callout="tip">
-<div class="callout-title"><span class="callout-title-inner">Title-only callout</span></div>
+<div class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Title-only callout</div></div>
 </div>
 ````````````````````````````````
 
@@ -722,8 +722,8 @@ The fold marker must directly follow `]`:
 > [!faq]- Are callouts foldable?
 > Yes!
 .
-<details class="callout is-collapsible" data-callout="faq" data-callout-fold="-">
-<summary class="callout-title"><span class="callout-title-inner">Are callouts foldable?</span><span class="callout-fold"></span></summary>
+<details class="callout is-collapsible is-collapsed" data-callout="faq" data-callout-fold="-">
+<summary class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Are callouts foldable?</div><div class="callout-fold is-collapsed"></div></summary>
 <div class="callout-content">
 <p>Yes!</p>
 </div>
@@ -739,10 +739,10 @@ Callouts can nest:
 > > [!todo] Yes!, they can.
 .
 <div class="callout" data-callout="question">
-<div class="callout-title"><span class="callout-title-inner">Can callouts be nested?</span></div>
+<div class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Can callouts be nested?</div></div>
 <div class="callout-content">
 <div class="callout" data-callout="todo">
-<div class="callout-title"><span class="callout-title-inner">Yes!, they can.</span></div>
+<div class="callout-title"><div class="callout-icon"></div><div class="callout-title-inner">Yes!, they can.</div></div>
 </div>
 </div>
 </div>
@@ -799,11 +799,11 @@ Unlike GFM, the character may be anything. A space means the task is incomplete.
 - [?] Question
 - [-] Cancelled
 .
-<ul>
-<li class="task-list-item is-checked" data-task="x"><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Done</li>
-<li class="task-list-item" data-task=""><input class="task-list-item-checkbox" type="checkbox" disabled="" /> Not done</li>
-<li class="task-list-item is-checked" data-task="?"><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Question</li>
-<li class="task-list-item is-checked" data-task="-"><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Cancelled</li>
+<ul class="contains-task-list has-list-bullet">
+<li class="task-list-item is-checked" data-task="x"><span class="list-bullet"></span><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Done</li>
+<li class="task-list-item" data-task=""><span class="list-bullet"></span><input class="task-list-item-checkbox" type="checkbox" disabled="" /> Not done</li>
+<li class="task-list-item is-checked" data-task="?"><span class="list-bullet"></span><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Question</li>
+<li class="task-list-item is-checked" data-task="-"><span class="list-bullet"></span><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Cancelled</li>
 </ul>
 ````````````````````````````````
 
@@ -815,9 +815,9 @@ Brackets holding zero characters, or more than one, are ordinary text:
 - [] empty
 - [ab] two
 .
-<ul>
-<li>[] empty</li>
-<li>[ab] two</li>
+<ul class="has-list-bullet">
+<li><span class="list-bullet"></span>[] empty</li>
+<li><span class="list-bullet"></span>[ab] two</li>
 </ul>
 ````````````````````````````````
 
@@ -842,6 +842,7 @@ Simple[^1] and named[^note].
 .
 <p>Simple<sup class="footnote-ref" data-footnote-id="fnref-1"><a class="footnote-link" href="#fn-1" id="fnref-1">1</a></sup> and named<sup class="footnote-ref" data-footnote-id="fnref-2"><a class="footnote-link" href="#fn-2" id="fnref-2">2</a></sup>.</p>
 <section class="footnotes">
+<hr />
 <ol>
 <li id="fn-1" data-footnote-id="fn-1">
 <p>The first.<br />
@@ -1027,8 +1028,8 @@ $$x^2$$
 
 Before $$y$$ after
 .
-<p><span class="math math-display">x^2</span></p>
-<p>Before <span class="math math-display">y</span> after</p>
+<p><span class="math math-block">x^2</span></p>
+<p>Before <span class="math math-block">y</span> after</p>
 ````````````````````````````````
 
 ### 7.6 Tags
@@ -1226,7 +1227,7 @@ The kind of embed depends on the target's extension:
 | Canvas | Shapes only, without card text | |
 | Base | Base view | `#View` selects the default view. |
 
-An image embed renders as `<img>`. Any other embed renders as `<span class="internal-embed" src="TARGET"></span>`.
+An embed renders as `<span class="internal-embed" src="TARGET" alt="DISPLAY"></span>`, where DISPLAY is the text after `|`, or the target when there is none. An image embed renders as Obsidian's Read view has it once the image is loaded: the span also has the classes `media-embed image-embed is-loaded`, and holds an `<img>` with the same `alt`, `width` and `height`.
 
 **Example 63**
 
@@ -1239,13 +1240,13 @@ An image embed renders as `<img>`. Any other embed renders as `<span class="inte
 
 ![[My canvas.canvas]]
 .
-<p><span class="internal-embed" src="Internal links"></span></p>
-<p><span class="internal-embed" src="Internal links#^b15695"></span></p>
-<p><span class="internal-embed" src="Document.pdf#page=3&amp;height=400"></span></p>
-<p><span class="internal-embed" src="My canvas.canvas"></span></p>
+<p><span class="internal-embed" src="Internal links" alt="Internal links"></span></p>
+<p><span class="internal-embed" src="Internal links#^b15695" alt="Internal links#^b15695"></span></p>
+<p><span class="internal-embed" src="Document.pdf#page=3&amp;height=400" alt="Document.pdf#page=3&amp;height=400"></span></p>
+<p><span class="internal-embed" src="My canvas.canvas" alt="My canvas.canvas"></span></p>
 ````````````````````````````````
 
-For an image, display text matching `^[0-9]+(x[0-9]+)?$` gives dimensions. Other display text is the image's alternative text, which otherwise defaults to the target. ***[chosen]***
+For an image, display text matching `^[0-9]+(x[0-9]+)?$` gives dimensions. So does that pattern after the last `|` of the display text, and then the text before that `|` is the alternative text, as in Obsidian: `![[Engelbart.jpg|A portrait|100x145]]`. Other display text is the image's alternative text, which otherwise defaults to the target.
 
 **Example 64**
 
@@ -1257,11 +1258,14 @@ For an image, display text matching `^[0-9]+(x[0-9]+)?$` gives dimensions. Other
 ![[Engelbart.jpg|100x145]]
 
 ![[Engelbart.jpg|A portrait]]
+
+![[Engelbart.jpg|A portrait|100x145]]
 .
-<p><img class="internal-embed" src="Engelbart.jpg" alt="Engelbart.jpg" /></p>
-<p><img class="internal-embed" src="Engelbart.jpg" alt="Engelbart.jpg" width="100" /></p>
-<p><img class="internal-embed" src="Engelbart.jpg" alt="Engelbart.jpg" width="100" height="145" /></p>
-<p><img class="internal-embed" src="Engelbart.jpg" alt="A portrait" /></p>
+<p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="Engelbart.jpg"><img src="Engelbart.jpg" alt="Engelbart.jpg" /></span></p>
+<p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="Engelbart.jpg" width="100"><img src="Engelbart.jpg" alt="Engelbart.jpg" width="100" /></span></p>
+<p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="Engelbart.jpg" width="100" height="145"><img src="Engelbart.jpg" alt="Engelbart.jpg" width="100" height="145" /></span></p>
+<p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="A portrait"><img src="Engelbart.jpg" alt="A portrait" /></span></p>
+<p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="A portrait" width="100" height="145"><img src="Engelbart.jpg" alt="A portrait" width="100" height="145" /></span></p>
 ````````````````````````````````
 
 An application that expands embeds MUST NOT recurse without limit when notes embed one another. ***[chosen]***
@@ -1291,7 +1295,7 @@ An application MAY display `![](URL)` as an embedded player or post when the URL
 
 ### 7.10 Markdown links to vault files
 
-CommonMark inline links and images whose destination has no URI scheme refer to vault files. The destination is percent-decoded and then treated as a [linktext](#81-linktext). The canonical HTML is unchanged from CommonMark.
+CommonMark inline links and images whose destination has no URI scheme refer to vault files. The destination is percent-decoded and then treated as a [linktext](#81-linktext). The canonical rendering marks the link as it marks a wikilink, with the class `internal-link` and the decoded destination in `data-href`, as Obsidian does. An image whose destination is an image file renders as an image embed ([7.8](#78-embeds)), with the decoded destination as the span's `src`: `![A|80](my%20pic.png)` is `<span class="internal-embed media-embed image-embed is-loaded" src="my pic.png" alt="A" width="80"><img src="my%20pic.png" alt="A" width="80" /></span>`.
 
 **Example 66**
 
@@ -1302,9 +1306,9 @@ CommonMark inline links and images whose destination has no URI scheme refer to 
 
 [With spaces](<My Note.md>)
 .
-<p><a href="Three%20laws%20of%20motion.md">Three laws</a></p>
-<p><a href="Example.md#Details">Section</a></p>
-<p><a href="My%20Note.md">With spaces</a></p>
+<p><a class="internal-link" data-href="Three laws of motion.md" href="Three%20laws%20of%20motion.md">Three laws</a></p>
+<p><a class="internal-link" data-href="Example.md#Details" href="Example.md#Details">Section</a></p>
+<p><a class="internal-link" data-href="My Note.md" href="My%20Note.md">With spaces</a></p>
 ````````````````````````````````
 
 Links with a scheme are external, including `obsidian://` URIs. The canonical rendering gives them the class `external-link`, as Obsidian does. This includes autolinks ([7.12](#712-autolinks)).
@@ -1330,6 +1334,7 @@ Text ^[An *inline* note.].
 .
 <p>Text <sup class="footnote-ref" data-footnote-id="fnref-1"><a class="footnote-link" href="#fn-1" id="fnref-1">1</a></sup>.</p>
 <section class="footnotes">
+<hr />
 <ol>
 <li id="fn-1" data-footnote-id="fn-1">
 <p>An <em>inline</em> note. <a href="#fnref-1" class="footnote-backref footnote-link">↩</a></p>

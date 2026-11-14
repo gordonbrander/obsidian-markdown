@@ -1,8 +1,8 @@
 // Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]).
 // The note service loads notes; this module decides what part of a note to show, and builds the DOM.
 import { draw, highlight } from './draw.ts';
-import type { NoteService } from './services/note.ts';
-import { IMAGE_EXTENSIONS } from './ofm-inline.ts';
+import type { TNoteService } from './services/note.ts';
+import { isImagePath } from './ofm-inline.ts';
 import { render, renderer, splitFrontmatter } from './render.ts';
 import type { RenderOptions } from './render.ts';
 
@@ -35,51 +35,67 @@ export const section = (note: string, sub = ''): string | undefined => {
   return lines.slice(map![0], next?.map?.[0] ?? lines.length).join('\n');
 };
 
-const isImage = (name: string) => IMAGE_EXTENSIONS.has(name.split('.').pop()?.toLowerCase() ?? '');
 
 /** The note-embed placeholders render() left under `root`. */
 export const embedPlaceholders = (root: ParentNode): Element[] =>
-  [...root.querySelectorAll('span.internal-embed[src]')].filter((span) => !isImage(parseTarget(span.getAttribute('src') ?? '').name));
+  [...root.querySelectorAll('span.internal-embed[src]:not(.image-embed)')]
+    .filter((span) => !isImagePath(span.getAttribute('src') ?? ''));
 
-/** Whether anything under `root` embeds note `name`, filled or not. */
-export const embedsNote = (root: ParentNode, name: string): boolean =>
-  [...root.querySelectorAll('.internal-embed[src]')].some((el) => parseTarget(el.getAttribute('src') ?? '').name === name);
+const element = (tag: string, className: string) => {
+  const el = document.createElement(tag);
+  el.className = className;
+  return el;
+};
 
-/** An embed's frame, as Obsidian draws it: a link to open the note, and an empty box for its content. */
+/**
+ * An embed's frame, as Obsidian builds it: the note's name as a title (a whole note only), a link to open the note,
+ * and an empty reading view for its content.
+ */
 export const embedFrame = (target: string): { frame: HTMLElement; content: HTMLElement } => {
-  const frame = document.createElement('div');
-  frame.className = 'internal-embed markdown-embed';
+  const { name, sub } = parseTarget(target);
+  const frame = element('div', 'internal-embed markdown-embed inline-embed is-loaded');
   frame.setAttribute('src', target);
-  const link = document.createElement('a');
-  link.className = 'markdown-embed-link internal-link';
+  const title = element('div', 'embed-title markdown-embed-title');
+  if (sub === '') title.textContent = name;
+  // A link where Obsidian has a div, so the keyboard reaches it.
+  const link = element('a', 'markdown-embed-link');
   link.setAttribute('data-href', target);
-  link.setAttribute('aria-label', `Open ${target}`);
-  const content = document.createElement('div');
-  content.className = 'markdown-embed-content';
-  frame.append(link, content);
+  link.setAttribute('aria-label', 'Open link');
+  link.tabIndex = 0;
+  const content = element('div', 'markdown-preview-view markdown-rendered');
+  const box = element('div', 'markdown-embed-content');
+  box.append(content);
+  frame.append(title, link, box);
   return { frame, content };
+};
+
+/** What stands in for an embed whose note or section isn't there, as Obsidian shows a file that doesn't exist. */
+export const missingEmbed = (target: string): HTMLElement => {
+  const frame = element('div', 'internal-embed file-embed mod-empty is-loaded');
+  frame.setAttribute('src', target);
+  frame.textContent = `“${target}” could not be found.`;
+  return frame;
 };
 
 /**
  * Replace the placeholders under `root` with embedded notes as they load, then fill their embeds one level deeper.
- * With no loader set, the placeholders stay as render() made them.
+ * With no service, the placeholders stay as render() made them.
  * Resolves once every embed, at every depth, is in place, drawn and highlighted. Never rejects.
  */
-export const fillEmbeds = async (root: ParentNode, service: NoteService, options: RenderOptions = {}, depth = 0): Promise<void> => {
-  if (depth >= MAX_DEPTH) return;
+export const fillEmbeds = async (root: ParentNode, service: TNoteService | undefined, options: RenderOptions = {}, depth = 0): Promise<void> => {
+  if (!service || depth >= MAX_DEPTH) return;
   await Promise.all(embedPlaceholders(root).map((span) => {
     const target = span.getAttribute('src') ?? '';
     const { name, sub } = parseTarget(target);
     return service.load(name).then(async (result) => {
-      if (!result.ok && result.error.type === 'no-loader') return;
       if (!result.ok && result.error.type === 'failed') console.warn(`ofm-markdown: could not load ${name}`, result.error.cause);
-      const { frame, content } = embedFrame(target);
-      span.replaceWith(frame);
       const source = result.ok ? section(result.value, sub) : undefined;
       if (source === undefined) {
-        frame.classList.add('is-unresolved');
+        span.replaceWith(missingEmbed(target));
         return;
       }
+      const { frame, content } = embedFrame(target);
+      span.replaceWith(frame);
       // Draw off-screen, so the embed appears with its math and diagrams. Highlighting follows, as for the note.
       const note = renderNoteEmbeds(source, service, options, depth + 1);
       await draw(note.content);
@@ -94,7 +110,7 @@ export const fillEmbeds = async (root: ParentNode, service: NoteService, options
  * `loaded` resolves once the embeds are filled (see fillEmbeds).
  * A template's content is inert until it's inserted, so drawing it off-screen is safe.
  */
-export const renderNoteEmbeds = (source: string, service: NoteService, options: RenderOptions = {}, depth = 0) => {
+export const renderNoteEmbeds = (source: string, service: TNoteService | undefined, options: RenderOptions = {}, depth = 0) => {
   const template = document.createElement('template');
   template.innerHTML = render(source, options);
   return { content: template.content, loaded: fillEmbeds(template.content, service, options, depth) };

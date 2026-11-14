@@ -1,16 +1,19 @@
+import { consume } from '@lit/context';
 import { LitElement, html } from 'lit';
-import type { PropertyValues } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
+import { iconContext, noteContext } from './ofm-context.ts';
+import { drawIcons, syncCollapsed } from '../decorate.ts';
 import { draw, highlight } from '../draw.ts';
-import { embedsNote, renderNoteEmbeds } from '../embeds.ts';
-import { NoteService, noteService } from '../services/note.ts';
-import type { NoteChangeDetail } from '../services/note.ts';
+import { renderNoteEmbeds } from '../embeds.ts';
+import { lucideIcons } from '../services/icons.ts';
+import type { IconResolver } from '../services/icons.ts';
+import type { TNoteService } from '../services/note.ts';
 
 export type MarkdownClickWikilinkDetail = { target: string };
 
 /**
  * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams and highlighting code.
- * Note embeds load through its `noteService` property: the shared `noteService` unless you assign another.
+ * Note embeds and icons come from the nearest `<ofm-context>`. Outside one, embeds stay placeholders and icons are Lucide's.
  * @attr rendered - Set by the element once its first content is in the DOM, with math and diagrams drawn. It stays set. Style the first render with `ofm-markdown:not([rendered])`.
  * @attr loaded - Set while the current content is fully loaded: code highlighted and note embeds filled. Removed when new content starts rendering.
  * @fires markdown-rendered - The new content is in the DOM, with math and diagrams drawn. Code highlighting and embeds may still be loading.
@@ -28,37 +31,12 @@ export class OfmMarkdown extends LitElement {
   @property() accessor value = '';
   @property({ type: Boolean, attribute: 'strict-line-breaks' }) accessor strictLineBreaks = false;
 
-  /** Loads note embeds. Defaults to the shared `noteService`; assign another to configure this element on its own. */
-  @property({ attribute: false }) accessor noteService: NoteService = noteService;
-  /** The service we listen to for changed notes. */
-  #subscribed?: NoteService;
-
-  /** A note we show changed: rebuild. The service still caches every other note, so only that one reloads. */
-  #onChange = (event: Event) => {
-    const { name } = (event as CustomEvent<NoteChangeDetail>).detail;
-    if (name === undefined || embedsNote(this, name)) this.requestUpdate();
-  };
-
-  #subscribe(service?: NoteService) {
-    this.#subscribed?.removeEventListener('change', this.#onChange);
-    this.#subscribed = service;
-    service?.addEventListener('change', this.#onChange);
-  }
-
-  override connectedCallback() {
-    super.connectedCallback();
-    this.#subscribe(this.noteService);
-  }
-
-  override disconnectedCallback() {
-    super.disconnectedCallback();
-    this.#subscribe(undefined);
-  }
-
-  /** A new service: listen to it instead. Every update rebuilds the content, so the embeds already use it. */
-  protected override willUpdate(changed: PropertyValues<this>) {
-    if (changed.has('noteService') && this.isConnected) this.#subscribe(this.noteService);
-  }
+  /** Loads note embeds: the nearest `<ofm-context>`'s. A new one rebuilds the note. */
+  @consume({ context: noteContext, subscribe: true })
+  @state() private accessor noteService: TNoteService | undefined;
+  /** Turns an icon id into its SVG: the nearest `<ofm-context>`'s, or Lucide's. */
+  @consume({ context: iconContext, subscribe: true })
+  @state() private accessor resolveIcon: IconResolver = lucideIcons;
 
   /** Render and draw off-screen, so an update shows finished content. */
   #build = async (value: string, strictLineBreaks: boolean) => {
@@ -95,7 +73,10 @@ export class OfmMarkdown extends LitElement {
     this.setAttribute('rendered', '');
     this.dispatchEvent(new CustomEvent('markdown-rendered', { bubbles: true, composed: true }));
     // Highlighting only adds spans, so the note shows without waiting for the highlighter to load.
-    const loading = Promise.all([highlight(this), this.#embedsLoaded]);
+    const { resolveIcon } = this;
+    // Embeds arrive later, with icons of their own. Icons already drawn are skipped.
+    const embedIcons = this.#embedsLoaded?.then(() => drawIcons(this, resolveIcon));
+    const loading = Promise.all([highlight(this), embedIcons, drawIcons(this, resolveIcon)]);
     this.#loading = loading;
     void loading.then(() => {
       if (this.#loading !== loading) return;
@@ -117,7 +98,7 @@ export class OfmMarkdown extends LitElement {
   #onClick(event: Event) {
     const clicked = event.target as Element;
 
-    const internal = clicked.closest('.internal-link');
+    const internal = clicked.closest('.internal-link, .markdown-embed-link');
     if (internal) {
       const target = internal.getAttribute('data-href') ?? internal.textContent?.trim() ?? '';
       if (!this.#clickWikilink(target)) event.preventDefault();
@@ -136,9 +117,16 @@ export class OfmMarkdown extends LitElement {
     if (clicked.closest('.tag')) event.preventDefault();
   }
 
+  /** toggle doesn't bubble, so this listens in the capture phase. */
+  #onToggle(event: Event) {
+    const toggled = event.target as Element;
+    if (toggled.matches('details.callout')) syncCollapsed(toggled);
+  }
+
   render() {
+    // Obsidian's reading view has both classes, and its rules, and snippets written for it, use either.
     return html`
-      <div class="markdown-rendered" @click=${this.#onClick}>
+      <div class="markdown-preview-view markdown-rendered" @click=${this.#onClick} @toggle=${{ handleEvent: (event: Event) => this.#onToggle(event), capture: true }}>
         ${this.#content}
       </div>
     `;
