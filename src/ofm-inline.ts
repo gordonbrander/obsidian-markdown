@@ -18,7 +18,7 @@ export const isImagePath = (path: string) =>
 export const imageEmbed = (target: string, alt: string, width?: string, height?: string, url = target) => {
   const size = `${width ? ` width="${width}"` : ''}${height ? ` height="${height}"` : ''}`;
   const described = ` alt="${escapeAttr(alt)}"${size}`;
-  const src = hasScheme(url) ? '' : ` src="${escapeAttr(url)}"`;
+  const src = hasScheme(url) || hasScheme(target) ? '' : ` src="${escapeAttr(url)}"`;
   return `<span class="internal-embed media-embed image-embed is-loaded" src="${escapeAttr(target)}"${described}><img${src}${described} /></span>`;
 };
 const HIGHLIGHT_COLORS: [string, string][] = [

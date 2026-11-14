@@ -71,7 +71,10 @@ test('targets with a scheme get no URL', () => {
     assert.match(html, /data-href=/, source);
   }
   // The span's src is only a name. The <img>, which would load it, has none.
-  assert.doesNotMatch(render('![[javascript:x.png]]'), /<img[^>]*\ssrc=/);
+  for (const source of ['![[javascript:x.png]]', '![[java\tscript:x.png]]', '![a](<java\tscript:x.png>)']) {
+    assert.doesNotMatch(render(source), /<img[^>]*\ssrc=/, source);
+  }
+  assert.doesNotMatch(render('![a](javascript:x.png)'), /<img|<span/);
 });
 
 test('content cannot break out of an attribute', () => {
