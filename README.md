@@ -113,7 +113,7 @@ An editable property list, like Obsidian's properties view.
 
 - Properties/attributes:
   - **`properties`**: the note's properties, as an object or JSON attribute.
-  - **`types`**: optional declared types per property: `text`, `number`, `checkbox`, `link`, `date`, `datetime`, `list` or `object`. A value that the declared type can't show without losing data keeps the type sniffed from it.
+  - **`types`**: optional declared types per property, with Obsidian's type names: `text`, `multitext` (a list), `number`, `checkbox`, `date`, `datetime`, `tags` or `aliases`. Properties named `tags` and `aliases` get those types without being declared, as in Obsidian. A value that the declared type can't show without losing data keeps the type sniffed from it, and a value no type can show has the type `unknown`. A text value that is one wikilink or URL shows as a link.
   - **`readonly`**: a boolean attribute that disables editing.
 - Events:
   - **`proprow-change`**: a property was edited. Bubbles up from its `<ofm-proprow>`; `detail` is `{ key, value, type, effectiveType }`. By then, `properties` holds the edit.
@@ -260,7 +260,27 @@ import { adoptSheet } from 'obsidian-markdown/adopt-sheet.js';
 adoptSheet(obsidianTheme);
 ```
 
-The theme uses Obsidian's CSS variable names (`--text-normal`, `--text-accent`, `--link-color`, …), so you can restyle it by setting those variables.
+#### CSS snippets from Obsidian
+
+The theme copies Obsidian's default theme: the same CSS variables with the same values, declared on `body`, and the same rules with the same selectors. The components render the DOM and classes of Obsidian's reading view (`.markdown-rendered`, `.callout`, `.list-bullet`, `.internal-embed`, …) and properties view (`.metadata-container`, `.metadata-property`, `.multi-select-pill`, …). So a CSS snippet written for Obsidian works when you paste it into your page:
+
+```css
+body { --h1-size: 3em; --accent-h: 120; }
+.callout[data-callout="tip"] { --callout-icon: lucide-rocket; }
+.metadata-property[data-property-key="tags"] { display: none; }
+```
+
+The theme sits in a cascade layer, `ofm-theme`, so your rules win whatever their specificity or order, as snippets do in Obsidian. The page's other unlayered rules win too: a reset such as `* { margin: 0 }` applies inside a note.
+
+Where it differs from Obsidian:
+
+- **Light and dark** follow `color-scheme`, through `light-dark()`. Obsidian's `theme-light` and `theme-dark` classes also work, on `body` or any ancestor of a component, and snippets scoped to them need one of them set.
+- **Scope**: rules Obsidian applies to the whole app, such as `a` or `table`, apply only inside the components.
+- **Math** is MathML drawn by Temml, not MathJax, so `mjx-*` snippets have nothing to match.
+- **Folding**: foldable callouts and the properties list are `<details>` elements. Obsidian's `is-collapsed` class is kept in sync on them.
+- **Links** are not resolved against a vault, so `is-unresolved` is never set on a link.
+- **Not editable**: task checkboxes are disabled, property names can't be renamed, and there is no "Add property" button.
+- **Icons** come from the `lucide` package. An icon id it doesn't have draws nothing.
 
 ## License
 

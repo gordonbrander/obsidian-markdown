@@ -1,5 +1,5 @@
 import { LitElement, html, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import './ofm-frontmatter.ts';
 import type { Properties, PropertyTypes } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
@@ -38,15 +38,32 @@ export class OfmNote extends LitElement {
   @property({ type: Boolean, attribute: 'strict-line-breaks' }) accessor strictLineBreaks = false;
   @property({ type: Boolean }) accessor readonly = false;
   @property({ type: Object }) accessor types: PropertyTypes | null = null;
+  /** Mirrors the <details>, for Obsidian's is-collapsed class. */
+  @state() private accessor collapsed = false;
 
   render() {
     // ponytail: ofm-markdown strips front matter again, so content that itself opens with a --- block loses it.
     const { data, content } = parse(this.value ?? '');
+    const count = Object.keys(data).length;
+    const collapsed = this.collapsed ? 'is-collapsed' : '';
+    // Obsidian's properties view, as a <details> where Obsidian folds a div with script. The arrow is its right-triangle icon.
     return html`
-      ${Object.keys(data).length > 0 ? html`
-        <details class="ofm-properties" open>
-          <summary class="ofm-properties-heading">Properties</summary>
-          <ofm-frontmatter .properties=${data} .types=${this.types} ?readonly=${this.readonly}></ofm-frontmatter>
+      ${count > 0 ? html`
+        <details
+          class="metadata-container ${collapsed}"
+          data-property-count=${count}
+          ?open=${!this.collapsed}
+          @toggle=${(e: Event) => { this.collapsed = !(e.currentTarget as HTMLDetailsElement).open; }}
+        >
+          <summary class="metadata-properties-heading">
+            <div class="collapse-indicator collapse-icon ${collapsed}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"/></svg>
+            </div>
+            <div class="metadata-properties-title">Properties</div>
+          </summary>
+          <div class="metadata-content">
+            <ofm-frontmatter .properties=${data} .types=${this.types} ?readonly=${this.readonly}></ofm-frontmatter>
+          </div>
         </details>
       ` : nothing}
       <ofm-markdown .noteService=${this.noteService} .value=${content} ?strict-line-breaks=${this.strictLineBreaks}></ofm-markdown>

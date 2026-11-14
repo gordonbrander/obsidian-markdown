@@ -3,7 +3,6 @@
 /** Obsidian's own ids, as the Lucide icons it draws for them. */
 const ALIASES: Record<string, string> = {
   'quote-glyph': 'quote',
-  help: 'help-circle',
 };
 
 // Skipping import() once loaded lets later renders finish in microtasks, before paint.

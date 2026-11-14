@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { fieldFor, formatCompact, parseCommitted, parseLink, parseWikilink, sniff } from './sniff.ts';
+import { fieldFor, parseCommitted, parseLink, parseWikilink, reservedType, sniff } from './sniff.ts';
 import type { Field, Json, Type } from './sniff.ts';
 
 test('sniff picks the widget type', () => {
@@ -12,10 +12,10 @@ test('sniff picks the widget type', () => {
     [false, 'checkbox'],
     [0, 'number'],
     [1.5, 'number'],
-    ['[[Episode IV]]', 'link'],
+    ['[[Episode IV]]', 'text'],
     ['[[a]] and [[b]]', 'text'],
-    ['https://example.com/a?b=c', 'link'],
-    ['HTTP://example.com', 'link'],
+    ['https://example.com/a?b=c', 'text'],
+    ['HTTP://example.com', 'text'],
     ['see https://example.com', 'text'],
     ['https://example.com and more', 'text'],
     ['ftp://example.com', 'text'],
@@ -28,11 +28,11 @@ test('sniff picks the widget type', () => {
     ['2020-08-21T99:30:00', 'text'],
     ['2020-08-21T10:30:00Z', 'text'],
     ['2020-08-21T10:30:00.123', 'text'],
-    [[], 'list'],
-    [['a', 1], 'list'],
-    [['a', null], 'object'],
-    [[['nested']], 'object'],
-    [{ a: 1 }, 'object'],
+    [[], 'multitext'],
+    [['a', 1], 'multitext'],
+    [['a', null], 'unknown'],
+    [[['nested']], 'unknown'],
+    [{ a: 1 }, 'unknown'],
   ];
   for (const [value, type] of cases) {
     assert.equal(sniff(value).type, type, JSON.stringify(value));
@@ -43,16 +43,19 @@ test('fieldFor applies declared types without coercing values', () => {
   const cases: [Json, string | undefined, Field][] = [
     [null, undefined, { type: 'text', value: null }],
     [null, 'checkbox', { type: 'checkbox', value: false }],
-    [null, 'list', { type: 'list', value: [] }],
+    [null, 'multitext', { type: 'multitext', value: [] }],
+    [null, 'tags', { type: 'tags', value: [] }],
+    [['a'], 'tags', { type: 'tags', value: ['a'] }],
+    [['a'], 'aliases', { type: 'aliases', value: ['a'] }],
+    ['a', 'tags', { type: 'text', value: 'a' }],
     [null, 'text', { type: 'text', value: null }],
     [null, 'number', { type: 'number', value: null }],
     [null, 'date', { type: 'date', value: null }],
     [null, 'datetime', { type: 'datetime', value: null }],
-    [null, 'link', { type: 'link', value: '' }],
-    [null, 'object', { type: 'object', value: {} }],
+    [null, 'unknown', { type: 'text', value: null }],
     ['2020-08-21', 'text', { type: 'text', value: '2020-08-21' }],
     ['2020-08-21T10:30:00', 'text', { type: 'text', value: '2020-08-21T10:30:00' }],
-    ['[[Note]]', 'text', { type: 'link', value: '[[Note]]' }],
+    ['[[Note]]', 'text', { type: 'text', value: '[[Note]]' }],
     ['soon', 'date', { type: 'text', value: 'soon' }],
     ['42', 'number', { type: 'text', value: '42' }],
     [42, 'text', { type: 'number', value: 42 }],
@@ -74,13 +77,6 @@ test('parseCommitted only reads lossless numbers', () => {
   }
 });
 
-test('formatCompact stays on one line', () => {
-  assert.equal(formatCompact({ compact: 'single line', mode: true }), '{ compact: "single line", mode: true }');
-  assert.equal(formatCompact({ a: [1, { b: null }], 'c-d': {}, e: [] }), '{ a: [1, { b: null }], "c-d": {}, e: [] }');
-  assert.equal(formatCompact(['x', null]), '["x", null]');
-  assert.equal(formatCompact({ text: 'two\nlines' }), '{ text: "two\\nlines" }');
-});
-
 test('parseLink gives wikilinks and web URLs an href, but never a scheme wikilink', () => {
   assert.deepEqual(parseLink('[[Note|Name]]'), { target: 'Note', label: 'Name', href: 'Note', wiki: true });
   assert.deepEqual(parseLink('[[javascript:alert(1)]]'), { target: 'javascript:alert(1)', label: 'javascript:alert(1)', href: undefined, wiki: true });
@@ -100,4 +96,10 @@ test('parseWikilink follows SPEC 7.7', () => {
   assert.equal(parseWikilink('[[a]] and [[b]]'), null);
   assert.equal(parseWikilink('[[a\nb]]'), null);
   assert.equal(parseWikilink('plain'), null);
+});
+
+test('tags and aliases take their type from their name', () => {
+  assert.equal(reservedType('Tags'), 'tags');
+  assert.equal(reservedType('aliases'), 'aliases');
+  assert.equal(reservedType('constructor'), undefined);
 });

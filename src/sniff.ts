@@ -4,11 +4,12 @@ export type Field =
   | { type: 'text'; value: string | null }
   | { type: 'number'; value: number | null }
   | { type: 'checkbox'; value: boolean }
-  | { type: 'link'; value: string }
   | { type: 'date'; value: string | null }
   | { type: 'datetime'; value: string | null }
-  | { type: 'list'; value: (string | number)[] }
-  | { type: 'object'; value: Json };
+  | { type: 'multitext'; value: (string | number)[] }
+  | { type: 'tags'; value: (string | number)[] }
+  | { type: 'aliases'; value: (string | number)[] }
+  | { type: 'unknown'; value: Json };
 
 export type Type = Field['type'];
 
@@ -56,30 +57,18 @@ export const parseLink = (s: string): Link | undefined => {
   return undefined;
 };
 
-/** Format JSON on one line, like `{ compact: "single line", mode: true }`. */
-export const formatCompact = (value: Json): string => {
-  if (Array.isArray(value)) return `[${value.map(formatCompact).join(', ')}]`;
-  if (typeof value === 'object' && value !== null) {
-    const entries = Object.entries(value).map(([key, item]) =>
-      `${/^[A-Za-z_$][\w$]*$/.test(key) ? key : JSON.stringify(key)}: ${formatCompact(item)}`);
-    return entries.length > 0 ? `{ ${entries.join(', ')} }` : '{}';
-  }
-  return JSON.stringify(value);
-};
-
-/** Pair a JSON value with the widget type that renders it. */
+/** Pair a JSON value with the widget type that renders it, as Obsidian infers one. */
 export const sniff = (value: Json): Field => {
   if (value === null || value === undefined) return { type: 'text', value: null };
   if (typeof value === 'boolean') return { type: 'checkbox', value };
   if (typeof value === 'number') return { type: 'number', value };
   if (typeof value === 'string') {
-    if (parseLink(value)) return { type: 'link', value };
     if (DATE.test(value) && isRealDate(value)) return { type: 'date', value };
     if (DATETIME.test(value) && isRealDate(value)) return { type: 'datetime', value };
     return { type: 'text', value };
   }
-  if (isScalarList(value)) return { type: 'list', value };
-  return { type: 'object', value };
+  if (isScalarList(value)) return { type: 'multitext', value };
+  return { type: 'unknown', value };
 };
 
 /** Read committed text as a number when that loses nothing, so "007" and "1.50" stay text. */
@@ -92,9 +81,9 @@ export const parseCommitted = (text: string): string | number => {
 const emptyField = (declared: Type | undefined): Field | null => {
   switch (declared) {
     case 'checkbox': return { type: 'checkbox', value: false };
-    case 'list': return { type: 'list', value: [] };
-    case 'link': return { type: 'link', value: '' };
-    case 'object': return { type: 'object', value: {} };
+    case 'multitext':
+    case 'tags':
+    case 'aliases': return { type: declared, value: [] };
     case 'text':
     case 'number':
     case 'date':
@@ -110,6 +99,16 @@ export const fieldFor = (value: Json, declared?: Type): Field => {
   if (declared === 'text' && (field.type === 'date' || field.type === 'datetime')) {
     return { type: 'text', value: field.value };
   }
+  // ponytail: Obsidian also shows a single string as a one-item list for these types. Here it stays text.
+  if (field.type === 'multitext' && (declared === 'tags' || declared === 'aliases')) {
+    return { type: declared, value: field.value };
+  }
   // Anything else the declared widget couldn't show losslessly keeps its sniffed widget.
   return field;
+};
+
+/** The type Obsidian gives a property for its name alone: `tags` and `aliases`. */
+export const reservedType = (key: string): Type | undefined => {
+  const name = key.toLowerCase();
+  return name === 'tags' || name === 'aliases' ? name : undefined;
 };

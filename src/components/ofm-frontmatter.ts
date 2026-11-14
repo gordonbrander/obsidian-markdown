@@ -16,6 +16,7 @@ const isRecord = (value: unknown): value is Properties =>
 
 /**
  * An editable property list, like Obsidian's properties view.
+ * The element is the list itself: it has the class `metadata-properties`, and each row is a `.metadata-property`.
  * @fires proprow-change - A property was edited. Bubbles from its row. `detail` is `{ key, value, type, effectiveType }`, and `properties` already holds the edit.
  * @fires wikilink-click - A wikilink in a property value was clicked. `detail` is `{ key, target }`. Cancel it to stop the link's navigation.
  */
@@ -32,6 +33,11 @@ export class OfmFrontmatter extends LitElement {
 
   #onRowChange({ detail: { key, value } }: CustomEvent<ProprowChangeDetail>) {
     this.properties = { ...this.properties, [key]: value };
+  }
+
+  override connectedCallback() {
+    super.connectedCallback();
+    this.classList.add('metadata-properties');
   }
 
   render() {

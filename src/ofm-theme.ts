@@ -5,6 +5,11 @@ import { css } from 'lit';
  * variable names, values, class names and selectors, so CSS snippets written for Obsidian apply here too.
  */
 export const obsidianTheme = css`
+  /*
+   * In a layer, so any rule outside one wins, whatever its specificity or order. Obsidian loads snippets after its
+   * own CSS, where an adopted stylesheet like this one comes after the page's. The layer gives snippets the last word again.
+   */
+  @layer ofm-theme {
   /* Obsidian 1.15's variables, copied with their expressions and declared on body as Obsidian does, so a snippet
      written for Obsidian (body { --h1-size: 2em }) applies unchanged. Zero specificity, so such a rule wins whatever the order. */
   :where(body) {
@@ -457,6 +462,52 @@ export const obsidianTheme = css`
     --input-border-width: var(--border-width);
     --input-border-width-focus: 2px;
     --input-placeholder-color: var(--text-faint);
+    --input-date-separator: var(--text-faint);
+    --input-transition: none;
+    --nav-collapse-icon-color: var(--collapse-icon-color);
+    --nav-collapse-icon-color-collapsed: var(--text-faint);
+    --metadata-background: transparent;
+    --metadata-display-reading: block;
+    --metadata-display-editing: block;
+    --metadata-max-width: none;
+    --metadata-padding: var(--size-4-2) 0;
+    --metadata-border-color: var(--background-modifier-border);
+    --metadata-border-radius: 0;
+    --metadata-border-width: 0;
+    --metadata-divider-color-hover: transparent;
+    --metadata-divider-color-focus: transparent;
+    --metadata-divider-width: 0;
+    --metadata-gap: 3px;
+    --metadata-property-padding: 0;
+    --metadata-property-radius: 6px;
+    --metadata-property-radius-hover: 6px;
+    --metadata-property-radius-focus: 6px;
+    --metadata-property-corner-shape: var(--corner-shape);
+    --metadata-property-corner-shape-hover: var(--corner-shape);
+    --metadata-property-corner-shape-focus: var(--corner-shape);
+    --metadata-property-background: transparent;
+    --metadata-property-background-hover: transparent;
+    --metadata-property-background-active: var(--background-modifier-hover);
+    --metadata-property-box-shadow-hover: 0 0 0 var(--border-width) var(--background-modifier-border-hover);
+    --metadata-property-box-shadow-focus: 0 0 0 2px var(--background-modifier-border-focus);
+    --metadata-label-background: transparent;
+    --metadata-label-background-hover: transparent;
+    --metadata-label-background-active: var(--background-modifier-hover);
+    --metadata-label-font: var(--font-interface);
+    --metadata-label-font-size: var(--font-smaller);
+    --metadata-label-font-weight: inherit;
+    --metadata-label-text-color: var(--text-muted);
+    --metadata-label-text-color-hover: var(--text-muted);
+    --metadata-label-width: 9em;
+    --metadata-input-height: calc(var(--font-preferred-size) * 1.75);
+    --metadata-input-text-color: var(--text-normal);
+    --metadata-input-font: var(--font-interface);
+    --metadata-input-font-size: var(--font-smaller);
+    --metadata-input-background: transparent;
+    --metadata-input-background-hover: transparent;
+    --metadata-input-background-active: var(--background-modifier-hover);
+    --metadata-input-longtext-lines: 3;
+    --metadata-input-padding: var(--size-4-1) var(--size-4-2);
 
     /* Without variable fonts; the @supports block below has the usual values. */
     --h1-weight: 700;
@@ -550,161 +601,584 @@ export const obsidianTheme = css`
     counter-reset: tmlEqnNo;
   }
 
-  /* Obsidian's collapsible Properties section. */
-  ofm-note {
-    .ofm-properties {
-      margin-block-end: 3em;
-    }
-    .ofm-properties-heading {
-      position: relative;
-      display: block;
-      padding-block: 0 4px;
-      color: var(--text-normal);
-      font-size: 1em;
-      font-weight: var(--bold-weight);
-      list-style: none;
-      cursor: pointer;
-      user-select: none;
-      &::-webkit-details-marker {
-        display: none;
-      }
-      /* Hangs in the gutter, so the title stays flush with the body text. */
-      &::before {
-        content: '';
-        position: absolute;
-        inset-inline-end: 100%;
-        top: 0.75em;
-        width: 0.4em;
-        height: 0.4em;
-        margin-inline-end: 0.6em;
-        border-right: 1.5px solid currentColor;
-        border-bottom: 1.5px solid currentColor;
-        color: var(--text-accent);
-        transform: translateY(-50%) rotate(-45deg);
-        transition: transform 100ms ease-in-out, opacity 100ms ease-in-out;
-      }
-    }
-    /* Open, the arrow is faint and shows only on hover or focus. Closed, it's always shown in the accent color. */
-    .ofm-properties[open] > .ofm-properties-heading::before {
-      color: var(--text-faint);
-      opacity: 0;
-      transform: translateY(-50%) rotate(45deg);
-    }
-    .ofm-properties[open] > .ofm-properties-heading:is(:hover, :focus-visible)::before {
-      opacity: 1;
-    }
-  }
+  /*
+   * Properties. These rules are Obsidian's, with its selectors: <ofm-note> renders Obsidian's .metadata-container,
+   * <ofm-frontmatter> is its .metadata-properties and each <ofm-proprow> a .metadata-property.
+   */
 
-  /* Obsidian's properties view. */
-  ofm-frontmatter {
-    display: block;
-    color-scheme: light dark;
+  /* Not Obsidian's: these stand in for the view Obsidian's properties sit in, which gives them their font. */
+  ofm-note, :where(ofm-frontmatter) {
+    font-family: var(--font-text);
+    font-size: var(--font-preferred-size);
+    line-height: var(--line-height-normal);
     color: var(--text-normal);
-    font: 14px/1.4 var(--font-interface);
+  }
+  /* Not Obsidian's: a property list used on its own gets what .metadata-container would give it. */
+  :where(ofm-frontmatter):not(.metadata-container *) {
+    --input-height: var(--metadata-input-height);
+    color: var(--text-muted);
+  }
+  /* Not Obsidian's: a foldable <details>, where Obsidian folds a div with script. */
+  summary.metadata-properties-heading {
+    list-style: none;
+    cursor: var(--cursor);
+  }
+  summary.metadata-properties-heading::-webkit-details-marker {
+    display: none;
+  }
+  .metadata-properties-heading .collapse-indicator {
+    display: inline-flex;
+    cursor: var(--cursor);
+    user-select: none;
   }
 
-  ofm-proprow {
-    display: grid;
-    grid-template-columns: 9em 1fr;
-    align-items: start;
-    gap: 4px;
-
-    .ofm-key {
-      overflow: hidden;
-      color: var(--text-muted);
-      line-height: 28px;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-    .ofm-value {
-      display: flex;
-      align-items: center;
-      min-width: 0;
-      min-height: 28px;
-    }
-    input {
-      flex: 1;
-      min-width: 0;
-      height: 28px;
+  /* Obsidian applies these to every element and form field of the app. */
+  :where(.metadata-container, .metadata-properties) {
+    &, & *, & ::before, & ::after {
       box-sizing: border-box;
-      padding: 0 6px;
-      border: 0;
-      border-radius: 4px;
-      background: transparent;
-      color: inherit;
-      font: inherit;
     }
-    input:not([readonly]):hover, input:not([readonly]):focus {
-      background: var(--background-modifier-hover);
-    }
-    input:focus {
-      outline: 1px solid var(--text-accent);
-    }
-    input[readonly]:focus {
+    :focus {
       outline: none;
     }
-    input[type='checkbox'] {
-      flex: none;
-      width: 16px;
-      height: 16px;
-      margin: 0 6px;
+    svg.svg-icon {
+      height: var(--icon-size);
+      width: var(--icon-size);
+      stroke-width: var(--icon-stroke);
     }
-    .ofm-tokens {
-      display: flex;
-      flex: 1;
+    .multi-select-container, input.metadata-input-text, input[type=date], input[type=datetime-local], input[type=text],
+    input[type=number] {
+      background: var(--background-modifier-form-field);
+      border: var(--input-border-width) solid var(--background-modifier-border);
+      color: var(--text-normal);
+      font-family: inherit;
+      padding: var(--input-padding);
+      font-size: var(--font-ui-small);
+      border-radius: var(--input-radius);
+      corner-shape: var(--input-corner-shape);
+      transition: var(--input-transition);
+      outline: none;
+    }
+    @media (hover: hover) {
+      :is(.multi-select-container, input.metadata-input-text, input[type=date], input[type=datetime-local],
+      input[type=text], input[type=number]):where(:not(:disabled)):hover {
+        background-color: var(--background-modifier-form-field-hover);
+        border-color: var(--background-modifier-border-hover);
+        transition: box-shadow var(--anim-duration-fast) ease-in-out, border var(--anim-duration-fast) ease-in-out;
+      }
+    }
+    :is(.multi-select-container, input.metadata-input-text, input[type=date], input[type=datetime-local],
+    input[type=text], input[type=number]):is(:active, :focus) {
+      box-shadow: 0 0 0 var(--input-border-width-focus) var(--background-modifier-border-focus);
+    }
+    input::placeholder {
+      color: var(--input-placeholder-color);
+    }
+    input[type=text], input[type=number] {
+      height: var(--input-height);
+    }
+    input[type=number]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+    }
+    input[type=date], input[type=datetime-local] {
+      font-variant-numeric: tabular-nums;
+      position: relative;
+    }
+    input[type=date]::-webkit-datetime-edit-text, input[type=datetime-local]::-webkit-datetime-edit-text {
+      color: var(--input-date-separator);
+      padding-inline-end: 0;
+    }
+    input, .metadata-input-longtext, .multi-select-pill-content {
+      unicode-bidi: plaintext;
+    }
+  }
+
+  .collapse-icon {
+    display: flex;
+    align-items: center;
+  }
+  .collapse-icon:before {
+    content: "\\200b";
+  }
+  .collapse-icon svg.svg-icon {
+    color: var(--nav-collapse-icon-color);
+    stroke-width: 4px;
+    width: 10px;
+    height: 10px;
+    transition: transform .1s ease-in-out;
+  }
+  .collapse-icon.is-collapsed svg.svg-icon {
+    transform: rotate(calc(var(--direction) * -1 * 90deg));
+  }
+  .multi-select-container {
+    cursor: text;
+    display: inline-flex;
+    vertical-align: top;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    gap: var(--size-2-3);
+    min-height: var(--input-height);
+  }
+  .multi-select-pill {
+    --icon-size: var(--icon-xs);
+    --icon-stroke: var(--icon-xs-stroke-width);
+    display: flex;
+    align-items: center;
+    background-color: var(--pill-background);
+    border: var(--pill-border-width) solid var(--pill-border-color);
+    border-radius: var(--pill-radius);
+    color: var(--pill-color);
+    cursor: var(--cursor);
+    font-weight: var(--pill-weight);
+    padding: var(--pill-padding-y) 0;
+    line-height: 1;
+    max-width: calc(100% - var(--size-2-3) - 1ch);
+    gap: var(--size-2-1);
+    position: relative;
+  }
+  .multi-select-pill:focus:after {
+    content: "";
+    display: block;
+    position: absolute;
+    pointer-events: none;
+    border-radius: var(--pill-radius);
+    inset-inline-end: var(--pill-focus-left-adjust);
+    width: var(--pill-focus-width);
+    height: 100%;
+    box-shadow: 0 0 0 1px var(--background-modifier-border-focus),inset 0 0 0 1px var(--background-modifier-border-focus);
+  }
+  @media (hover: hover) {
+    .multi-select-pill:hover {
+      background-color: var(--pill-background-hover);
+      border: var(--pill-border-width) solid var(--pill-border-color-hover);
+      color: var(--pill-color-hover);
+      text-decoration: var(--pill-decoration-hover);
+    }
+  }
+  .multi-select-pill-content {
+    word-break: break-word;
+    margin-inline-start: var(--pill-padding-x);
+    overflow: hidden;
+  }
+  .multi-select-pill-remove-button {
+    margin-inline-end: min(var(--size-2-3),var(--pill-padding-x));
+    cursor: var(--cursor);
+    color: var(--pill-color-remove);
+    border-radius: var(--radius-s);
+    corner-shape: var(--corner-shape);
+    display: flex;
+    align-items: center;
+    --icon-size: var(--icon-xs);
+    --icon-stroke: var(--icon-xs-stroke-width);
+  }
+  @media (hover: hover) {
+    .multi-select-pill-remove-button:hover {
+      color: var(--pill-color-remove-hover);
+    }
+  }
+  .multi-select-input {
+    cursor: text;
+    font-family: var(--font-interface);
+    min-width: 1ch;
+    max-width: max-content;
+    color: var(--text-normal);
+    background-color: inherit;
+    border: none;
+    word-break: break-word;
+    --scrollbar-native-width: none;
+  }
+  .multi-select-input::-webkit-scrollbar {
+    display: none;
+  }
+  .multi-select-input:empty:before {
+    content: attr(placeholder,"\\200b");
+    color: var(--input-placeholder-color);
+    pointer-events: none;
+  }
+  .metadata-container {
+    --input-height: var(--metadata-input-height);
+    border-radius: var(--metadata-border-radius);
+    background-color: var(--metadata-background);
+    border-color: var(--metadata-border-color);
+    border-style: solid;
+    border-width: var(--metadata-border-width);
+    padding: var(--metadata-padding);
+    color: var(--text-muted);
+    position: relative;
+    max-width: var(--metadata-max-width);
+    margin-block-end: 2rem;
+  }
+  .metadata-container.is-collapsed .metadata-property {
+    display: none;
+  }
+  .metadata-properties {
+    display: flex;
+    flex-direction: column;
+    gap: var(--metadata-gap);
+  }
+  .metadata-properties .metadata-input-longtext {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--metadata-input-longtext-lines);
+  }
+  .metadata-properties .metadata-input-longtext:not(:empty) {
+    display: -webkit-box;
+  }
+  .metadata-properties .metadata-input-longtext:focus {
+    -webkit-line-clamp: unset;
+  }
+  .metadata-properties-heading {
+    display: inline-block;
+    padding: var(--size-4-1);
+    margin-bottom: var(--size-4-2);
+    position: relative;
+    line-height: 1.2;
+  }
+  .metadata-properties-heading:before {
+    content: "";
+    border-radius: var(--metadata-property-radius);
+    corner-shape: var(--metadata-property-corner-shape);
+    position: absolute;
+    display: inline-block;
+    inset: 0;
+  }
+  .metadata-properties-heading:focus:before {
+    box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+  }
+  .metadata-properties-heading .collapse-indicator {
+    position: absolute;
+    inset-inline-start: -22px;
+    padding: 0 6px;
+  }
+  .metadata-properties-title {
+    user-select: none;
+    font-size: max(var(--font-ui-small),1em);
+    color: var(--text-normal);
+    font-weight: var(--font-medium);
+    font-family: var(--font-interface);
+  }
+  input[type=checkbox].metadata-input-checkbox {
+    margin: var(--input-padding);
+  }
+  .metadata-input-text {
+    background-color: transparent;
+    width: 100%;
+    min-height: var(--input-height);
+    border-width: 0px;
+    resize: none;
+    overflow-y: hidden;
+  }
+  .metadata-input-text::-webkit-date-and-time-value {
+    text-align: start;
+  }
+  .metadata-input-text.mod-date {
+    padding-inline-end: 0;
+    width: auto;
+  }
+  .metadata-property {
+    --input-border-width: 0;
+    --input-border-width-focus: 0;
+    --input-radius: 0;
+    position: relative;
+    display: flex;
+    align-items: start;
+    padding: var(--metadata-property-padding);
+    border-radius: var(--metadata-property-radius);
+    corner-shape: var(--metadata-property-corner-shape);
+    overflow: hidden;
+    background-color: var(--metadata-property-background);
+    box-shadow: var(--metadata-property-box-shadow);
+  }
+  @media (hover: hover) {
+    .metadata-property:hover {
+      --metadata-divider-color: var(--metadata-divider-color-hover);
+      background-color: var(--metadata-property-background-hover);
+      box-shadow: var(--metadata-property-box-shadow-hover);
+      border-radius: var(--metadata-property-radius-hover);
+      corner-shape: var(--metadata-property-corner-shape-hover);
+    }
+  }
+  .metadata-property.has-focus, .metadata-property:focus-within {
+    --metadata-divider-color: var(--metadata-divider-color-focus);
+    background-color: var(--metadata-property-background-hover);
+    box-shadow: var(--metadata-property-box-shadow-focus);
+    border-radius: var(--metadata-property-radius-focus);
+    corner-shape: var(--metadata-property-corner-shape-focus);
+  }
+  .metadata-property-icon {
+    cursor: var(--cursor);
+    color: var(--icon-color);
+    display: flex;
+    align-items: center;
+    padding: var(--size-4-1) 0;
+    height: var(--input-height);
+    -webkit-user-select: none;
+  }
+  .metadata-property-icon:before {
+    content: "\\200b";
+    width: var(--size-4-1);
+  }
+  @media (hover: hover) {
+    .metadata-property-icon:hover .svg-icon {
+      color: var(--icon-color-focused);
+    }
+  }
+  .metadata-property-icon[aria-disabled=true] {
+    color: var(--text-muted);
+    opacity: .4;
+  }
+  .metadata-input-number {
+    background-color: transparent;
+    width: 100%;
+    border-width: 0px;
+  }
+  .metadata-property-key {
+    display: flex;
+    align-self: stretch;
+    align-items: flex-start;
+    flex-direction: row;
+    flex-shrink: 0;
+    font-family: var(--metadata-label-font);
+    border-bottom: var(--metadata-divider-width) solid var(--metadata-divider-color);
+    background-color: var(--metadata-label-background);
+    width: var(--metadata-label-width);
+    min-width: var(--metadata-label-width);
+  }
+  @media (hover: hover) {
+    .metadata-property-key:hover {
+      background-color: var(--metadata-label-background-hover);
+    }
+  }
+  .metadata-property-key:focus-within {
+    background-color: var(--metadata-label-background-active);
+  }
+  input.metadata-property-key-input {
+    border: none;
+    flex-grow: 1;
+    color: var(--metadata-label-text-color);
+    font-size: var(--metadata-label-font-size);
+    font-weight: var(--metadata-label-font-weight);
+    padding: var(--metadata-input-padding);
+    height: var(--input-height);
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+    text-align: left;
+  }
+  @media (hover: hover) {
+    input.metadata-property-key-input:hover {
+      background-color: transparent;
+    }
+  }
+  input.metadata-property-key-input:active, input.metadata-property-key-input:focus {
+    background-color: transparent;
+  }
+  .metadata-property-value {
+    --input-padding: var(--metadata-input-padding);
+    display: flex;
+    flex: 1 1 auto;
+    gap: var(--size-2-2);
+    align-items: center;
+    align-self: stretch;
+    overflow: hidden;
+    font-family: var(--metadata-input-font);
+    min-height: var(--input-height);
+    background-color: var(--metadata-input-background);
+    border-bottom: var(--metadata-divider-width) solid var(--metadata-divider-color);
+  }
+  .metadata-property-value .metadata-input-text, .metadata-property-value .metadata-input-number, .metadata-property-value .multi-select-container {
+    background-color: transparent;
+  }
+  @media (hover: hover) {
+    .metadata-property-value .metadata-input-text:hover, .metadata-property-value .metadata-input-number:hover, .metadata-property-value .multi-select-container:hover {
+      background-color: transparent;
+    }
+  }
+  .metadata-property-value .metadata-input-text:active, .metadata-property-value .metadata-input-number:active, .metadata-property-value .multi-select-container:active, .metadata-property-value .metadata-input-text:focus, .metadata-property-value .metadata-input-number:focus, .metadata-property-value .multi-select-container:focus, .metadata-property-value .metadata-input-text:focus-within, .metadata-property-value .metadata-input-number:focus-within, .metadata-property-value .multi-select-container:focus-within {
+    background-color: transparent;
+  }
+  .metadata-property-value .multi-select-pill {
+    --pill-border-width: 0;
+    --pill-padding-x: 0;
+    --pill-padding-y: 0;
+    --pill-color: var(--metadata-input-text-color);
+    line-height: var(--line-height-tight);
+  }
+  .metadata-property-value .metadata-input-text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .metadata-property-value .mod-unknown {
+    color: var(--text-warning);
+    padding: var(--input-padding);
+    font-size: var(--metadata-input-font-size);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .metadata-property-value .multi-select-input {
+    font-size: inherit;
+  }
+  .metadata-property-value .multi-select-container, .metadata-property-value .metadata-link-inner, .metadata-property-value input {
+    font-size: var(--metadata-input-font-size);
+  }
+  .metadata-property-value .multi-select-container {
+    --background-modifier-form-field: transparent;
+    --background-modifier-border: transparent;
+    align-items: center;
+    overflow: hidden;
+  }
+  .metadata-property-value .multi-select-container input {
+    background-color: transparent;
+  }
+  .metadata-property-value .external-link .multi-select-pill-content, .metadata-property-value .internal-link .multi-select-pill-content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  @media (hover: hover) {
+    .metadata-property-value:hover {
+      background-color: var(--metadata-input-background-hover);
+    }
+  }
+  .metadata-property-value:focus-within {
+    background-color: var(--metadata-input-background-active);
+  }
+  .metadata-property-value[data-property-type=tags] .multi-select-pill {
+    --pill-color: var(--tag-color);
+    --pill-color-hover: var(--tag-color-hover);
+    --pill-color-remove: var(--tag-color);
+    --pill-color-remove-hover: var(--tag-color-hover);
+    --pill-decoration: var(--tag-decoration);
+    --pill-decoration-hover: var(--tag-decoration-hover);
+    --pill-background: var(--tag-background);
+    --pill-background-hover: var(--tag-background-hover);
+    --pill-border-color: var(--tag-border-color);
+    --pill-border-color-hover: var(--tag-border-color-hover);
+    --pill-border-width: var(--tag-border-width);
+    --pill-padding-x: var(--tag-padding-x);
+    --pill-padding-y: var(--tag-padding-y);
+    --pill-radius: var(--tag-radius);
+    --pill-corner-shape: var(--tag-corner-shape);
+    --pill-weight: var(--tag-weight);
+    --pill-focus-width: 100%;
+    --pill-focus-left-adjust: 0;
+    cursor: var(--cursor-link);
+    line-height: 1;
+  }
+  .metadata-input-longtext {
+    flex-grow: 1;
+    cursor: text;
+    white-space: pre-wrap;
+    color: var(--metadata-input-text-color);
+    font-size: var(--metadata-input-font-size);
+    max-height: 300px;
+    padding: var(--input-padding);
+  }
+  .metadata-input-longtext:focus {
+    overflow-y: auto;
+  }
+  .metadata-input-longtext:empty:before {
+    content: attr(placeholder);
+    color: var(--input-placeholder-color);
+  }
+  .metadata-link {
+    cursor: text;
+    align-items: center;
+    padding: var(--input-padding);
+    display: flex;
+    flex: 1 1 auto;
+    gap: var(--size-4-2);
+  }
+  @media (hover: hover) {
+    .metadata-link:hover .metadata-link-flair {
+      opacity: var(--icon-opacity);
+      transition: .1s opacity .25s ease-in-out;
+    }
+  }
+  .metadata-link-inner {
+    cursor: var(--cursor-link);
+    color: var(--link-color);
+    text-decoration-line: var(--link-decoration);
+    text-decoration-thickness: var(--link-decoration-thickness);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  @media (hover: hover) {
+    .metadata-link-inner:hover {
+      text-decoration-line: var(--link-decoration-hover);
+      color: var(--link-color-hover);
+    }
+  }
+  @media (hover: hover) {
+    .metadata-link-inner:hover~.metadata-link-flair {
+      opacity: 0;
+    }
+  }
+  .metadata-link-flair {
+    --icon-size: var(--icon-xs);
+    background-color: transparent;
+    cursor: text;
+    margin-inline-start: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--size-2-1);
+    border-radius: var(--clickable-icon-radius);
+    color: var(--icon-color);
+    opacity: 0;
+    transition: opacity var(--anim-duration-fast) ease-in-out;
+    height: auto;
+  }
+  .metadata-property-value .internal-link {
+    cursor: var(--cursor-link);
+    text-decoration-line: var(--link-decoration);
+    --font-weight: var(--link-weight);
+    color: var(--link-color);
+    transition: opacity var(--anim-duration-fast) ease-in-out;
+  }
+  @media (hover: hover) {
+    .metadata-property-value .internal-link:hover {
+      color: var(--link-color-hover);
+      text-decoration-line: var(--link-decoration-hover);
+    }
+  }
+  .metadata-property-value .internal-link.is-unresolved {
+    color: var(--link-unresolved-color);
+    opacity: var(--link-unresolved-opacity);
+    filter: var(--link-unresolved-filter);
+    text-decoration-style: var(--link-unresolved-decoration-style);
+    text-decoration-color: var(--link-unresolved-decoration-color);
+  }
+  @media (hover: hover) {
+    .metadata-property-value .internal-link.is-unresolved:hover {
+      opacity: 1;
+      color: var(--link-color-hover);
+      text-decoration-color: var(--link-color-hover);
+      text-decoration-line: var(--link-decoration-hover);
+    }
+  }
+  .metadata-container {
+    container-type: inline-size;
+    container-name: metadata;
+  }
+  @container (width < 250px) {
+    .metadata-property {
       flex-wrap: wrap;
-      align-items: center;
-      gap: 4px;
-      min-width: 0;
-      padding: 3px 6px;
     }
-    .ofm-tokens input {
-      flex: 1 1 4em;
-      height: 22px;
-      padding: 0;
+  }
+  @container (width < 250px) {
+    .metadata-property .metadata-property-key {
+      width: 100%;
+      border-bottom: 0;
     }
-    .ofm-tokens input:hover, .ofm-tokens input:focus {
-      background: transparent;
-      outline: none;
-    }
-    .ofm-token {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      padding: 0 6px;
-      border-radius: 10px;
-      background: var(--code-background);
-      line-height: 22px;
-      overflow-wrap: anywhere;
-    }
-    button {
-      padding: 0;
-      border: 0;
-      background: none;
-      color: inherit;
-      font: inherit;
-      cursor: pointer;
-    }
-    .ofm-link {
-      color: var(--text-accent);
-      text-decoration: underline;
-      overflow-wrap: anywhere;
-    }
-    .ofm-value > .ofm-link {
-      margin-left: 6px;
-    }
-    .ofm-icon {
-      padding: 0 4px;
-      color: var(--text-muted);
-    }
-    pre {
-      flex: 1;
-      min-width: 0;
-      margin: 0;
-      padding: 4px 6px;
-      overflow-x: auto;
-      color: var(--text-muted);
-      font: 12px/1.4 var(--font-monospace);
+  }
+  @container (width < 250px) {
+    .metadata-property .metadata-property-value {
+      margin-top: -2px;
+      padding-inline-start: calc(var(--icon-size) + var(--size-4-1));
     }
   }
 
@@ -1093,7 +1567,7 @@ export const obsidianTheme = css`
     }
   }
 
-  :where(.markdown-rendered) {
+  :where(.markdown-rendered, .metadata-container, .metadata-properties) {
     /* Obsidian sets this on every element of the app. */
     &, & *, & ::before, & ::after {
       box-sizing: border-box;
@@ -1962,5 +2436,6 @@ export const obsidianTheme = css`
       counter-increment: tmlEqnNo;
       content: "(" counter(tmlEqnNo) ")";
     }
+  }
   }
 `;
