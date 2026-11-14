@@ -22,38 +22,15 @@
       <label><input id="strict" type="checkbox" /> strict line breaks</label>
     </nav>
     <main>
-      <textarea id="source" aria-label="Note source" spellcheck="false">---
-title: A New Hope
-year: 1977
-released: 1977-05-25
-favorite: true
-director: "[[George Lucas]]"
-tags:
-  - scifi
-  - classic
-cast:
-  - Mark Hamill
-  - "[[Carrie Fisher]]"
----
-# A New Hope
-
-The first film in the [[Star Wars]] saga. #scifi
-
-> [!quote] Obi-Wan
-> The Force will be with you. Always.
-
-- [x] Watched
-- [ ] Reviewed
-
-Escape velocity: $v_e = \sqrt{2GM/r}$.
-</textarea>
-      <ofm-note id="note" types='{"year": "number", "released": "date"}'></ofm-note>
+      <textarea id="source" aria-label="Note source" spellcheck="false"></textarea>
+      <ofm-note id="note" types='{"published": "date", "chapters": "number"}'></ofm-note>
     </main>
     <pre id="log"></pre>
 
     <script type="module">
       import { adoptSheet } from '/src/adopt-sheet.ts';
       import { obsidianTheme } from '/src/ofm-theme.ts';
+      import { doc } from './demo.js';
 
       adoptSheet(obsidianTheme);
 
@@ -68,7 +45,8 @@ Escape velocity: $v_e = \sqrt{2GM/r}$.
       note.addEventListener('wikilink-click', (e) => { e.preventDefault(); show(e); });
       document.querySelector('#readonly').addEventListener('change', (e) => { note.readonly = e.target.checked; });
       document.querySelector('#strict').addEventListener('change', (e) => { note.strictLineBreaks = e.target.checked; });
-      note.value = source.value;
+      source.value = doc;
+      note.value = doc;
     </script>
   </body>
 </html>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" width="320" height="320">
+  <defs>
+    <pattern id="squares" width="2" height="2" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="#f0d9b5"/>
+      <rect x="1" width="1" height="1" fill="#b58863"/>
+      <rect y="1" width="1" height="1" fill="#b58863"/>
+    </pattern>
+  </defs>
+  <rect width="8" height="8" fill="url(#squares)"/>
+  <!-- Alice, the White Pawn, on d2 -->
+  <circle cx="3.5" cy="6.5" r="0.3" fill="#fff" stroke="#333" stroke-width="0.06"/>
+</svg>
