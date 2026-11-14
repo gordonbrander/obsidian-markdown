@@ -26,8 +26,11 @@ export const obsidianTheme = css`
     --interactive-accent-hover: light-dark(#a68af9, #a68af9);
     --background-primary: light-dark(#ffffff, #1c1c1c);
     --background-primary-alt: light-dark(#fafafa, #232323);
+    --background-secondary: light-dark(#f6f6f6, #282828);
     --background-modifier-border: light-dark(#e4e4e4, #333333);
+    --background-modifier-border-hover: light-dark(#dadada, #3f3f3f);
     --background-modifier-border-focus: light-dark(#bdbdbd, #555555);
+    --radius-s: 4px;
     --background-modifier-hover: light-dark(#00000011, #ffffff11);
     --highlight-opacity: 30%;
     --highlight-background-red: color-mix(in oklch, var(--color-red) var(--highlight-opacity), transparent);
@@ -1021,18 +1024,29 @@ export const obsidianTheme = css`
       counter-reset: tmlEqnNo;
     }
 
-    /* Pele draws diagrams from these variables, so they follow light and dark without a redraw. */
+    /* Pele draws diagrams from these variables, so they follow light and dark without a redraw.
+       The mapping is the one in Obsidian's default theme. */
     .mermaid {
       text-align: center;
       --pele-bg: var(--background-primary);
       --pele-fg: var(--text-normal);
       --pele-muted: var(--text-muted);
-      --pele-line: var(--text-muted);
-      --pele-border: var(--background-modifier-border-focus);
-      --pele-surface: var(--background-primary-alt);
-      --pele-surface-alt: var(--background-modifier-border);
+      --pele-line: var(--text-normal);
+      --pele-border: var(--background-modifier-border-hover);
+      --pele-surface: var(--background-secondary);
+      --pele-surface-alt: var(--background-primary-alt);
       --pele-accent: var(--interactive-accent);
+      --pele-critical: var(--color-red);
       --pele-error: var(--color-red);
+      --pele-radius: var(--radius-s);
+      --pele-series-1: var(--color-blue);
+      --pele-series-2: var(--color-orange);
+      --pele-series-3: var(--color-green);
+      --pele-series-4: var(--color-red);
+      --pele-series-5: var(--color-cyan);
+      --pele-series-6: var(--color-yellow);
+      --pele-series-7: var(--color-purple);
+      --pele-series-8: var(--color-pink);
       --pele-font: var(--font-text-theme);
       --pele-font-mono: var(--font-monospace-theme);
     }
