@@ -147,6 +147,41 @@ import { NoteService } from 'obsidian-markdown/services/note.js';
 document.querySelector('ofm-note').noteService = new NoteService(loadPublishedNote);
 ```
 
+### Icons
+
+Callouts, properties and embeds show icons. Which icon goes where follows Obsidian: a callout's comes from the theme's `--callout-icon`, and the rest are fixed. How an icon's id becomes an SVG is one function, the icon resolver, which you can replace.
+
+By default it draws [Lucide](https://lucide.dev) icons, as Obsidian does. The icons the components and the theme use are built in, so showing them loads nothing. Any other Lucide icon, such as one a CSS snippet names, loads the `lucide` package on first use.
+
+```js
+import { setIconResolver, lucideIcons } from 'obsidian-markdown/icons.js';
+
+// Your own icons. The id is Obsidian's: "lucide-flame", "quote-glyph", or a name from your CSS.
+setIconResolver(async (id) => myIcons[id]);
+
+// Some of your own, Lucide for the rest.
+setIconResolver(async (id) => myIcons[id] ?? lucideIcons(id));
+
+// No icons.
+setIconResolver();
+```
+
+A resolver returns a promise of `<svg>` markup, or of `undefined` for no icon. The markup is inserted with scripts and event handlers removed, and with the class `svg-icon`.
+
+Set the resolver before notes render: a note already on screen keeps its icons until it renders again. To configure one element on its own, assign its `resolveIcon` property:
+
+```js
+document.querySelector('ofm-note').resolveIcon = async (id) => myIcons[id];
+```
+
+To change which icon a callout shows, set `--callout-icon` in CSS, to an icon id or a quoted `<svg>`, as in Obsidian:
+
+```css
+.callout[data-callout="tip"] { --callout-icon: lucide-rocket; }
+```
+
+The fold arrow of a foldable callout is part of `render()`'s output, so the resolver doesn't draw it. Restyle or hide it with CSS (`.callout-fold svg`).
+
 ### Using with frameworks
 
 Components are standard custom elements, so you can use them from any framework. Import the module once to register the element, then pass properties and listen for events with your framework's syntax.
@@ -280,7 +315,7 @@ Where it differs from Obsidian:
 - **Folding**: foldable callouts and the properties list are `<details>` elements. Obsidian's `is-collapsed` class is kept in sync on them.
 - **Links** are not resolved against a vault, so `is-unresolved` is never set on a link.
 - **Not editable**: task checkboxes are disabled, property names can't be renamed, and there is no "Add property" button.
-- **Icons** come from the `lucide` package. An icon id it doesn't have draws nothing.
+- **Icons** are Lucide's, as in Obsidian, drawn through a resolver you can replace (see [Icons](#icons)). An icon id the resolver doesn't know draws nothing.
 - **Image embeds** have the class `is-loaded` from the start, where Obsidian adds it once the image has loaded.
 
 ## License

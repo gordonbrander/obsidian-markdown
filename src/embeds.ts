@@ -1,6 +1,5 @@
 // Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]).
 // The note service loads notes; this module decides what part of a note to show, and builds the DOM.
-import { drawIcons } from './decorate.ts';
 import { draw, highlight } from './draw.ts';
 import type { NoteService } from './services/note.ts';
 import { isImagePath } from './ofm-inline.ts';
@@ -106,8 +105,7 @@ export const fillEmbeds = async (root: ParentNode, service: NoteService, options
       const note = renderNoteEmbeds(source, service, options, depth + 1);
       await draw(note.content);
       content.append(note.content);
-      // Callout icons come from computed styles, so an embed still off-screen waits for the note that holds it.
-      await Promise.all([highlight(content), note.loaded, frame.isConnected ? drawIcons(frame) : undefined]);
+      await Promise.all([highlight(content), note.loaded]);
     });
   }));
 };

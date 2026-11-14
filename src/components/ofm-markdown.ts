@@ -4,6 +4,8 @@ import { customElement, property } from 'lit/decorators.js';
 import { drawIcons, syncCollapsed } from '../decorate.ts';
 import { draw, highlight } from '../draw.ts';
 import { embedsNote, renderNoteEmbeds } from '../embeds.ts';
+import { resolveIcon } from '../icons.ts';
+import type { IconResolver } from '../icons.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import type { NoteChangeDetail } from '../services/note.ts';
 
@@ -12,6 +14,7 @@ export type MarkdownClickWikilinkDetail = { target: string };
 /**
  * Renders a note's Obsidian Flavored Markdown, drawing math and Mermaid diagrams and highlighting code.
  * Note embeds load through its `noteService` property: the shared `noteService` unless you assign another.
+ * Icons are drawn through its `resolveIcon` property: the shared `resolveIcon` unless you assign another.
  * @attr rendered - Set by the element once its first content is in the DOM, with math and diagrams drawn. It stays set. Style the first render with `ofm-markdown:not([rendered])`.
  * @attr loaded - Set while the current content is fully loaded: code highlighted and note embeds filled. Removed when new content starts rendering.
  * @fires markdown-rendered - The new content is in the DOM, with math and diagrams drawn. Code highlighting and embeds may still be loading.
@@ -31,6 +34,8 @@ export class OfmMarkdown extends LitElement {
 
   /** Loads note embeds. Defaults to the shared `noteService`; assign another to configure this element on its own. */
   @property({ attribute: false }) accessor noteService: NoteService = noteService;
+  /** Turns an icon id into its SVG. Defaults to the shared `resolveIcon`; assign another to configure this element on its own. */
+  @property({ attribute: false }) accessor resolveIcon: IconResolver = resolveIcon;
   /** The service we listen to for changed notes. */
   #subscribed?: NoteService;
 
@@ -96,7 +101,10 @@ export class OfmMarkdown extends LitElement {
     this.setAttribute('rendered', '');
     this.dispatchEvent(new CustomEvent('markdown-rendered', { bubbles: true, composed: true }));
     // Highlighting only adds spans, so the note shows without waiting for the highlighter to load.
-    const loading = Promise.all([highlight(this), this.#embedsLoaded, drawIcons(this)]);
+    const { resolveIcon } = this;
+    // Embeds arrive later, with icons of their own. Icons already drawn are skipped.
+    const embedIcons = this.#embedsLoaded?.then(() => drawIcons(this, resolveIcon));
+    const loading = Promise.all([highlight(this), embedIcons, drawIcons(this, resolveIcon)]);
     this.#loading = loading;
     void loading.then(() => {
       if (this.#loading !== loading) return;

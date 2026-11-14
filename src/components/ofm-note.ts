@@ -3,6 +3,8 @@ import { customElement, property, state } from 'lit/decorators.js';
 import './ofm-frontmatter.ts';
 import type { Properties, PropertyTypes } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
+import { resolveIcon } from '../icons.ts';
+import type { IconResolver } from '../icons.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import { parseFrontmatter, splitFrontmatter } from '../render.ts';
 
@@ -33,6 +35,9 @@ export class OfmNote extends LitElement {
   /** Loads note embeds. Defaults to the shared `noteService`; assign another to configure this element on its own. */
   @property({ attribute: false }) accessor noteService: NoteService = noteService;
 
+  /** Turns an icon id into its SVG. Defaults to the shared `resolveIcon`; assign another to configure this element on its own. */
+  @property({ attribute: false }) accessor resolveIcon: IconResolver = resolveIcon;
+
   /** The note's source, front matter included. */
   @property() accessor value = '';
   @property({ type: Boolean, attribute: 'strict-line-breaks' }) accessor strictLineBreaks = false;
@@ -62,11 +67,11 @@ export class OfmNote extends LitElement {
             <div class="metadata-properties-title">Properties</div>
           </summary>
           <div class="metadata-content">
-            <ofm-frontmatter .properties=${data} .types=${this.types} ?readonly=${this.readonly}></ofm-frontmatter>
+            <ofm-frontmatter .properties=${data} .types=${this.types} .resolveIcon=${this.resolveIcon} ?readonly=${this.readonly}></ofm-frontmatter>
           </div>
         </details>
       ` : nothing}
-      <ofm-markdown .noteService=${this.noteService} .value=${content} ?strict-line-breaks=${this.strictLineBreaks}></ofm-markdown>
+      <ofm-markdown .noteService=${this.noteService} .resolveIcon=${this.resolveIcon} .value=${content} ?strict-line-breaks=${this.strictLineBreaks}></ofm-markdown>
     `;
   }
 }
