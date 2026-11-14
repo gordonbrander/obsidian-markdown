@@ -323,6 +323,7 @@ Where it differs from Obsidian:
 - **Folding**: foldable callouts and the properties list are `<details>` elements. Obsidian's `is-collapsed` class is kept in sync on them.
 - **Links** are not resolved against a vault, so `is-unresolved` is never set on a link.
 - **Not editable**: task checkboxes are disabled, property names can't be renamed, and there is no "Add property" button.
+- **Icons**: only the icons Obsidian draws by default are built in. Another Lucide id in `--callout-icon` draws nothing unless your `resolveIcon` supplies it.
 - **Image embeds** have the class `is-loaded` from the start, where Obsidian adds it once the image has loaded.
 
 ## License
