@@ -1,6 +1,6 @@
 // The parts of Obsidian's Read view that need a live page. render() emits the rest.
-import { drawCalloutIcon, drawIcon } from './icons.ts';
-import type { IconResolver } from './icons.ts';
+import { drawCalloutIcon, drawIcon } from './services/icons.ts';
+import type { IconResolver } from './services/icons.ts';
 
 /** Mirror a foldable callout's state as Obsidian's is-collapsed class, on it and on its fold arrow. */
 export const syncCollapsed = (callout: Element) => {

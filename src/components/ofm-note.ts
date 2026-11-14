@@ -3,8 +3,8 @@ import { customElement, property, state } from 'lit/decorators.js';
 import './ofm-frontmatter.ts';
 import type { Properties, PropertyTypes } from './ofm-frontmatter.ts';
 import './ofm-markdown.ts';
-import { resolveIcon } from '../icons.ts';
-import type { IconResolver } from '../icons.ts';
+import { resolveIcon } from '../services/icons.ts';
+import type { IconResolver } from '../services/icons.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import { parseFrontmatter, splitFrontmatter } from '../render.ts';
 

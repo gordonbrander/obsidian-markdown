@@ -154,7 +154,7 @@ Callouts, properties and embeds show icons. Which icon goes where follows Obsidi
 By default it draws [Lucide](https://lucide.dev) icons, as Obsidian does. The icons the components and the theme use are built in, so showing them loads nothing. Any other Lucide icon, such as one a CSS snippet names, loads the `lucide` package on first use.
 
 ```js
-import { setIconResolver, lucideIcons } from 'obsidian-markdown/icons.js';
+import { setIconResolver, lucideIcons } from 'obsidian-markdown/services/icons.js';
 
 // Your own icons. The id is Obsidian's: "lucide-flame", "quote-glyph", or a name from your CSS.
 setIconResolver(async (id) => myIcons[id]);

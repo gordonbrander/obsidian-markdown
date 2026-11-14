@@ -1,8 +1,8 @@
 import { LitElement, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { drawIcon, resolveIcon } from '../icons.ts';
-import type { IconResolver } from '../icons.ts';
+import { drawIcon, resolveIcon } from '../services/icons.ts';
+import type { IconResolver } from '../services/icons.ts';
 import { fieldFor, parseCommitted, parseLink, reservedType } from '../sniff.ts';
 import type { Field, Json, Link, Type } from '../sniff.ts';
 

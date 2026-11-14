@@ -11,8 +11,8 @@ test('lucideIcons answers Obsidian\'s ids', async () => {
 
 test('every icon the theme and the property rows name is built in', async () => {
   const builtIn = readFileSync(new URL('./icons.ts', import.meta.url), 'utf8').split('const BUILT_IN')[1].split('};')[0];
-  const theme = readFileSync(new URL('./ofm-theme.ts', import.meta.url), 'utf8');
-  const rows = readFileSync(new URL('./components/ofm-proprow.ts', import.meta.url), 'utf8');
+  const theme = readFileSync(new URL('../ofm-theme.ts', import.meta.url), 'utf8');
+  const rows = readFileSync(new URL('../components/ofm-proprow.ts', import.meta.url), 'utf8');
   const ids = [
     ...[...theme.matchAll(/--callout-icon: ([\w-]+);/g)].map((match) => match[1]),
     ...[...rows.matchAll(/'(lucide-[\w-]+)'/g)].map((match) => match[1]),

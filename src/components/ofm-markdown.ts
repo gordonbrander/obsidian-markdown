@@ -4,8 +4,8 @@ import { customElement, property } from 'lit/decorators.js';
 import { drawIcons, syncCollapsed } from '../decorate.ts';
 import { draw, highlight } from '../draw.ts';
 import { embedsNote, renderNoteEmbeds } from '../embeds.ts';
-import { resolveIcon } from '../icons.ts';
-import type { IconResolver } from '../icons.ts';
+import { resolveIcon } from '../services/icons.ts';
+import type { IconResolver } from '../services/icons.ts';
 import { NoteService, noteService } from '../services/note.ts';
 import type { NoteChangeDetail } from '../services/note.ts';
 

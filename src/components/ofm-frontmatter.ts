@@ -3,8 +3,8 @@ import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './ofm-proprow.ts';
 import type { ProprowChangeDetail } from './ofm-proprow.ts';
-import { resolveIcon } from '../icons.ts';
-import type { IconResolver } from '../icons.ts';
+import { resolveIcon } from '../services/icons.ts';
+import type { IconResolver } from '../services/icons.ts';
 import type { Json, Type } from '../sniff.ts';
 
 export type { ProprowChangeDetail, ClickWikilinkDetail } from './ofm-proprow.ts';

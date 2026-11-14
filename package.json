@@ -35,7 +35,7 @@
     "./ofm-theme.js": "./dist/ofm-theme.js",
     "./adopt-sheet.js": "./dist/adopt-sheet.js",
     "./services/note.js": "./dist/services/note.js",
-    "./icons.js": "./dist/icons.js",
+    "./services/icons.js": "./dist/services/icons.js",
     "./package.json": "./package.json"
   },
   "sideEffects": [
