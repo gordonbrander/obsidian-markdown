@@ -1030,6 +1030,7 @@ export const obsidianTheme = css`
       --pele-line: var(--text-muted);
       --pele-border: var(--background-modifier-border-focus);
       --pele-surface: var(--background-primary-alt);
+      --pele-surface-alt: var(--background-modifier-border);
       --pele-accent: var(--interactive-accent);
       --pele-error: var(--color-red);
       --pele-font: var(--font-text-theme);
