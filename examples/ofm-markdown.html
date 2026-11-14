@@ -15,78 +15,7 @@
   </head>
   <body>
     <main>
-      <textarea id="source" aria-label="Markdown source" spellcheck="false"># Obsidian Flavored Markdown
-
-A [[Wikilink]], an [[Other note#Heading|aliased link]], and a #nested/tag. ^intro-paragraph
-
-==Highlight== ==🔴red== ==🟢green== ~~struck~~ **bold** %%hidden comment%% visible.
-A single newline is a line break here.
-
-> [!tip]+ A foldable callout, open
-> With **formatting** and [[a link]].
-
-> [!faq]- A foldable callout, closed
-> Hidden until opened.
-
-> [!warning]
-> > [!example] Nested
-> > Inner body.
-
-%%
-A block comment.
-
-# Hidden heading
-%%
-
-- [x] Done
-- [ ] Not done
-- [?] Question
-
-| Left | Center | Right |
-| :-- | :--: | --: |
-| [[Note\|Alias]] | ![[pic.png\|64]] | `code` |
-
-^table-id
-
-Footnote[^1] and an inline one ^[Inline *note*.].
-
-[^1]: A footnote
-  across two lines.
-
-Inline math $e^{2i\pi} = 1$ and a rare glyph $\mathfrak{A} \mathscr{B} \mathbb{C}$.
-
-$$
-\begin{vmatrix}a & b\\
-c & d
-\end{vmatrix}=ad-bc
-$$
-
-A macro from one formula $\gdef\RR{\mathbb{R}}$ used in the next: $f: \RR \to \RR$.
-
-```mermaid
-graph TD
-Biology --> Chemistry
-class Biology,Chemistry internal-link;
-```
-
-```js
-const a = "[[not a link]]";
-```
-
-![[Embedded note#^block]]
-
-Autolink www.example.com but not README.md.
-
-## Inert on purpose
-
-<img src=x onerror="document.title='pwned'">
-
-<script>document.title = 'pwned'</script>
-
-[[javascript:document.title='pwned']]
-
-$\href{javascript:document.title='pwned'}{link}$
-</textarea>
+      <textarea id="source" aria-label="Markdown source" spellcheck="false"></textarea>
       <ofm-markdown id="note"></ofm-markdown>
     </main>
     <pre id="log"></pre>
@@ -94,13 +23,9 @@ $\href{javascript:document.title='pwned'}{link}$
     <script type="module">
       import { adoptSheet } from '/src/adopt-sheet.ts';
       import { obsidianTheme } from '/src/ofm-theme.ts';
-      import { noteService } from '/src/services/note.ts';
+      import { doc } from './demo.js';
 
       adoptSheet(obsidianTheme);
-
-      // A tiny in-memory vault for note embeds.
-      const vault = { 'Embedded note': '# Embedded note\n\nAn embedded block, with **formatting**. ^block' };
-      noteService.setLoader(async (name) => vault[name]);
 
       const source = document.querySelector('#source');
       const note = document.querySelector('#note');
@@ -116,6 +41,7 @@ $\href{javascript:document.title='pwned'}{link}$
           log.textContent = `${type}\n${log.textContent}`;
         });
       }
+      source.value = doc;
       show();
     </script>
   </body>
