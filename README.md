@@ -305,15 +305,13 @@ adoptSheet(obsidianTheme);
 
 #### CSS snippets from Obsidian
 
-The theme copies Obsidian's default theme: the same CSS variables with the same values, declared on `body`, and the same rules with the same selectors. `render()` emits the markup and classes of Obsidian's reading view (`.callout`, `.list-bullet`, `.internal-embed`, …), so its output takes the theme on its own inside any element with the class `markdown-rendered`. The components add what needs a live page, such as icons and loaded embeds, and render Obsidian's properties view (`.metadata-container`, `.metadata-property`, `.multi-select-pill`, …). So a CSS snippet written for Obsidian works when you paste it into your page:
+Rendered CSS variables and classes closely align with the HTML in Obsidian's reading view, so that CSS snippets from an Obsidian theme will typically work when copy/pasted:
 
 ```css
 body { --h1-size: 3em; --accent-h: 120; }
 .callout[data-callout="tip"] { --callout-icon: lucide-rocket; }
 .metadata-property[data-property-key="tags"] { display: none; }
 ```
-
-The theme sits in a cascade layer, `ofm-theme`, so your rules win whatever their specificity or order, as snippets do in Obsidian. The page's other unlayered rules win too: a reset such as `* { margin: 0 }` applies inside a note.
 
 Where it differs from Obsidian:
 
