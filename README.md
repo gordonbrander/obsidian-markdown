@@ -262,7 +262,7 @@ adoptSheet(obsidianTheme);
 
 #### CSS snippets from Obsidian
 
-The theme copies Obsidian's default theme: the same CSS variables with the same values, declared on `body`, and the same rules with the same selectors. The components render the DOM and classes of Obsidian's reading view (`.markdown-rendered`, `.callout`, `.list-bullet`, `.internal-embed`, …) and properties view (`.metadata-container`, `.metadata-property`, `.multi-select-pill`, …). So a CSS snippet written for Obsidian works when you paste it into your page:
+The theme copies Obsidian's default theme: the same CSS variables with the same values, declared on `body`, and the same rules with the same selectors. `render()` emits the markup and classes of Obsidian's reading view (`.callout`, `.list-bullet`, `.internal-embed`, …), so its output takes the theme on its own inside any element with the class `markdown-rendered`. The components add what needs a live page, such as icons and loaded embeds, and render Obsidian's properties view (`.metadata-container`, `.metadata-property`, `.multi-select-pill`, …). So a CSS snippet written for Obsidian works when you paste it into your page:
 
 ```css
 body { --h1-size: 3em; --accent-h: 120; }
@@ -281,6 +281,7 @@ Where it differs from Obsidian:
 - **Links** are not resolved against a vault, so `is-unresolved` is never set on a link.
 - **Not editable**: task checkboxes are disabled, property names can't be renamed, and there is no "Add property" button.
 - **Icons** come from the `lucide` package. An icon id it doesn't have draws nothing.
+- **Image embeds** have the class `is-loaded` from the start, where Obsidian adds it once the image has loaded.
 
 ## License
 

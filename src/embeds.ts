@@ -1,9 +1,9 @@
 // Note embeds (![[Note]], ![[Note#Heading]], ![[Note#^block]]).
 // The note service loads notes; this module decides what part of a note to show, and builds the DOM.
-import { decorate, drawIcons } from './decorate.ts';
+import { drawIcons } from './decorate.ts';
 import { draw, highlight } from './draw.ts';
 import type { NoteService } from './services/note.ts';
-import { IMAGE_EXTENSIONS } from './ofm-inline.ts';
+import { isImagePath } from './ofm-inline.ts';
 import { render, renderer, splitFrontmatter } from './render.ts';
 import type { RenderOptions } from './render.ts';
 
@@ -36,12 +36,11 @@ export const section = (note: string, sub = ''): string | undefined => {
   return lines.slice(map![0], next?.map?.[0] ?? lines.length).join('\n');
 };
 
-const isImage = (name: string) => IMAGE_EXTENSIONS.has(name.split('.').pop()?.toLowerCase() ?? '');
 
 /** The note-embed placeholders render() left under `root`. */
 export const embedPlaceholders = (root: ParentNode): Element[] =>
   [...root.querySelectorAll('span.internal-embed[src]:not(.image-embed)')]
-    .filter((span) => !isImage(parseTarget(span.getAttribute('src') ?? '').name));
+    .filter((span) => !isImagePath(span.getAttribute('src') ?? ''));
 
 /** Whether anything under `root` embeds note `name`, filled or not. */
 export const embedsNote = (root: ParentNode, name: string): boolean =>
@@ -121,6 +120,5 @@ export const fillEmbeds = async (root: ParentNode, service: NoteService, options
 export const renderNoteEmbeds = (source: string, service: NoteService, options: RenderOptions = {}, depth = 0) => {
   const template = document.createElement('template');
   template.innerHTML = render(source, options);
-  decorate(template.content);
   return { content: template.content, loaded: fillEmbeds(template.content, service, options, depth) };
 };

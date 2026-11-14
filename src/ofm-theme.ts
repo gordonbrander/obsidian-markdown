@@ -632,6 +632,16 @@ export const obsidianTheme = css`
     user-select: none;
   }
 
+  /* Not Obsidian's: icons load after the note shows, so their holders keep the icon's width and nothing shifts. */
+  :is(.callout-icon, .metadata-property-icon, .markdown-embed-link, .multi-select-pill-remove-button, .metadata-link-flair):empty::after {
+    flex: none;
+    width: var(--icon-size);
+  }
+  :is(.metadata-property-icon, .markdown-embed-link, .multi-select-pill-remove-button, .metadata-link-flair):empty::after {
+    content: "";
+    height: var(--icon-size);
+  }
+
   /* Obsidian applies these to every element and form field of the app. */
   :where(.metadata-container, .metadata-properties) {
     &, & *, & ::before, & ::after {

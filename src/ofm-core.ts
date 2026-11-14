@@ -25,6 +25,9 @@ const wrapper = (state: StateCore, type: string, className: string, body: Token[
   return [open, ...body, close];
 };
 
+// Lucide's chevron-down, as Obsidian's setIcon draws it.
+const CHEVRON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>';
+
 const callouts = (state: StateCore) => {
   const { tokens } = state;
   // Back to front, so nested quotes are already balanced when their parent is rewritten.
@@ -45,7 +48,9 @@ const callouts = (state: StateCore) => {
     const tag = fold ? 'details' : 'div';
     const opening = tokens[open];
     Object.assign(opening, { type: 'callout_open', tag });
-    opening.attrSet('class', fold ? 'callout is-collapsible' : 'callout');
+    // Obsidian marks a callout that starts folded. A page that lets it toggle must keep the class in step.
+    const collapsed = fold === '-' ? ' is-collapsed' : '';
+    opening.attrSet('class', fold ? `callout is-collapsible${collapsed}` : 'callout');
     opening.attrSet('data-callout', type);
     if (fold) opening.attrSet('data-callout-fold', fold);
     if (fold === '+') opening.attrSet('open', '');
@@ -57,6 +62,9 @@ const callouts = (state: StateCore) => {
     titleInline.content = title?.trim() || words.charAt(0).toUpperCase() + words.slice(1);
     titleInline.children = [];
 
+    const chevron = new state.Token('html_inline', '', 0);
+    chevron.content = CHEVRON;
+
     paragraph.content = rest.join('\n');
     const body = tokens.slice(rest.length > 0 ? open + 1 : open + 4, close);
     tokens.splice(
@@ -65,7 +73,7 @@ const callouts = (state: StateCore) => {
       ...wrapper(state, 'callout_title', 'callout-title', [
         ...wrapper(state, 'callout_icon', 'callout-icon', [], 'div', false),
         ...wrapper(state, 'callout_title_inner', 'callout-title-inner', [titleInline], 'div', false),
-        ...(fold ? wrapper(state, 'callout_fold', 'callout-fold', [], 'div', false) : []),
+        ...(fold ? wrapper(state, 'callout_fold', `callout-fold${collapsed}`, [chevron], 'div', false) : []),
       ], fold ? 'summary' : 'div'),
       ...(body.length > 0 ? wrapper(state, 'callout_content', 'callout-content', body) : []),
     );
@@ -153,6 +161,16 @@ export const ofmCore = (md: MarkdownIt) => {
   md.core.ruler.after('ofm_callouts', 'ofm_block_ids', blockIds);
   md.core.ruler.after('ofm_block_ids', 'ofm_tasks', tasks);
   md.core.ruler.after('inline', 'ofm_empty_paragraphs', dropEmptyParagraphs);
+
+  // Obsidian draws its own bullets: a span in each item of a bullet list, which the theme styles in place of the marker.
+  md.renderer.rules.bullet_list_open = (tokens, idx, options, _env, self) => {
+    tokens[idx].attrJoin('class', 'has-list-bullet');
+    return self.renderToken(tokens, idx, options);
+  };
+  md.renderer.rules.list_item_open = (tokens, idx, options, _env, self) => {
+    const bullet = '-*+'.includes(tokens[idx].markup) ? '<span class="list-bullet"></span>' : '';
+    return self.renderToken(tokens, idx, options) + bullet;
+  };
 
   md.renderer.rules.task_checkbox = (tokens, idx) => {
     const { checked, hasText } = tokens[idx].meta as { checked: boolean; hasText: boolean };

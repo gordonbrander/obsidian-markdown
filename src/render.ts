@@ -4,7 +4,7 @@ import { parse } from 'yaml';
 import { ofmBlock } from './ofm-block.ts';
 import { ofmCore } from './ofm-core.ts';
 import { ofmFootnote } from './ofm-footnote.ts';
-import { ofmInline } from './ofm-inline.ts';
+import { imageEmbed, isImagePath, ofmInline } from './ofm-inline.ts';
 
 // The canonical output uses align, where markdown-it writes a style (SPEC Example 14).
 const cellOpen: RendererRule = (tokens, idx, options, _env, self) => {
@@ -16,17 +16,6 @@ const cellOpen: RendererRule = (tokens, idx, options, _env, self) => {
 
 const IMAGE_SIZE = /^(?:(.*)\|)?(\d+)(?:x(\d+))?$/;
 
-// A description may end with a size, or be only a size (SPEC 7.9).
-const image: RendererRule = (tokens, idx, options, env, self) => {
-  const token = tokens[idx];
-  const description = self.renderInlineAsText(token.children ?? [], options, env);
-  const size = description.match(IMAGE_SIZE);
-  token.attrSet('alt', size ? size[1] ?? '' : description);
-  if (size) token.attrSet('width', size[2]);
-  if (size?.[3]) token.attrSet('height', size[3]);
-  return self.renderToken(tokens, idx, options);
-};
-
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
 const decoded = (url: string) => {
@@ -35,6 +24,23 @@ const decoded = (url: string) => {
   } catch {
     return url;
   }
+};
+
+// A description may end with a size, or be only a size (SPEC 7.9).
+const image: RendererRule = (tokens, idx, options, env, self) => {
+  const token = tokens[idx];
+  const description = self.renderInlineAsText(token.children ?? [], options, env);
+  const size = description.match(IMAGE_SIZE);
+  const src = String(token.attrGet('src') ?? '');
+  // An image in the vault is an embed, as in Obsidian (SPEC 7.10).
+  // ponytail: a local target that isn't an image, like ![x](Note.md), stays an <img>. Obsidian embeds the note.
+  if (!SCHEME.test(src) && isImagePath(src)) {
+    return imageEmbed(decoded(src), size ? size[1] ?? '' : description, size?.[2], size?.[3], src);
+  }
+  token.attrSet('alt', size ? size[1] ?? '' : description);
+  if (size) token.attrSet('width', size[2]);
+  if (size?.[3]) token.attrSet('height', size[3]);
+  return self.renderToken(tokens, idx, options);
 };
 
 // Links with a scheme are external (SPEC 7.10). The rest are internal links, marked as Obsidian marks a wikilink.

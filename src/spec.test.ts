@@ -70,7 +70,8 @@ test('targets with a scheme get no URL', () => {
     assert.doesNotMatch(html, /\shref=/, source);
     assert.match(html, /data-href=/, source);
   }
-  assert.doesNotMatch(render('![[javascript:x.png]]'), /\ssrc=/);
+  // The span's src is only a name. The <img>, which would load it, has none.
+  assert.doesNotMatch(render('![[javascript:x.png]]'), /<img[^>]*\ssrc=/);
 });
 
 test('content cannot break out of an attribute', () => {
@@ -89,7 +90,8 @@ test('content cannot break out of an attribute', () => {
   ];
   for (const source of sources) {
     const html = render(source);
-    assert.doesNotMatch(html, /<img(?! class="internal-embed")/, source);
+    // The only <img> is the one an image embed wraps.
+    assert.doesNotMatch(html, /(?<!<span class="internal-embed media-embed image-embed is-loaded"[^>]*>)<img/, source);
     assert.doesNotMatch(html, /\sonclick="y"|\sonerror="y/, source);
   }
 });
@@ -110,5 +112,26 @@ test('a callout type is normalized as Obsidian does', () => {
 
 test('a list holding a task is marked, and only that list', () => {
   const html = render('- a\n  - [ ] b');
-  assert.match(html, /^<ul>\n<li>a\n<ul class="contains-task-list">/);
+  assert.match(html, /^<ul class="has-list-bullet">\n<li><span class="list-bullet"><\/span>a\n<ul class="contains-task-list has-list-bullet">/);
+});
+
+test('bullet list items carry Obsidian\'s bullet, and ordered ones do not', () => {
+  assert.equal(render('- a'), '<ul class="has-list-bullet">\n<li><span class="list-bullet"></span>a</li>\n</ul>\n');
+  assert.match(render('- a\n\n- b'), /<li>\n<span class="list-bullet"><\/span><p>a<\/p>/);
+  assert.equal(render('1. a'), '<ol>\n<li>a</li>\n</ol>\n');
+  assert.match(render('- [ ] a'), /^<ul class="contains-task-list has-list-bullet">\n<li class="task-list-item" data-task=""><span class="list-bullet">/);
+});
+
+test('an image in the vault is an embed, however it is written', () => {
+  const embed = '<span class="internal-embed media-embed image-embed is-loaded" src="my pic.png" alt="A" width="80"><img src="my%20pic.png" alt="A" width="80" /></span>';
+  assert.equal(render('![A|80](my%20pic.png)'), `<p>${embed}</p>\n`);
+  assert.match(render('![[pic.png|80]]'), /<span class="internal-embed media-embed image-embed is-loaded" src="pic.png" alt="pic.png" width="80"><img src="pic.png"/);
+  assert.equal(render('![A](https://example.com/a.png)'), '<p><img src="https://example.com/a.png" alt="A" /></p>\n');
+});
+
+test('a callout folded at first is marked collapsed', () => {
+  const html = render('> [!faq]- Q\n> A');
+  assert.match(html, /^<details class="callout is-collapsible is-collapsed"/);
+  assert.match(html, /<div class="callout-fold is-collapsed"><svg [^>]*class="svg-icon lucide-chevron-down"/);
+  assert.doesNotMatch(render('> [!faq]+ Q\n> A'), /is-collapsed/);
 });
