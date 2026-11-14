@@ -29,10 +29,24 @@ const image: RendererRule = (tokens, idx, options, env, self) => {
 
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
-// Links with a scheme are external (SPEC 7.10). Obsidian marks them with external-link.
+const decoded = (url: string) => {
+  try {
+    return decodeURI(url);
+  } catch {
+    return url;
+  }
+};
+
+// Links with a scheme are external (SPEC 7.10). The rest are internal links, marked as Obsidian marks a wikilink.
 const linkOpen: RendererRule = (tokens, idx, options, _env, self) => {
   const token = tokens[idx];
-  if (SCHEME.test(String(token.attrGet('href') ?? ''))) token.attrSet('class', 'external-link');
+  const href = String(token.attrGet('href') ?? '');
+  if (SCHEME.test(href)) {
+    token.attrSet('class', 'external-link');
+  } else {
+    token.attrSet('class', 'internal-link');
+    token.attrSet('data-href', decoded(href));
+  }
   return self.renderToken(tokens, idx, options);
 };
 

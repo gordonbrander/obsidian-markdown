@@ -541,13 +541,13 @@ export const obsidianTheme = css`
     color-scheme: dark;
   }
 
-  ofm-note, ofm-markdown {
+  ofm-note, ofm-markdown, ofm-frontmatter {
     display: block;
     color-scheme: light dark;
-    color: var(--text-normal);
-    font-family: var(--font-text);
-    font-size: var(--font-text-size);
-    line-height: var(--line-height-normal);
+  }
+  /* Temml resets on body; per note here, so each note numbers its equations from (1). */
+  ofm-markdown {
+    counter-reset: tmlEqnNo;
   }
 
   /* Obsidian's collapsible Properties section. */
@@ -708,321 +708,905 @@ export const obsidianTheme = css`
     }
   }
 
-  /* Variables with no default above fall back to inherit here, because --x: inherit wouldn't mean the same thing. */
-  ofm-markdown {
+  /*
+   * The rules below are Obsidian's, with its selectors. <ofm-markdown> renders into a
+   * div.markdown-preview-view.markdown-rendered, as Obsidian's reading view does.
+   * Rules Obsidian scopes to those classes are copied as they are. Rules Obsidian applies to the whole app
+   * (a, table, .callout) sit under :where(.markdown-rendered), which keeps Obsidian's specificity without
+   * restyling the host page. Either way, a snippet written for Obsidian overrides them as it would there.
+   */
+
+  /* Obsidian also sizes and scrolls this as an app pane; only its text styles apply here. */
+  .markdown-preview-view {
+    font-size: var(--font-preferred-size);
+    font-family: var(--font-text);
+    line-height: var(--line-height-normal);
+    overflow-wrap: break-word;
+    color: var(--text-normal);
+
+    img {
+      image-rendering: -webkit-optimize-contrast;
+      max-width: 100%;
+    }
+    img:not([width]) {
+      outline: none;
+    }
+    .task-list-item-checkbox {
+      position: relative;
+      top: .2em;
+      margin-inline-end: .6em;
+    }
+    .mermaid {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    .markdown-embed .markdown-preview-view {
+      height: 100%;
+      padding: 0;
+    }
+  }
+
+  .markdown-rendered {
+    tab-size: var(--indent-size);
+
     > :first-child {
       margin-top: 0;
     }
     > :last-child {
       margin-bottom: 0;
     }
-    p, ul, ol, table {
-      margin-block: var(--p-spacing);
+    p {
+      margin-block-start: var(--p-spacing);
+      margin-block-end: var(--p-spacing);
+      unicode-bidi: plaintext;
     }
-    strong {
-      color: var(--bold-color, inherit);
-      font-weight: var(--bold-weight);
+
+    h1 {
+      --font-weight: var(--h1-weight);
+      font-variant: var(--h1-variant);
+      letter-spacing: var(--h1-letter-spacing);
+      line-height: var(--h1-line-height);
+      font-size: var(--h1-size);
+      color: var(--h1-color);
+      font-weight: var(--font-weight);
+      font-style: var(--h1-style);
+      font-family: var(--h1-font);
     }
-    em {
-      color: var(--italic-color, inherit);
+    h1 a {
+      --link-weight: var(--h1-weight);
     }
-    img, svg {
-      max-width: 100%;
+    h2 {
+      --font-weight: var(--h2-weight);
+      font-variant: var(--h2-variant);
+      letter-spacing: var(--h2-letter-spacing);
+      line-height: var(--h2-line-height);
+      font-size: var(--h2-size);
+      color: var(--h2-color);
+      font-weight: var(--font-weight);
+      font-style: var(--h2-style);
+      font-family: var(--h2-font);
+    }
+    h2 a {
+      --link-weight: var(--h2-weight);
+    }
+    h3 {
+      --font-weight: var(--h3-weight);
+      font-variant: var(--h3-variant);
+      letter-spacing: var(--h3-letter-spacing);
+      line-height: var(--h3-line-height);
+      font-size: var(--h3-size);
+      color: var(--h3-color);
+      font-weight: var(--font-weight);
+      font-style: var(--h3-style);
+      font-family: var(--h3-font);
+    }
+    h3 a {
+      --link-weight: var(--h3-weight);
+    }
+    h4 {
+      --font-weight: var(--h4-weight);
+      font-variant: var(--h4-variant);
+      letter-spacing: var(--h4-letter-spacing);
+      line-height: var(--h4-line-height);
+      font-size: var(--h4-size);
+      color: var(--h4-color);
+      font-weight: var(--font-weight);
+      font-style: var(--h4-style);
+      font-family: var(--h4-font);
+    }
+    h4 a {
+      --link-weight: var(--h4-weight);
+    }
+    h5 {
+      --font-weight: var(--h5-weight);
+      font-variant: var(--h5-variant);
+      letter-spacing: var(--h5-letter-spacing);
+      font-size: var(--h5-size);
+      line-height: var(--h5-line-height);
+      color: var(--h5-color);
+      font-weight: var(--font-weight);
+      font-style: var(--h5-style);
+      font-family: var(--h5-font);
+    }
+    h5 a {
+      --link-weight: var(--h5-weight);
+    }
+    h6 {
+      --font-weight: var(--h6-weight);
+      font-variant: var(--h6-variant);
+      letter-spacing: var(--h6-letter-spacing);
+      font-size: var(--h6-size);
+      line-height: var(--h6-line-height);
+      color: var(--h6-color);
+      font-weight: var(--font-weight);
+      font-style: var(--h6-style);
+      font-family: var(--h6-font);
+    }
+    h6 a {
+      --link-weight: var(--h6-weight);
+    }
+    /* Obsidian's reading view wraps each block in a div, and its rule catches blockquotes and callouts through those. */
+    :is(p, pre, table, ul, ol, blockquote, .callout) + :is(h1, h2, h3, h4, h5, h6) {
+      margin-top: var(--heading-spacing);
+    }
+    li h1, li h2, li h3, li h4, li h5 {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+    .internal-link {
+      cursor: var(--cursor-link);
+      text-decoration-line: var(--link-decoration);
+      --font-weight: var(--link-weight);
+      color: var(--link-color);
+      transition: opacity var(--anim-duration-fast) ease-in-out;
+    }
+    .internal-link.is-unresolved {
+      color: var(--link-unresolved-color);
+      opacity: var(--link-unresolved-opacity);
+      filter: var(--link-unresolved-filter);
+      text-decoration-style: var(--link-unresolved-decoration-style);
+      text-decoration-color: var(--link-unresolved-decoration-color);
+    }
+    @media (hover: hover) {
+      .internal-link:hover {
+        color: var(--link-color-hover);
+        text-decoration-line: var(--link-decoration-hover);
+      }
+      .internal-link.is-unresolved:hover {
+        opacity: 1;
+        color: var(--link-color-hover);
+        text-decoration-color: var(--link-color-hover);
+        text-decoration-line: var(--link-decoration-hover);
+      }
+    }
+
+    mark {
+      background-color: var(--highlight-background);
+      color: var(--text-normal);
+    }
+    mark .internal-link {
+      color: var(--text-normal);
+    }
+    mark[data-highlight=red] {
+      --highlight-background: var(--highlight-background-red);
+    }
+    mark[data-highlight=orange] {
+      --highlight-background: var(--highlight-background-orange);
+    }
+    mark[data-highlight=yellow] {
+      --highlight-background: var(--highlight-background-yellow);
+    }
+    mark[data-highlight=green] {
+      --highlight-background: var(--highlight-background-green);
+    }
+    mark[data-highlight=blue] {
+      --highlight-background: var(--highlight-background-blue);
+    }
+    mark[data-highlight=purple] {
+      --highlight-background: var(--highlight-background-purple);
+    }
+
+    code {
+      color: var(--code-normal);
+      font-family: var(--font-monospace);
+      font-size: var(--code-size);
+      background-color: var(--code-background);
+      border-radius: var(--code-radius);
+      padding: .15em .3em;
+      border: var(--code-border-width) solid var(--code-border-color);
+      -webkit-box-decoration-break: clone;
+    }
+    pre {
+      position: relative;
+      padding: var(--size-4-3) var(--size-4-4);
+      min-height: 38px;
+      background-color: var(--code-background);
+      border-radius: var(--code-radius);
+      white-space: var(--code-white-space);
+      border: var(--code-border-width) solid var(--code-border-color);
+      overflow-x: auto;
+    }
+    pre code {
+      border: none;
+      padding: 0;
+      background-color: transparent;
+    }
+    li > pre {
+      margin: 0;
+    }
+
+    blockquote {
+      color: var(--blockquote-color);
+      font-style: var(--blockquote-font-style);
+      background-color: var(--blockquote-background-color);
+      border-inline-start: var(--blockquote-border-thickness) solid var(--blockquote-border-color);
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-inline-start: var(--size-4-6);
+      margin-inline-start: 0;
+      margin-inline-end: 0;
+    }
+    blockquote > :first-child {
+      margin-top: 0;
+    }
+    blockquote > :last-child {
+      margin-bottom: 0;
+    }
+
+    hr {
+      border: none;
+      border-top: var(--hr-thickness) solid;
+      border-color: var(--hr-color);
+    }
+
+    ul, ol {
+      padding-inline-start: 0;
+      margin-block-start: var(--p-spacing);
+      margin-block-end: var(--p-spacing);
+    }
+    ul ul, ol ul, ul ol, ol ol {
+      margin-block-start: 0;
+      margin-block-end: 0;
+    }
+    ul li p:first-of-type, ol li p:first-of-type {
+      margin-block-start: 0;
+    }
+    ul li p:last-of-type, ol li p:last-of-type {
+      margin-block-end: 0;
+    }
+    ul > li, ol > li {
+      padding-top: var(--list-spacing);
+      padding-bottom: var(--list-spacing);
+      position: relative;
+    }
+    ul > li {
+      margin-inline-start: 3ch;
+    }
+    ol > li {
+      margin-inline-start: 3ch;
+    }
+    ol ol > li, ul ul > li {
+      margin-inline-start: var(--list-indent);
+    }
+    .list-bullet {
+      float: left;
+      float: inline-start;
+      margin-inline-start: -.8em;
+    }
+    .task-list-item > .list-bullet {
+      display: none;
+    }
+    ul.has-list-bullet {
+      list-style-type: "\\200b";
+    }
+    ul.has-list-bullet > li::marker {
+      color: transparent;
+    }
+
+    table {
+      margin-block-start: var(--p-spacing);
+      margin-block-end: var(--p-spacing);
+      word-break: normal;
+      border-collapse: collapse;
+      line-height: var(--table-line-height);
+    }
+    td, th {
+      padding: var(--size-2-2) var(--size-4-2);
+      border: var(--table-border-width) solid var(--table-border-color);
+      max-width: var(--table-column-max-width);
+      min-width: var(--table-column-min-width);
+      vertical-align: var(--table-cell-vertical-alignment);
+    }
+    td {
+      font-size: var(--table-text-size);
+      color: var(--table-text-color);
+    }
+    th {
+      font-size: var(--table-header-size);
+      font-weight: var(--table-header-weight);
+      color: var(--table-header-color);
+      font-family: var(--table-header-font);
+      line-height: var(--line-height-tight);
+    }
+    th, td, th[align=left], td[align=left] {
+      text-align: start;
+    }
+    th[align=center], td[align=center] {
+      text-align: center;
+    }
+    th[align=right], td[align=right] {
+      text-align: end;
+    }
+    thead > tr > th, tbody > tr > td {
+      white-space: var(--table-white-space);
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    thead > tr > th > .markdown-embed, tbody > tr > td > .markdown-embed {
+      white-space: normal;
+    }
+    tbody tr {
+      background-color: var(--table-background);
+    }
+    tbody tr:nth-child(odd) {
+      background-color: var(--table-row-alt-background);
+    }
+    tbody tr > td:nth-child(2n+2) {
+      background-color: var(--table-column-alt-background);
+    }
+    tbody tr:last-child > td {
+      border-bottom-width: var(--table-row-last-border-width);
+    }
+    tbody tr > td:first-child {
+      border-left-width: var(--table-column-first-border-width);
+    }
+    tbody tr > td:last-child {
+      border-right-width: var(--table-column-last-border-width);
+    }
+    thead tr {
+      background-color: var(--table-header-background);
+    }
+    thead tr > th {
+      border-top-width: var(--table-header-border-width);
+      border-color: var(--table-header-border-color);
+    }
+    thead tr > th:nth-child(2n+2) {
+      background-color: var(--table-column-alt-background);
+    }
+    thead tr > th:first-child {
+      border-left-width: var(--table-column-first-border-width);
+    }
+    thead tr > th:last-child {
+      border-right-width: var(--table-column-last-border-width);
+    }
+    @media (hover: hover) {
+      tbody tr:hover {
+        background-color: var(--table-row-background-hover);
+      }
+      tbody tr:nth-child(odd):hover {
+        background-color: var(--table-row-alt-background-hover);
+      }
+      thead tr:hover {
+        background-color: var(--table-header-background-hover);
+      }
+    }
+  }
+
+  :where(.markdown-rendered) {
+    /* Obsidian sets this on every element of the app. */
+    &, & *, & ::before, & ::after {
+      box-sizing: border-box;
     }
 
     h1, h2, h3, h4, h5, h6 {
-      margin-block: var(--p-spacing);
+      margin-block-start: var(--p-spacing);
+      margin-block-end: var(--p-spacing);
     }
-    /* Obsidian's reading view wraps blocks, so its rule also catches headings after blockquotes. */
-    :is(p, pre, table, ul, ol, blockquote) + :is(h1, h2, h3, h4, h5, h6) {
-      margin-top: var(--heading-spacing);
+    hr {
+      border: none;
+      border-top: var(--hr-thickness) solid;
+      border-color: var(--hr-color);
+      margin: 2rem 0;
     }
-    li :is(h1, h2, h3, h4, h5) {
-      margin-block: 0;
+    ul ul, ol ul, ol ol ul, ol ul ul, ul ol ul, ul ul ul {
+      list-style-type: disc;
     }
-    h1 {
-      color: var(--h1-color, inherit);
-      font-family: var(--h1-font, inherit);
-      font-size: var(--h1-size);
-      font-style: var(--h1-style, normal);
-      font-variant: var(--h1-variant, normal);
-      font-weight: var(--h1-weight);
-      line-height: var(--h1-line-height);
-      letter-spacing: var(--h1-letter-spacing);
+    ol {
+      list-style-type: var(--list-numbered-style);
     }
-    h2 {
-      color: var(--h2-color, inherit);
-      font-family: var(--h2-font, inherit);
-      font-size: var(--h2-size);
-      font-style: var(--h2-style, normal);
-      font-variant: var(--h2-variant, normal);
-      font-weight: var(--h2-weight);
-      line-height: var(--h2-line-height);
-      letter-spacing: var(--h2-letter-spacing);
+    ul > li, ol > li {
+      text-align: start;
     }
-    h3 {
-      color: var(--h3-color, inherit);
-      font-family: var(--h3-font, inherit);
-      font-size: var(--h3-size);
-      font-style: var(--h3-style, normal);
-      font-variant: var(--h3-variant, normal);
-      font-weight: var(--h3-weight);
-      line-height: var(--h3-line-height);
-      letter-spacing: var(--h3-letter-spacing);
-    }
-    h4 {
-      color: var(--h4-color, inherit);
-      font-family: var(--h4-font, inherit);
-      font-size: var(--h4-size);
-      font-style: var(--h4-style, normal);
-      font-variant: var(--h4-variant, normal);
-      font-weight: var(--h4-weight);
-      line-height: var(--h4-line-height);
-      letter-spacing: var(--h4-letter-spacing);
-    }
-    h5 {
-      color: var(--h5-color, inherit);
-      font-family: var(--h5-font, inherit);
-      font-size: var(--h5-size);
-      font-style: var(--h5-style, normal);
-      font-variant: var(--h5-variant, normal);
-      font-weight: var(--h5-weight);
-      line-height: var(--h5-line-height);
-      letter-spacing: var(--h5-letter-spacing);
-    }
-    h6 {
-      color: var(--h6-color, inherit);
-      font-family: var(--h6-font, inherit);
-      font-size: var(--h6-size);
-      font-style: var(--h6-style, normal);
-      font-variant: var(--h6-variant, normal);
-      font-weight: var(--h6-weight);
-      line-height: var(--h6-line-height);
-      letter-spacing: var(--h6-letter-spacing);
+    ol > li::marker, ul > li::marker {
+      color: var(--list-marker-color);
     }
 
     a {
-      color: var(--link-external-color);
-      font-weight: var(--link-weight, inherit);
-      text-decoration: var(--link-external-decoration);
-      text-decoration-thickness: auto;
-      &:hover {
-        color: var(--link-external-color-hover);
-        text-decoration: var(--link-external-decoration-hover);
-      }
-    }
-    a.internal-link {
+      --font-weight: var(--link-weight);
       color: var(--link-color);
-      text-decoration: var(--link-decoration);
-      &:hover {
-        color: var(--link-color-hover);
-        text-decoration: var(--link-decoration-hover);
-      }
+      font-weight: var(--link-weight);
+      outline: none;
+      text-decoration-line: var(--link-decoration);
+      text-decoration-thickness: var(--link-decoration-thickness);
+      cursor: var(--cursor-link);
+      transition: opacity var(--anim-duration-fast) ease-in-out;
     }
-    /* Obsidian's public/external-link.svg. */
-    a.external-link {
-      padding-inline-end: 0.9em;
-      background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='9.38%25'><path d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>")
-        right 0.25em / 0.825em no-repeat;
+    b, strong {
+      font-weight: calc(var(--font-weight) + var(--bold-modifier));
+      color: var(--bold-color);
+    }
+    b a, strong a {
+      font-weight: calc(var(--link-weight) + var(--bold-modifier));
+    }
+    i, em {
+      font-style: italic;
+      color: var(--italic-color);
+    }
+    kbd {
+      color: var(--code-normal);
+      font-family: var(--font-monospace);
+      background-color: var(--code-background);
+      border-radius: var(--radius-s);
+      font-size: var(--code-size);
+      padding: .1em .25em;
+    }
+
+    /* The icon is Obsidian's public/external-link.svg. */
+    .external-link {
+      color: var(--link-external-color);
+      text-decoration-line: var(--link-external-decoration);
+      background-position: center right;
+      background-repeat: no-repeat;
+      background-image: linear-gradient(transparent, transparent), url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='9.38%25'><path d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
+      background-size: .825em;
+      padding-inline-end: .9em;
+      background-position-y: .25em;
+      cursor: var(--cursor-link);
+      filter: var(--link-external-filter);
+      transition: opacity var(--anim-duration-fast) ease-in-out;
     }
     a.tag {
-      line-height: 1;
-      padding: var(--tag-padding-y) var(--tag-padding-x);
+      background-color: var(--tag-background);
       border: var(--tag-border-width) solid var(--tag-border-color);
       border-radius: var(--tag-radius);
-      background: var(--tag-background);
+      corner-shape: var(--tag-corner-shape);
       color: var(--tag-color);
       font-size: var(--tag-size);
-      font-weight: var(--tag-weight, inherit);
+      font-weight: var(--tag-weight);
       text-decoration: var(--tag-decoration);
-      &:hover {
-        border-color: var(--tag-border-color-hover);
-        background: var(--tag-background-hover);
+      padding: var(--tag-padding-y) var(--tag-padding-x);
+      line-height: 1;
+    }
+    @media (hover: hover) {
+      .external-link:hover {
+        color: var(--link-external-color-hover);
+        text-decoration-line: var(--link-external-decoration-hover);
+      }
+      a.tag:hover {
+        background-color: var(--tag-background-hover);
+        border: var(--tag-border-width) solid var(--tag-border-color-hover);
         color: var(--tag-color-hover);
         text-decoration: var(--tag-decoration-hover);
       }
     }
 
-    code, pre {
-      font-family: var(--font-monospace);
-      font-size: var(--code-size);
-    }
-    code {
-      padding: 0.15em 0.3em;
-      border-radius: var(--code-radius);
-      background: var(--code-background);
+    /* Prism, as in Obsidian's app.css. */
+    code[class*=language-] {
       color: var(--code-normal);
-    }
-    pre {
-      /* Obsidian sets * { box-sizing: border-box }, so its 38px includes the padding. */
-      box-sizing: border-box;
-      min-height: 38px;
-      padding: 12px 16px;
-      overflow-x: auto;
-      border-radius: var(--code-radius);
-      background: var(--code-background);
-      white-space: var(--code-white-space);
-    }
-    pre code {
-      padding: 0;
       background: none;
-      font-size: inherit;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      word-break: normal;
+      direction: ltr;
+      font-family: var(--font-monospace);
+      text-align: left;
+      word-spacing: normal;
+      line-height: var(--line-height-normal);
+      hyphens: none;
     }
-
-    /* Prism token colors, as in Obsidian's app.css. */
+    .token.important, .token.bold { font-weight: 700; }
+    .token.italic { font-style: italic; }
+    .token.entity { cursor: help; }
     .token.comment, .token.prolog, .token.doctype, .token.cdata { color: var(--code-comment); }
+    .token.namespace { opacity: .7; }
     .token.tag, .token.constant, .token.symbol, .token.deleted { color: var(--code-tag); }
     .token.punctuation { color: var(--code-punctuation); }
     .token.boolean, .token.number { color: var(--code-value); }
     .token.selector, .token.attr-name, .token.string, .token.char, .token.inserted { color: var(--code-string); }
     .token.operator { color: var(--code-operator); }
-    .token.entity, .token.parameter, .token.property, .token.url, .token.variable,
-    .language-css .token.string { color: var(--code-property); }
+    .token.entity, .token.parameter, .token.property, .token.url, .language-css .token.string, .style .token.string,
+    .token.variable { color: var(--code-property); }
     .token.atrule, .token.attr-value, .token.builtin, .token.function, .token.class-name, .token.property-access {
       color: var(--code-function);
     }
     .token.keyword { color: var(--code-keyword); }
     .token.regex, .token.important { color: var(--code-important); }
-    .token.important, .token.bold { font-weight: bold; }
-    .token.italic { font-style: italic; }
 
-    blockquote {
-      margin-inline: 0;
-      padding-block: 0;
-      padding-inline-start: 24px;
-      border-inline-start: var(--blockquote-border-thickness) solid var(--blockquote-border-color);
-      background: var(--blockquote-background-color);
-      color: var(--blockquote-color);
-      font-style: var(--blockquote-font-style);
-      > :first-child {
-        margin-top: 0;
-      }
-      > :last-child {
-        margin-bottom: 0;
-      }
-    }
-
-    hr {
-      margin: 2rem 0;
-      border: 0;
-      border-top: var(--hr-thickness) solid var(--hr-color);
-    }
-
-    table {
-      border-collapse: collapse;
-      background: var(--table-background);
-      line-height: var(--table-line-height);
-    }
-    th, td {
-      min-width: 6ch;
-      padding: 4px 8px;
-      border: var(--table-border-width) solid var(--table-border-color);
-      vertical-align: var(--table-cell-vertical-alignment);
-      white-space: var(--table-white-space);
-    }
-    td {
-      color: var(--table-text-color, inherit);
-      font-size: var(--table-text-size, inherit);
-    }
-    th {
-      background: var(--table-header-background);
-      color: var(--table-header-color, inherit);
-      font-family: var(--table-header-font, inherit);
-      font-size: var(--table-header-size, inherit);
-      font-weight: var(--table-header-weight);
-    }
-
-    ul, ol {
-      padding-inline-start: 0;
-    }
-    :is(ul, ol) :is(ul, ol) {
-      margin-block: 0;
-    }
-    li {
-      margin-inline-start: 3ch;
-      padding-block: var(--list-spacing);
-    }
-    :is(ul, ol) :is(ul, ol) > li {
-      margin-inline-start: var(--list-indent);
-    }
-    li > p:first-of-type {
-      margin-top: 0;
-    }
-    li > p:last-of-type {
-      margin-bottom: 0;
-    }
-    li::marker {
-      color: var(--list-marker-color);
-    }
-    .task-list-item {
-      list-style: none;
-    }
-    /* Obsidian strikes through only [x], not other task characters. */
-    .task-list-item:is([data-task='x'], [data-task='X']) {
-      color: var(--checklist-done-color);
-      text-decoration: var(--checklist-done-decoration);
-    }
-    .task-list-item-checkbox {
+    input[type=checkbox] {
+      -webkit-appearance: none;
       appearance: none;
-      position: relative;
-      top: 0.2em;
+      border-radius: var(--checkbox-radius);
+      border: 1px solid var(--checkbox-border-color);
+      flex-shrink: 0;
+      padding: 0;
+      margin: 0;
+      margin-inline-end: 6px;
       width: var(--checkbox-size);
       height: var(--checkbox-size);
+      position: relative;
+      transition: box-shadow .15s ease-in-out;
+    }
+    input[type=checkbox]:active, input[type=checkbox]:focus {
+      outline: 0;
+      border-color: var(--checkbox-border-color-hover);
+    }
+    input[type=checkbox]:focus-visible {
+      box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+    }
+    input[type=checkbox]:checked {
+      background-color: var(--checkbox-color);
+      border-color: var(--checkbox-color);
+    }
+    /* Obsidian's check mark. */
+    input[type=checkbox]:checked:after {
+      content: "";
+      top: -1px;
+      inset-inline-start: -1px;
+      position: absolute;
+      width: var(--checkbox-size);
+      height: var(--checkbox-size);
+      display: block;
+      background-color: var(--checkbox-marker-color);
+      mask-position: 52% 52%;
+      mask-size: 65%;
+      mask-repeat: no-repeat;
+      mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path transform='translate(-4 -6)' d='M8.1043257,14.0367999 L4.52468714,10.5420499 C4.32525014,10.3497722 4.32525014,10.0368095 4.52468714,9.8424863 L5.24777413,9.1439454 C5.44721114,8.95166768 5.77142411,8.95166768 5.97086112,9.1439454 L8.46638057,11.5903727 L14.0291389,6.1442083 C14.2285759,5.95193057 14.5527889,5.95193057 14.7522259,6.1442083 L15.4753129,6.84377194 C15.6747499,7.03604967 15.6747499,7.35003511 15.4753129,7.54129009 L8.82741268,14.0367999 C8.62797568,14.2290777 8.3037627,14.2290777 8.1043257,14.0367999'/></svg>");
+    }
+    @media (hover: hover) {
+      input[type=checkbox]:hover {
+        border-color: var(--checkbox-border-color-hover);
+      }
+      input[type=checkbox]:checked:hover {
+        background-color: var(--checkbox-color-hover);
+        border-color: var(--checkbox-color-hover);
+      }
+    }
+    .task-list-item-checkbox {
+      width: var(--checkbox-size);
+      height: var(--checkbox-size);
+    }
+    ul > li.task-list-item {
+      list-style: none;
+    }
+    ul > li.task-list-item > p > .task-list-item-checkbox, ul > li.task-list-item > .task-list-item-checkbox {
+      margin-inline-start: calc(var(--checkbox-size) * -1.5);
+    }
+    ul > li.task-list-item[data-task=x], ul > li.task-list-item[data-task=X] {
+      text-decoration: var(--checklist-done-decoration);
+      color: var(--checklist-done-color);
+    }
+
+    .list-bullet {
+      color: transparent;
+      position: relative;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .list-bullet:before {
+      content: "\\200b";
+    }
+    .list-bullet:after {
+      position: absolute;
+      content: "\\200b";
+      pointer-events: none;
+      color: var(--list-marker-color);
+      border-radius: var(--list-bullet-radius);
+      width: var(--list-bullet-size);
+      height: var(--list-bullet-size);
+      border: var(--list-bullet-border);
+      transform: var(--list-bullet-transform);
+      background-color: var(--list-marker-color);
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .footnote-link {
+      text-decoration: none;
+    }
+    .footnotes {
+      font-size: var(--footnote-size);
+    }
+    .footnote-ref {
+      vertical-align: super;
+    }
+    .footnote-backref {
+      display: inline-block;
+      margin-inline-start: var(--size-4-1);
+      color: var(--text-faint);
+      text-decoration: none;
+    }
+    @media (hover: hover) {
+      .footnote-backref:hover {
+        color: var(--text-accent);
+        text-decoration: none;
+      }
+    }
+
+    svg.svg-icon {
+      height: var(--icon-size);
+      width: var(--icon-size);
+      stroke-width: var(--icon-stroke);
+    }
+
+    .internal-embed:not(.image-embed) {
+      display: block;
+    }
+    .internal-embed img:not([width]) {
+      max-width: 100%;
+    }
+    .internal-embed img {
+      border-radius: var(--image-radius);
+    }
+    .markdown-embed, .file-embed {
+      position: relative;
+    }
+    .markdown-embed-link {
+      position: absolute;
+      top: 4px;
+      inset-inline-end: 4px;
+      color: var(--icon-color);
+      opacity: var(--icon-opacity);
+      cursor: var(--cursor-link);
+      padding: var(--size-2-2);
+      border-radius: var(--radius-s);
+      display: flex;
+      align-items: center;
+      --icon-size: var(--icon-s);
+      --icon-stroke: var(--icon-s-stroke-width);
+    }
+    @media (hover: hover) {
+      .markdown-embed-link:hover {
+        color: var(--icon-color-hover);
+        opacity: var(--icon-opacity-hover);
+        background: var(--background-modifier-hover);
+      }
+    }
+    .markdown-embed-content {
+      height: 100%;
+    }
+    .embed-title {
+      align-items: center;
+      display: flex;
+      gap: var(--size-4-1);
+      font-size: var(--font-preferred-size);
+      font-weight: calc(var(--font-weight) + var(--bold-modifier));
+      text-align: start;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 0 var(--size-4-2) 0;
+    }
+    .markdown-embed {
+      font-style: var(--embed-font-style);
+      background-color: var(--embed-background);
+      border-top: var(--embed-border-top);
+      border-inline-end: var(--embed-border-end, var(--embed-border-right));
+      border-bottom: var(--embed-border-bottom);
+      border-inline-start: var(--embed-border-start, var(--embed-border-left));
       margin: 0;
-      margin-inline: calc(var(--checkbox-size) * -1.5) 0.6em;
+    }
+    .markdown-embed .markdown-preview-view {
       padding: 0;
-      border: 1px solid var(--checkbox-border-color);
-      border-radius: var(--checkbox-radius);
-      &:checked {
-        border-color: var(--checkbox-color);
-        background: var(--checkbox-color);
-      }
-      /* Obsidian's check mark. */
-      &:checked::after {
-        content: '';
-        position: absolute;
-        inset: -1px;
-        background: var(--checkbox-marker-color);
-        mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path transform='translate(-4 -6)' d='M8.1043257,14.0367999 L4.52468714,10.5420499 C4.32525014,10.3497722 4.32525014,10.0368095 4.52468714,9.8424863 L5.24777413,9.1439454 C5.44721114,8.95166768 5.77142411,8.95166768 5.97086112,9.1439454 L8.46638057,11.5903727 L14.0291389,6.1442083 C14.2285759,5.95193057 14.5527889,5.95193057 14.7522259,6.1442083 L15.4753129,6.84377194 C15.6747499,7.03604967 15.6747499,7.35003511 15.4753129,7.54129009 L8.82741268,14.0367999 C8.62797568,14.2290777 8.3037627,14.2290777 8.1043257,14.0367999'/></svg>")
-          52% 52% / 65% no-repeat;
-      }
     }
-
-    mark {
-      background: var(--highlight-background);
-      color: var(--text-normal);
+    .inline-embed > .markdown-embed-title {
+      padding: var(--embed-padding);
     }
-    mark[data-highlight='red'] {
-      --highlight-background: var(--highlight-background-red);
+    .inline-embed > .markdown-embed-content {
+      height: fit-content;
+      max-height: var(--embed-max-height);
+      overflow: auto;
     }
-    mark[data-highlight='orange'] {
-      --highlight-background: var(--highlight-background-orange);
+    .inline-embed > .markdown-embed-content > .markdown-preview-view {
+      padding: var(--embed-padding);
     }
-    mark[data-highlight='yellow'] {
-      --highlight-background: var(--highlight-background-yellow);
+    /* An embed whose note or section is missing, as Obsidian shows a file that doesn't exist. */
+    .file-embed.mod-empty {
+      cursor: var(--cursor-link);
+      padding: var(--size-4-2);
+      color: var(--text-muted);
+      text-align: center;
+      font-size: var(--font-smaller);
     }
-    mark[data-highlight='green'] {
-      --highlight-background: var(--highlight-background-green);
-    }
-    mark[data-highlight='blue'] {
-      --highlight-background: var(--highlight-background-blue);
-    }
-    mark[data-highlight='purple'] {
-      --highlight-background: var(--highlight-background-purple);
-    }
-
+    /* Not Obsidian's: an embed nothing has loaded, because the page set no loader. */
     span.internal-embed:empty::before {
       content: '↪ ' attr(src);
-      padding: var(--embed-padding);
-      border: 1px dashed var(--background-modifier-border);
-      border-radius: 4px;
-      background: var(--embed-background);
       color: var(--text-muted);
-      font-size: 0.9em;
-      font-style: var(--embed-font-style);
+      font-size: var(--font-smaller);
     }
 
-    .math-block, .math-display {
+    /* Pele draws diagrams from these variables, so they follow light and dark without a redraw. */
+    .mermaid {
+      --pele-bg: var(--mermaid-background);
+      --pele-fg: var(--mermaid-text-color);
+      --pele-muted: var(--mermaid-muted-color);
+      --pele-line: var(--mermaid-line-color);
+      --pele-surface: var(--mermaid-surface);
+      --pele-surface-alt: var(--mermaid-surface-alt);
+      --pele-border: var(--mermaid-border-color);
+      --pele-accent: var(--mermaid-accent);
+      --pele-critical: var(--mermaid-critical);
+      --pele-error: var(--mermaid-error);
+      --pele-font: var(--font-mermaid);
+      --pele-font-mono: var(--font-monospace);
+      --pele-radius: var(--mermaid-radius);
+      --pele-title-weight: var(--mermaid-title-weight);
+      --pele-heading-weight: var(--mermaid-heading-weight);
+      --pele-bold-weight: var(--mermaid-bold-weight);
+      --pele-series-1: var(--mermaid-color-1);
+      --pele-series-2: var(--mermaid-color-2);
+      --pele-series-3: var(--mermaid-color-3);
+      --pele-series-4: var(--mermaid-color-4);
+      --pele-series-5: var(--mermaid-color-5);
+      --pele-series-6: var(--mermaid-color-6);
+      --pele-series-7: var(--mermaid-color-7);
+      --pele-series-8: var(--mermaid-color-8);
+      --pele-zoom-cursor: var(--cursor);
+      /* Not Obsidian's, whose diagrams sit at the start of the line. */
+      text-align: center;
+    }
+    .mermaid .pele a.internal-link {
+      fill: var(--link-color);
+    }
+
+    .callout {
+      --callout-color: var(--callout-default);
+      --callout-icon: lucide-pencil;
+      --table-border-color: color-mix(in oklch, var(--callout-color) 25%, var(--background-primary) 50%);
+    }
+    .callout[data-callout=abstract], .callout[data-callout=summary], .callout[data-callout=tldr] {
+      --callout-color: var(--callout-summary);
+      --callout-icon: lucide-clipboard-list;
+    }
+    .callout[data-callout=info] {
+      --callout-color: var(--callout-info);
+      --callout-icon: lucide-info;
+    }
+    .callout[data-callout=todo] {
+      --callout-color: var(--callout-todo);
+      --callout-icon: lucide-check-circle-2;
+    }
+    .callout[data-callout=important] {
+      --callout-color: var(--callout-important);
+      --callout-icon: lucide-flame;
+    }
+    .callout[data-callout=tip], .callout[data-callout=hint] {
+      --callout-color: var(--callout-tip);
+      --callout-icon: lucide-flame;
+    }
+    .callout[data-callout=success], .callout[data-callout=check], .callout[data-callout=done] {
+      --callout-color: var(--callout-success);
+      --callout-icon: lucide-check;
+    }
+    .callout[data-callout=question], .callout[data-callout=help], .callout[data-callout=faq] {
+      --callout-color: var(--callout-question);
+      --callout-icon: help-circle;
+    }
+    .callout[data-callout=warning], .callout[data-callout=caution], .callout[data-callout=attention] {
+      --callout-color: var(--callout-warning);
+      --callout-icon: lucide-alert-triangle;
+    }
+    .callout[data-callout=failure], .callout[data-callout=fail], .callout[data-callout=missing] {
+      --callout-color: var(--callout-fail);
+      --callout-icon: lucide-x;
+    }
+    .callout[data-callout=danger], .callout[data-callout=error] {
+      --callout-color: var(--callout-error);
+      --callout-icon: lucide-zap;
+    }
+    .callout[data-callout=bug] {
+      --callout-color: var(--callout-bug);
+      --callout-icon: lucide-bug;
+    }
+    .callout[data-callout=example] {
+      --callout-color: var(--callout-example);
+      --callout-icon: lucide-list;
+    }
+    .callout[data-callout=quote], .callout[data-callout=cite] {
+      --callout-color: var(--callout-quote);
+      --callout-icon: quote-glyph;
+    }
+    .callout {
+      overflow: hidden;
+      border-style: solid;
+      border-color: color-mix(in oklch, var(--callout-color) calc(var(--callout-border-opacity) * 100%), transparent);
+      border-width: var(--callout-border-width);
+      border-radius: var(--callout-radius);
+      margin: 1em 0;
+      mix-blend-mode: var(--callout-blend-mode);
+      background-color: color-mix(in oklch, var(--callout-color) 10%, transparent);
+      padding: var(--callout-padding);
+    }
+    .callout.is-collapsible .callout-title {
+      cursor: var(--cursor);
+    }
+    .callout-title {
+      padding: var(--callout-title-padding);
+      display: flex;
+      gap: var(--size-4-1);
+      font-size: var(--callout-title-size);
+      color: var(--callout-color);
+      line-height: var(--line-height-tight);
+      align-items: flex-start;
+    }
+    .callout-content {
+      overflow-x: auto;
+      padding: var(--callout-content-padding);
+      background-color: var(--callout-content-background);
+    }
+    .callout-content .callout {
+      margin-top: 20px;
+    }
+    .callout-icon {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+    }
+    .callout-icon .svg-icon {
+      color: var(--callout-color);
+    }
+    .callout-icon:after {
+      content: "\\200b";
+    }
+    .callout-title-inner {
+      --font-weight: var(--callout-title-weight);
+      font-weight: var(--font-weight);
+      color: var(--callout-title-color);
+    }
+    .callout-fold {
+      display: flex;
+      align-items: center;
+      padding-inline-end: var(--size-4-2);
+    }
+    .callout-fold:after {
+      content: "\\200b";
+    }
+    .callout-fold .svg-icon {
+      transition: transform .1s ease-in-out;
+    }
+    .callout-fold.is-collapsed .svg-icon {
+      transform: rotate(calc(var(--direction) * -1 * 90deg));
+    }
+
+    /*
+     * Not Obsidian's: it folds a div with script, where a foldable callout here is a <details>, which needs none.
+     * The component mirrors Obsidian's is-collapsed class onto it.
+     */
+    summary.callout-title {
+      list-style: none;
+    }
+    summary.callout-title::-webkit-details-marker {
+      display: none;
+    }
+    /* Browsers without ::details-content or interpolate-size toggle instantly. */
+    details.callout {
+      interpolate-size: allow-keywords;
+    }
+    details.callout::details-content {
+      height: 0;
+      overflow: clip;
+      transition: height 150ms ease-out, content-visibility 150ms allow-discrete;
+    }
+    details.callout[open]::details-content {
+      height: auto;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      details.callout::details-content {
+        transition: none;
+      }
+    }
+
+    /* Not Obsidian's, which draws math with MathJax. */
+    .math-block {
       display: block;
       text-align: center;
       overflow-x: auto;
@@ -1377,189 +1961,6 @@ export const obsidianTheme = css`
     .tml-eqn::before {
       counter-increment: tmlEqnNo;
       content: "(" counter(tmlEqnNo) ")";
-    }
-
-    /* Temml resets on body; per note here, so each note numbers its equations from (1). */
-    & {
-      counter-reset: tmlEqnNo;
-    }
-
-    /* Pele draws diagrams from these variables, so they follow light and dark without a redraw.
-       The mapping is the one in Obsidian's default theme. */
-    .mermaid {
-      text-align: center;
-      --pele-bg: var(--background-primary);
-      --pele-fg: var(--text-normal);
-      --pele-muted: var(--text-muted);
-      --pele-line: var(--text-normal);
-      --pele-border: var(--background-modifier-border-hover);
-      --pele-surface: var(--background-secondary);
-      --pele-surface-alt: var(--background-primary-alt);
-      --pele-accent: var(--interactive-accent);
-      --pele-critical: var(--color-red);
-      --pele-error: var(--color-red);
-      --pele-radius: var(--radius-s);
-      --pele-series-1: var(--color-blue);
-      --pele-series-2: var(--color-orange);
-      --pele-series-3: var(--color-green);
-      --pele-series-4: var(--color-red);
-      --pele-series-5: var(--color-cyan);
-      --pele-series-6: var(--color-yellow);
-      --pele-series-7: var(--color-purple);
-      --pele-series-8: var(--color-pink);
-      --pele-font: var(--font-text);
-      --pele-font-mono: var(--font-monospace);
-    }
-    .mermaid .internal-link {
-      cursor: pointer;
-    }
-
-    /* Obsidian puts an hr before the footnotes; this border stands in for it. */
-    .footnotes {
-      margin-top: 2rem;
-      padding-top: 1rem;
-      border-top: var(--hr-thickness) solid var(--hr-color);
-      font-size: var(--footnote-size);
-    }
-    .footnote-backref {
-      margin-inline-start: 4px;
-      color: var(--text-faint);
-      text-decoration: none;
-      &:hover {
-        color: var(--text-accent);
-        text-decoration: none;
-      }
-    }
-
-    .callout {
-      --callout-color: var(--callout-default);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'/><path d='m15 5 4 4'/></svg>");
-      overflow: hidden;
-      margin: 1em 0;
-      padding: var(--callout-padding);
-      border: var(--callout-border-width) solid
-        color-mix(in oklch, var(--callout-color) calc(var(--callout-border-opacity) * 100%), transparent);
-      border-radius: var(--callout-radius);
-      background: color-mix(in oklch, var(--callout-color) 10%, transparent);
-      mix-blend-mode: var(--callout-blend-mode);
-    }
-    .callout-content .callout {
-      margin-top: 20px;
-    }
-    .callout-title {
-      display: flex;
-      align-items: flex-start;
-      gap: 4px;
-      padding: var(--callout-title-padding);
-      color: var(--callout-color);
-      font-size: var(--callout-title-size, inherit);
-      line-height: var(--line-height-tight);
-    }
-    /* Obsidian's 16px Lucide icons, drawn as masks so they take the callout color. */
-    .callout-title::before, .callout-fold::after {
-      content: '';
-      flex: none;
-      width: 16px;
-      height: calc(1em * var(--line-height-tight));
-      background: currentColor;
-      mask: var(--callout-icon) center / 16px no-repeat;
-    }
-    .callout-title-inner {
-      color: var(--callout-title-color, inherit);
-      font-weight: var(--callout-title-weight);
-    }
-    .callout-content {
-      overflow-x: auto;
-      padding: var(--callout-content-padding);
-      background: var(--callout-content-background);
-    }
-    summary.callout-title {
-      list-style: none;
-      cursor: pointer;
-      &::-webkit-details-marker {
-        display: none;
-      }
-    }
-    /* Browsers without ::details-content or interpolate-size toggle instantly. */
-    .callout.is-collapsible {
-      interpolate-size: allow-keywords;
-      &::details-content {
-        height: 0;
-        overflow: clip;
-        transition: height 150ms ease-out, content-visibility 150ms allow-discrete;
-      }
-      &[open]::details-content {
-        height: auto;
-      }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .callout.is-collapsible::details-content {
-        transition: none;
-      }
-    }
-    .callout-fold {
-      display: flex;
-      padding-inline-end: 8px;
-      &::after {
-        mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
-        transition: transform 100ms ease-in-out;
-      }
-    }
-    .callout:not([open]) > .callout-title .callout-fold::after {
-      transform: rotate(-90deg);
-    }
-
-    [data-callout='info'] {
-      --callout-color: var(--callout-info);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
-    }
-    [data-callout='todo'] {
-      --callout-color: var(--callout-todo);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='m9 12 2 2 4-4'/></svg>");
-    }
-    :is([data-callout='abstract'], [data-callout='summary'], [data-callout='tldr']) {
-      --callout-color: var(--callout-summary);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='8' y='2' width='8' height='4' rx='1' ry='1'/><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><path d='M12 11h4'/><path d='M12 16h4'/><path d='M8 11h.01'/><path d='M8 16h.01'/></svg>");
-    }
-    [data-callout='important'] {
-      --callout-color: var(--callout-important);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4'/></svg>");
-    }
-    :is([data-callout='tip'], [data-callout='hint']) {
-      --callout-color: var(--callout-tip);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4'/></svg>");
-    }
-    :is([data-callout='success'], [data-callout='check'], [data-callout='done']) {
-      --callout-color: var(--callout-success);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>");
-    }
-    :is([data-callout='question'], [data-callout='help'], [data-callout='faq']) {
-      --callout-color: var(--callout-question);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'/><path d='M12 17h.01'/></svg>");
-    }
-    :is([data-callout='warning'], [data-callout='caution'], [data-callout='attention']) {
-      --callout-color: var(--callout-warning);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3'/><path d='M12 9v4'/><path d='M12 17h.01'/></svg>");
-    }
-    :is([data-callout='failure'], [data-callout='fail'], [data-callout='missing']) {
-      --callout-color: var(--callout-fail);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 6 6 18'/><path d='m6 6 12 12'/></svg>");
-    }
-    :is([data-callout='danger'], [data-callout='error']) {
-      --callout-color: var(--callout-error);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z'/></svg>");
-    }
-    [data-callout='bug'] {
-      --callout-color: var(--callout-bug);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 20v-9'/><path d='M14 7a4 4 0 0 1 4 4v3a6 6 0 0 1-12 0v-3a4 4 0 0 1 4-4z'/><path d='M14.12 3.88 16 2'/><path d='M21 21a4 4 0 0 0-3.81-4'/><path d='M21 5a4 4 0 0 1-3.55 3.97'/><path d='M22 13h-4'/><path d='M3 21a4 4 0 0 1 3.81-4'/><path d='M3 5a4 4 0 0 0 3.55 3.97'/><path d='M6 13H2'/><path d='m8 2 1.88 1.88'/><path d='M9 7.13V6a3 3 0 1 1 6 0v1.13'/></svg>");
-    }
-    [data-callout='example'] {
-      --callout-color: var(--callout-example);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 5h.01'/><path d='M3 12h.01'/><path d='M3 19h.01'/><path d='M8 5h13'/><path d='M8 12h13'/><path d='M8 19h13'/></svg>");
-    }
-    :is([data-callout='quote'], [data-callout='cite']) {
-      --callout-color: var(--callout-quote);
-      --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z'/><path d='M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z'/></svg>");
     }
   }
 `;

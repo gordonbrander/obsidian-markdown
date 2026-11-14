@@ -1,6 +1,7 @@
 import { LitElement, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { drawIcons, syncCollapsed } from '../decorate.ts';
 import { draw, highlight } from '../draw.ts';
 import { embedsNote, renderNoteEmbeds } from '../embeds.ts';
 import { NoteService, noteService } from '../services/note.ts';
@@ -95,7 +96,7 @@ export class OfmMarkdown extends LitElement {
     this.setAttribute('rendered', '');
     this.dispatchEvent(new CustomEvent('markdown-rendered', { bubbles: true, composed: true }));
     // Highlighting only adds spans, so the note shows without waiting for the highlighter to load.
-    const loading = Promise.all([highlight(this), this.#embedsLoaded]);
+    const loading = Promise.all([highlight(this), this.#embedsLoaded, drawIcons(this)]);
     this.#loading = loading;
     void loading.then(() => {
       if (this.#loading !== loading) return;
@@ -117,7 +118,7 @@ export class OfmMarkdown extends LitElement {
   #onClick(event: Event) {
     const clicked = event.target as Element;
 
-    const internal = clicked.closest('.internal-link');
+    const internal = clicked.closest('.internal-link, .markdown-embed-link');
     if (internal) {
       const target = internal.getAttribute('data-href') ?? internal.textContent?.trim() ?? '';
       if (!this.#clickWikilink(target)) event.preventDefault();
@@ -136,9 +137,16 @@ export class OfmMarkdown extends LitElement {
     if (clicked.closest('.tag')) event.preventDefault();
   }
 
+  /** toggle doesn't bubble, so this listens in the capture phase. */
+  #onToggle(event: Event) {
+    const toggled = event.target as Element;
+    if (toggled.matches('details.callout')) syncCollapsed(toggled);
+  }
+
   render() {
+    // Obsidian's reading view has both classes, and its rules, and snippets written for it, use either.
     return html`
-      <div class="markdown-rendered" @click=${this.#onClick}>
+      <div class="markdown-preview-view markdown-rendered" @click=${this.#onClick} @toggle=${{ handleEvent: (event: Event) => this.#onToggle(event), capture: true }}>
         ${this.#content}
       </div>
     `;

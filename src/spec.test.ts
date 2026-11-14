@@ -41,7 +41,7 @@ test('www. and email addresses are autolinked', () => {
 });
 
 test('only links with a scheme are external', () => {
-  assert.match(render('[x](Note.md)'), /<a href="Note\.md">/);
+  assert.match(render('[x](Note.md)'), /<a href="Note\.md" class="internal-link" data-href="Note\.md">/);
   assert.match(render('[x](obsidian://open)'), /<a href="obsidian:\/\/open" class="external-link">/);
 });
 
@@ -102,4 +102,13 @@ test('front matter is split off and parsed', () => {
   assert.deepEqual(splitFrontmatter('---\n---\nBody'), { frontmatter: '', content: 'Body' });
   assert.deepEqual(parseFrontmatter('Body'), { data: {}, content: 'Body' });
   assert.throws(() => parseFrontmatter('---\na: [\n---\n'));
+});
+
+test('a callout type is normalized as Obsidian does', () => {
+  assert.match(render('> [!My Type]\n> Body'), /data-callout="my-type".*callout-title-inner">My type</s);
+});
+
+test('a list holding a task is marked, and only that list', () => {
+  const html = render('- a\n  - [ ] b');
+  assert.match(html, /^<ul>\n<li>a\n<ul class="contains-task-list">/);
 });

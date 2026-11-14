@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "lit": "^3.3.3",
+    "lucide": "^1.73.0",
     "markdown-it": "^15.0.3",
     "pele": "^1.13.0",
     "refractor": "^5.0.0",

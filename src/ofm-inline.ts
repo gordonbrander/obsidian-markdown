@@ -171,7 +171,7 @@ export const ofmInline = (md: MarkdownIt) => {
   rules.math_inline = (tokens, idx) =>
     `<span class="math math-inline">${escapeHtml(tokens[idx].content)}</span>`;
   rules.math_display = (tokens, idx) =>
-    `<span class="math math-display">${escapeHtml(tokens[idx].content)}</span>`;
+    `<span class="math math-block">${escapeHtml(tokens[idx].content)}</span>`;
 
   rules.tag = (tokens, idx) => {
     const name = escapeHtml(tokens[idx].content);
