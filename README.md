@@ -84,7 +84,7 @@ See [[Another note]]."></ofm-markdown>
 Renders a note, drawing...
 
 - Math as MathML with [Temml](https://temml.org/)
-- Mermaid diagrams with [Pele](https://pele.run))
+- Mermaid diagrams with [Pele](https://pele.run)
 - Highlighted code blocks with Prism (common set, plus `jsx` and `tsx`)
 
 The component is rendered in the light DOM so page styles apply. Rendered HTML and class names mirror Obsidian's reading view wherever feasible, allowing you to easily port styles from your Obsidian theme to the component.
