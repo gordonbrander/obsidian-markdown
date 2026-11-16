@@ -1,10 +1,17 @@
+---
+version: "0.1"
+status: draft
+date: 2026-11-10
+base-specifications:
+  - name: CommonMark 0.31.2
+    url: https://spec.commonmark.org/0.31.2/
+  - name: GitHub Flavored Markdown 0.29-gfm
+    url: https://github.github.com/gfm/
+---
+
 # Obsidian Flavored Markdown Spec
 
-**Version:** 0.1 (draft)
-**Date:** 2026-11-10
-**Base specifications:** [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/), [GitHub Flavored Markdown 0.29-gfm](https://github.github.com/gfm/)
-
-This is an independent, unofficial specification. It is not published or endorsed by Obsidian. It describes the syntax documented in the Obsidian help as of the date above.
+This is an independent, unofficial specification. It is not published or endorsed by Obsidian. It describes the syntax documented in the Obsidian help as of the date in its front matter.
 
 ## Contents
 
@@ -69,11 +76,9 @@ Where another specification covers the same case, a *[chosen]* rule follows it, 
 
 Like CommonMark, this document alternates prose with numbered examples. Each example shows Markdown input, a line containing a single `.`, and the expected HTML output. The `→` character represents a tab.
 
-The HTML is a **canonical rendering**. It follows the DOM of Obsidian's Read view wherever that DOM is static: the same elements, classes and attributes, so that CSS written for Obsidian applies to it. It leaves out what Obsidian adds with script once a note is on screen, such as the icons a theme names, loaded embeds, and drawn math and diagrams. Foldable callouts are the one deliberate departure ([section 6.1](#61-callouts)).
+Obsidian's rendered HTML is often specific to the application, and may not suit every publisher. Wherever feasible, an example's HTML is a **canonical rendering** that matches the DOM of Obsidian's Read view, so that CSS written for Obsidian applies to it. Where Obsidian's HTML differs substantially from what is required, a **minimal** example of output follows. The output examples also leave out markup that Obsidian adds with scripts after a note is on screen, such as icons, loaded embeds, drawn math, and diagrams.
 
-Much of that HTML is specific to Obsidian. So each section that produces output says which of it is required, in a **Required output** paragraph. Elements and attributes named there MUST be produced. Every other element, class and attribute in that section's examples is Obsidian's, and MAY be produced. An implementation that aims to match Obsidian SHOULD produce it exactly as shown. Where CommonMark or GFM defines a construct's HTML, that HTML is the required output.
-
-Where Obsidian's HTML differs a lot from the required output, a **minimal** example follows the canonical one. It has the same input and only the required output.
+Each section that produces output separates what is required from what aligns with Obsidian, in a **Required output** paragraph. Elements and attributes named there MUST be produced. Everything else in that section's examples MAY be produced, to align with Obsidian. Where CommonMark or GFM defines a construct's HTML, that HTML is the required output.
 
 Conforming implementations need not produce HTML at all. When comparing against the examples, attribute order is not significant.
 
@@ -687,15 +692,15 @@ The captures are, in order:
 
 1. The **type identifier**. It is case-insensitive. It is normalized as Obsidian does: trimmed, lowercased, and each run of whitespace replaced with one `-`, so `[!My type]` has the type `my-type`. A type that is empty after trimming is not a callout.
 2. **Metadata**, an optional string after `|` that themes can use for styling. The canonical rendering stores it in `data-callout-metadata`. ***[reported]***
-3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. A foldable callout is a `details` element, so that it folds without script, and is open when the marker is `+`. Obsidian renders `div`s and folds them with script. ***[chosen]***
+3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. Obsidian renders foldable callouts as `div`s and folds them with script. The canonical rendering uses a `details` element instead, which is accessible by default and folds without script. Either MAY be produced. ***[chosen]***
 4. The **title**, parsed as inline content. ***[chosen]***
 
 This first line is removed from the paragraph. Remaining lines, and the remaining children of the block quote, are the callout's **content**. Content is parsed as ordinary blocks, so callouts can contain lists, code, wikilinks, and embeds.
 
-**Required output:** a callout that is not foldable is a `div`, and a foldable one is a `details` element with an `open` attribute exactly when the fold marker is `+`. Either carries the type identifier in `data-callout`. Its first child holds the title, and is a `summary` in a foldable callout. The content follows the title.
+**Required output:** none. Publishers may follow Obsidian's markup or choose their own structure. The canonical rendering below is one possible output, and all of it MAY be produced:
 
-The rest of the canonical rendering is Obsidian's, and MAY be produced:
-
+- A `div`, or for a foldable callout a `details` element whose title is a `summary`, with an `open` attribute exactly when the fold marker is `+`.
+- The type identifier in `data-callout`.
 - The classes `callout`, `callout-title`, `callout-title-inner`, and `callout-content`.
 - An empty `.callout-icon` element at the start of each title, which an application fills with the icon named by the theme.
 - On a foldable callout, the class `is-collapsible` and the fold marker in `data-callout-fold`. Its title ends with an empty `.callout-fold` element, which an application fills with the fold arrow, Lucide's `chevron-down` icon, as Obsidian does.
@@ -713,18 +718,6 @@ The rest of the canonical rendering is Obsidian's, and MAY be produced:
 <div class="callout-content">
 <p>Here's a callout block.</p>
 </div>
-</div>
-````````````````````````````````
-
-**Example 28, minimal**
-
-```````````````````````````````` example minimal
-> [!info] Here's a callout title
-> Here's a callout block.
-.
-<div data-callout="info">
-<div>Here's a callout title</div>
-<p>Here's a callout block.</p>
 </div>
 ````````````````````````````````
 
@@ -769,18 +762,6 @@ The fold marker must directly follow `]`:
 <div class="callout-content">
 <p>Yes!</p>
 </div>
-</details>
-````````````````````````````````
-
-**Example 31, minimal**
-
-```````````````````````````````` example minimal
-> [!faq]- Are callouts foldable?
-> Yes!
-.
-<details data-callout="faq">
-<summary>Are callouts foldable?</summary>
-<p>Yes!</p>
 </details>
 ````````````````````````````````
 
