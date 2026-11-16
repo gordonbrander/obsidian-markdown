@@ -61,15 +61,23 @@ Obsidian's own behavior is known with varying confidence, so rules carry a prove
 | ***[reported]*** | Not stated by Obsidian. Based on user reports, third-party tools, or how the official help vault's own source is written. |
 | ***[chosen]*** | Obsidian's behavior is undocumented. This spec fixes a rule so that implementations agree. Obsidian may behave differently. |
 
+Where another specification covers the same case, a *[chosen]* rule follows it, and the text names it, as in "as in pandoc". The mark still records that Obsidian's own behavior is unknown.
+
 **Apart from a manual check of colored highlights ([section 7.2](#72-highlights)), no example in this document has been run against Obsidian itself.** Rules marked *[chosen]* in particular are the first candidates for correction. [Appendix C](#appendix-c-open-questions) lists what most needs testing.
 
 ### 1.5 About this document
 
 Like CommonMark, this document alternates prose with numbered examples. Each example shows Markdown input, a line containing a single `.`, and the expected HTML output. The `→` character represents a tab.
 
-The HTML is a **canonical rendering**. It follows the DOM of Obsidian's Read view wherever that DOM is static: the same elements, classes and attributes, so that CSS written for Obsidian applies to it. It leaves out what Obsidian adds with script once a note is on screen, such as the icons a theme names, loaded embeds, and drawn math and diagrams. Conforming implementations need not produce HTML at all. When comparing against the examples, attribute order is not significant.
+The HTML is a **canonical rendering**. It follows the DOM of Obsidian's Read view wherever that DOM is static: the same elements, classes and attributes, so that CSS written for Obsidian applies to it. It leaves out what Obsidian adds with script once a note is on screen, such as the icons a theme names, loaded embeds, and drawn math and diagrams. Foldable callouts are the one deliberate departure ([section 6.1](#61-callouts)).
 
-Examples use a block format compatible with CommonMark's `spec.txt`, so they can be extracted mechanically: an opening fence of 32 backticks with the info string `example`, and a closing fence of 32 backticks.
+Much of that HTML is specific to Obsidian. So each section that produces output says which of it is required, in a **Required output** paragraph. Elements and attributes named there MUST be produced. Every other element, class and attribute in that section's examples is Obsidian's, and MAY be produced. An implementation that aims to match Obsidian SHOULD produce it exactly as shown. Where CommonMark or GFM defines a construct's HTML, that HTML is the required output.
+
+Where Obsidian's HTML differs a lot from the required output, a **minimal** example follows the canonical one. It has the same input and only the required output.
+
+Conforming implementations need not produce HTML at all. When comparing against the examples, attribute order is not significant.
+
+Examples use a block format compatible with CommonMark's `spec.txt`, so they can be extracted mechanically: an opening fence of 32 backticks with the info string `example`, and a closing fence of 32 backticks. Minimal examples use the info string `example minimal`, in the way cmark-gfm's `spec.txt` marks extension examples with `example strikethrough`, so tools can tell them apart.
 
 ### 1.6 Views
 
@@ -177,6 +185,8 @@ Among inlines, the following constructs bind more tightly than emphasis, in the 
 
 The following are unchanged from CommonMark, except as noted in the listed section: thematic breaks, ATX and setext headings, indented code blocks, fenced code blocks ([5.1](#51-fenced-code-blocks)), HTML blocks ([5.5](#55-html-blocks)), link reference definitions, paragraphs ([5.6](#56-block-identifiers)), block quotes ([6.1](#61-callouts)), lists ([6.2](#62-task-list-items)), code spans, emphasis and strong emphasis, links, images ([7.9](#79-images-with-dimensions)), autolinks, raw HTML, and hard line breaks.
 
+**Required output:** CommonMark's HTML for each of these. Obsidian also gives each bullet list the class `has-list-bullet`, and starts each of its items with an empty `<span class="list-bullet">` for themes to draw the bullet in. Both MAY be produced, as the examples in [section 5.6](#56-block-identifiers) show.
+
 **Example 4**
 
 ```````````````````````````````` example
@@ -192,9 +202,9 @@ The following are unchanged from CommonMark, except as noted in the listed secti
 
 ## 4 Properties (front matter)
 
-<a id="front-matter"></a>A **front matter** block stores a note's properties. It MUST begin on the first line of the file. Its first line is exactly `---`, and it ends at the next line that is exactly `---`. Trailing spaces and tabs on these two lines are allowed. ***[chosen]*** Everything between the two lines is the **front matter content**, which is not parsed as Markdown.
+<a id="front-matter"></a>A **front matter** block stores a note's properties. It MUST begin on the first line of the file. Its first line is exactly `---`, and it ends at the next line that is exactly `---`. Trailing spaces and tabs on these two lines are allowed, as in [micromark-extension-frontmatter](https://github.com/micromark/micromark-extension-frontmatter). ***[chosen]*** Everything between the two lines is the **front matter content**, which is not parsed as Markdown.
 
-If no closing line exists, the file has no front matter and the first line is an ordinary thematic break. ***[chosen]***
+If no closing line exists, the file has no front matter and the first line is an ordinary thematic break, as in micromark-extension-frontmatter. ***[chosen]*** Unlike pandoc, `...` does not close front matter.
 
 A front matter block produces no rendered output.
 
@@ -280,6 +290,8 @@ For Obsidian Publish, `publish`, `permalink`, `description`, `image`, and `cover
 
 Fenced code blocks are as in CommonMark. The first word of the info string is the language, used for syntax highlighting. Obsidian's Reading view uses Prism and its language names.
 
+**Required output:** CommonMark's `<pre><code class="language-LANG">`.
+
 **Example 7**
 
 ```````````````````````````````` example
@@ -316,9 +328,11 @@ Biology --&gt; Chemistry
 
 ### 5.2 Math blocks
 
-<a id="math-block"></a>A **math block** begins with a line whose content, after at most 3 spaces of indentation, starts with `$$` and has no further `$$` on that line. It ends at the next line containing `$$`, or at the end of its container if there is none. ***[reported]*** Text before the closing `$$` belongs to the math block. Blank lines MAY appear inside. ***[chosen]***
+<a id="math-block"></a>A **math block** begins with a line whose content, after at most 3 spaces of indentation, starts with `$$` and has no further `$$` on that line. It ends at the next line containing `$$`, or at the end of its container if there is none. ***[reported]*** Text before the closing `$$` belongs to the math block. Blank lines MAY appear inside, as in micromark-extension-math. ***[chosen]***
 
 The content is LaTeX. Implementations MAY render it to MathML or through libraries such as [MathJax](https://docs.mathjax.org/). It is not parsed as Markdown, and its leading and trailing whitespace is removed. A math block can interrupt a paragraph. ***[chosen]***
+
+**Required output:** an element with the classes `math` and `math-block`, holding the LaTeX source. Obsidian uses a `div` for a math block and a `span` for [inline math](#75-inline-math), with the class `math-inline` in place of `math-block`. [micromark-extension-math](https://github.com/micromark/micromark-extension-math) uses the same classes, except `math-display` for display math.
 
 **Example 9**
 
@@ -339,6 +353,8 @@ A line such as `$$x$$`, which opens and closes on one line, is parsed as [inline
 ### 5.3 Block comments
 
 <a id="block-comment"></a>A **block comment** begins with a line whose content, after at most 3 spaces of indentation ***[chosen]***, starts with `%%` and has no further `%%` on that line. It ends at the next `%%`, wherever that occurs in a line. Its content is discarded, including any blank lines, headings, or lists it contains. A block comment can interrupt a paragraph.
+
+**Required output:** none. A block comment produces no output.
 
 **Example 10**
 
@@ -392,7 +408,9 @@ A line that begins with `%%` and closes on the same line is an [inline comment](
 
 ### 5.4 Tables
 
-Tables are as in GFM: a header row, a delimiter row, and zero or more data rows. Leading and trailing `|` are optional.
+Tables are as in [GFM section 4.10](https://github.github.com/gfm/#tables-extension-): a header row, a delimiter row, and zero or more data rows. Leading and trailing `|` are optional.
+
+**Required output:** GFM's HTML, including the `align` attribute.
 
 **Example 13**
 
@@ -494,7 +512,7 @@ Without the backslash, the wikilink is broken across two cells, and the excess c
 
 ### 5.5 HTML blocks
 
-HTML blocks are recognized as in CommonMark. **Markdown is not parsed inside an HTML block.** In particular, the block ends at a blank line where CommonMark says it does, so HTML blocks that are meant to be whole SHOULD contain no blank lines.
+HTML blocks are recognized as in CommonMark. **Markdown is not parsed inside an HTML block.** **Required output:** the block's HTML as written, after sanitizing. In particular, the block ends at a blank line where CommonMark says it does, so HTML blocks that are meant to be whole SHOULD contain no blank lines.
 
 **Example 17**
 
@@ -517,6 +535,8 @@ All HTML, block or inline, MUST be sanitized before display, because a note may 
 <a id="block-identifier"></a>A **block identifier** names a block so that it can be [linked to](#84-block-subpaths). Its form is `^` followed by one or more Latin letters, digits, or hyphens (`[A-Za-z0-9-]+`).
 
 A **block identifier marker** is a block identifier at the end of a line, optionally followed by spaces or tabs, and either at the start of the line or preceded by a space or tab. Markers are recognized only on the **last line** of a paragraph. The marker and any whitespace before it are removed from the paragraph.
+
+**Required output:** none beyond the named block's own HTML. The canonical rendering records the identifier in a `data-block-id` attribute on the block it names, which MAY be produced. Other tools that name blocks, such as pandoc and [Djot](https://djot.net) with `{#id}`, use the `id` attribute instead.
 
 If the paragraph has other content, the marker names that paragraph:
 
@@ -667,10 +687,20 @@ The captures are, in order:
 
 1. The **type identifier**. It is case-insensitive. It is normalized as Obsidian does: trimmed, lowercased, and each run of whitespace replaced with one `-`, so `[!My type]` has the type `my-type`. A type that is empty after trimming is not a callout.
 2. **Metadata**, an optional string after `|` that themes can use for styling. The canonical rendering stores it in `data-callout-metadata`. ***[reported]***
-3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. The canonical rendering of a foldable callout is a `details` element with the class `is-collapsible`, plus `open` when the marker is `+`. Its title is a `summary` that ends with an empty `.callout-fold` element, which an application fills with the fold arrow, Lucide's `chevron-down` icon, as Obsidian does. When the marker is `-`, both the callout and its `.callout-fold` have the class `is-collapsed`, as in Obsidian; an application that lets the callout toggle keeps that class in step. Obsidian renders `div`s and folds them with script. Every title begins with an empty `.callout-icon` element, as in Obsidian, which an application fills with the icon named by the theme. ***[chosen]***
+3. The **fold marker**: `+` means foldable and expanded by default, `-` means foldable and collapsed by default, and no marker means not foldable. A foldable callout is a `details` element, so that it folds without script, and is open when the marker is `+`. Obsidian renders `div`s and folds them with script. ***[chosen]***
 4. The **title**, parsed as inline content. ***[chosen]***
 
 This first line is removed from the paragraph. Remaining lines, and the remaining children of the block quote, are the callout's **content**. Content is parsed as ordinary blocks, so callouts can contain lists, code, wikilinks, and embeds.
+
+**Required output:** a callout that is not foldable is a `div`, and a foldable one is a `details` element with an `open` attribute exactly when the fold marker is `+`. Either carries the type identifier in `data-callout`. Its first child holds the title, and is a `summary` in a foldable callout. The content follows the title.
+
+The rest of the canonical rendering is Obsidian's, and MAY be produced:
+
+- The classes `callout`, `callout-title`, `callout-title-inner`, and `callout-content`.
+- An empty `.callout-icon` element at the start of each title, which an application fills with the icon named by the theme.
+- On a foldable callout, the class `is-collapsible` and the fold marker in `data-callout-fold`. Its title ends with an empty `.callout-fold` element, which an application fills with the fold arrow, Lucide's `chevron-down` icon, as Obsidian does.
+- When the marker is `-`, the class `is-collapsed` on both the callout and its `.callout-fold`, as in Obsidian. An application that lets the callout toggle and produces this class SHOULD keep it in step.
+- The metadata in `data-callout-metadata`.
 
 **Example 28**
 
@@ -683,6 +713,18 @@ This first line is removed from the paragraph. Remaining lines, and the remainin
 <div class="callout-content">
 <p>Here's a callout block.</p>
 </div>
+</div>
+````````````````````````````````
+
+**Example 28, minimal**
+
+```````````````````````````````` example minimal
+> [!info] Here's a callout title
+> Here's a callout block.
+.
+<div data-callout="info">
+<div>Here's a callout title</div>
+<p>Here's a callout block.</p>
 </div>
 ````````````````````````````````
 
@@ -727,6 +769,18 @@ The fold marker must directly follow `]`:
 <div class="callout-content">
 <p>Yes!</p>
 </div>
+</details>
+````````````````````````````````
+
+**Example 31, minimal**
+
+```````````````````````````````` example minimal
+> [!faq]- Are callouts foldable?
+> Yes!
+.
+<details data-callout="faq">
+<summary>Are callouts foldable?</summary>
+<p>Yes!</p>
 </details>
 ````````````````````````````````
 
@@ -787,9 +841,11 @@ An identifier outside this table is still a callout. It takes the appearance of 
 
 ### 6.2 Task list items
 
-Lists are as in CommonMark. In addition, a list item of any list type is a **task list item** if its first paragraph begins with `[`, exactly one character, `]`, and then a space, tab, or end of line.
+Lists are as in CommonMark. In addition, as in [GFM section 5.3](https://github.github.com/gfm/#task-list-items-extension-), a list item of any list type is a **task list item** if its first paragraph begins with `[`, exactly one character, `]`, and then a space, tab, or end of line.
 
 Unlike GFM, the character may be anything. A space means the task is incomplete. **Any other character means it is complete.** The character is preserved so that themes and plugins can distinguish statuses. The canonical rendering stores it in `data-task`, which is empty for a space.
+
+**Required output:** as in GFM, the item starts with `<input type="checkbox" disabled="">`, which also has `checked=""` when the task is complete. Obsidian's classes `contains-task-list` on the list, `task-list-item` and `is-checked` on the item, and `task-list-item-checkbox` on the input MAY be produced, as MAY `data-task`.
 
 **Example 34**
 
@@ -804,6 +860,22 @@ Unlike GFM, the character may be anything. A space means the task is incomplete.
 <li class="task-list-item" data-task=""><span class="list-bullet"></span><input class="task-list-item-checkbox" type="checkbox" disabled="" /> Not done</li>
 <li class="task-list-item is-checked" data-task="?"><span class="list-bullet"></span><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Question</li>
 <li class="task-list-item is-checked" data-task="-"><span class="list-bullet"></span><input class="task-list-item-checkbox" type="checkbox" disabled="" checked="" /> Cancelled</li>
+</ul>
+````````````````````````````````
+
+**Example 34, minimal**
+
+```````````````````````````````` example minimal
+- [x] Done
+- [ ] Not done
+- [?] Question
+- [-] Cancelled
+.
+<ul>
+<li><input type="checkbox" disabled="" checked="" /> Done</li>
+<li><input type="checkbox" disabled="" /> Not done</li>
+<li><input type="checkbox" disabled="" checked="" /> Question</li>
+<li><input type="checkbox" disabled="" checked="" /> Cancelled</li>
 </ul>
 ````````````````````````````````
 
@@ -827,9 +899,11 @@ Task list items can be nested under, or contain, any kind of list.
 
 <a id="footnote-definition"></a>A **footnote definition** is a container that begins with `[^`, a **footnote label**, `]:`, and optional whitespace, indented by at most 3 spaces. A label is one or more characters and contains no whitespace or `]`. A definition can interrupt a paragraph, so several may appear on consecutive lines. ***[chosen]***
 
-A following line belongs to the definition if it is blank or is indented by at least **2 spaces**. GitHub's renderer requires 4. Paragraph continuation text may also be lazy, as in a list item. Labels match case-insensitively, as CommonMark link labels do. ***[chosen]***
+A following line belongs to the definition if it is blank or is indented by at least **4 spaces**, as in GitHub's renderer. Paragraph continuation text may also be lazy, as in a list item. Labels match case-insensitively, as CommonMark link labels do and as in GitHub's renderer. ***[chosen]***
 
-Definitions render together at the end of the document, in the order of first reference, and are numbered from 1 whatever their labels are. A definition that is never referenced is not rendered. ***[chosen]***
+Definitions render together at the end of the document, in the order of first reference, and are numbered from 1 whatever their labels are. A definition that is never referenced is not rendered. ***[chosen]*** Apart from the indent and inline footnotes, these rules are those of GitHub's renderer, whose footnote tests are in [cmark-gfm's `extensions.txt`](https://github.com/github/cmark-gfm/blob/master/test/extensions.txt). The GFM spec itself does not define footnotes.
+
+**Required output:** each reference is a `<sup>` holding an `<a>` whose `href` points to its note and that has an `id`. The notes are `<li>` elements with an `id`, in an `<ol>` inside `<section class="footnotes">`, at the end of the document. Each note ends with a link back to its reference. Obsidian's classes `footnote-ref`, `footnote-link`, and `footnote-backref`, its `data-footnote-id`, the `<hr />` at the start of the section, and the exact form of the ids MAY be produced. GitHub instead marks the links with `data-footnote-ref` and `data-footnote-backref`, which MAY also be produced.
 
 **Example 36**
 
@@ -855,6 +929,55 @@ It spans lines. <a href="#fnref-1" class="footnote-backref footnote-link">↩</a
 </section>
 ````````````````````````````````
 
+**Example 36, minimal**
+
+```````````````````````````````` example minimal
+Simple[^1] and named[^note].
+
+[^1]: The first.
+  It spans lines.
+[^note]: Named footnotes appear as numbers.
+.
+<p>Simple<sup><a href="#fn-1" id="fnref-1">1</a></sup> and named<sup><a href="#fn-2" id="fnref-2">2</a></sup>.</p>
+<section class="footnotes">
+<ol>
+<li id="fn-1">
+<p>The first.<br />
+It spans lines. <a href="#fnref-1">↩</a></p>
+</li>
+<li id="fn-2">
+<p>Named footnotes appear as numbers. <a href="#fnref-2">↩</a></p>
+</li>
+</ol>
+</section>
+````````````````````````````````
+
+A later block needs the 4-space indent to stay in the note:
+
+**Example 37**
+
+```````````````````````````````` example
+Text[^1].
+
+[^1]: First paragraph.
+
+    Second paragraph.
+
+  Not part of the note.
+.
+<p>Text<sup class="footnote-ref" data-footnote-id="fnref-1"><a class="footnote-link" href="#fn-1" id="fnref-1">1</a></sup>.</p>
+<p>Not part of the note.</p>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn-1" data-footnote-id="fn-1">
+<p>First paragraph.</p>
+<p>Second paragraph. <a href="#fnref-1" class="footnote-backref footnote-link">↩</a></p>
+</li>
+</ol>
+</section>
+````````````````````````````````
+
 ---
 
 ## 7 Inlines
@@ -865,7 +988,7 @@ Inline parsing is as in CommonMark, with the additions in this section.
 
 <a id="soft-line-break"></a>**Soft line breaks.** With [strict line breaks](#strict-line-breaks) off, which is the default, a line ending that CommonMark treats as a soft line break renders as a hard line break. With the setting on, CommonMark's behavior applies. Obsidian's help text is ambiguous about the default, and users report that the setting has no effect in Live Preview. ***[reported]***
 
-**Example 37**
+**Example 38**
 
 ```````````````````````````````` example
 line one
@@ -877,11 +1000,17 @@ line two</p>
 
 A trailing backslash or two trailing spaces also produce a hard line break, under either setting.
 
+This is the behavior of cmark-gfm's `HARDBREAKS` option and pandoc's `hard_line_breaks` extension.
+
+**Required output:** `<br />` followed by a line ending, as CommonMark renders a hard line break.
+
 ### 7.2 Highlights
 
-<a id="highlight"></a>A **highlight** is text wrapped in `==`. It is parsed with the delimiter algorithm CommonMark uses for emphasis. Only runs of exactly two `=` can act as delimiters, an opener must be left-flanking, a closer must be right-flanking, and highlights do not combine with other delimiter types. ***[chosen]*** Highlight content can contain other inlines.
+<a id="highlight"></a>A **highlight** is text wrapped in `==`. It is parsed as in [markdown-it-mark](https://github.com/markdown-it/markdown-it-mark), with the delimiter algorithm CommonMark uses for emphasis. A run of `=` is split into pairs, each of which can act as a delimiter. In a run of odd length, the extra `=` is literal text outside the highlight. An opener must be left-flanking, a closer must be right-flanking, and highlights do not combine with other delimiter types. ***[chosen]*** Pandoc's `mark` extension agrees. Highlight content can contain other inlines.
 
-**Example 38**
+**Required output:** `<mark>`. The color attribute `data-highlight` described below is Obsidian's, and MAY be produced.
+
+**Example 39**
 
 ```````````````````````````````` example
 ==Highlighted **text**==
@@ -892,7 +1021,7 @@ A trailing backslash or two trailing spaces also produce a hard line break, unde
 <p><strong><mark>Bold highlight</mark></strong></p>
 ````````````````````````````````
 
-**Example 39**
+**Example 40**
 
 ```````````````````````````````` example
 a == b == c
@@ -902,7 +1031,7 @@ a == b == c
 == spaced ==
 .
 <p>a == b == c</p>
-<p>===three===</p>
+<p>=<mark>three</mark>=</p>
 <p>== spaced ==</p>
 ````````````````````````````````
 
@@ -917,7 +1046,7 @@ A highlight whose content starts with one of these six emoji has that color. The
 | 🔵 | blue |
 | 🟣 | purple |
 
-**Example 40**
+**Example 41**
 
 ```````````````````````````````` example
 ==🔴Important==
@@ -927,9 +1056,11 @@ A highlight whose content starts with one of these six emoji has that color. The
 
 ### 7.3 Strikethrough
 
-Strikethrough uses `~~`. Unlike GFM, a single `~` is not a delimiter. ***[chosen]***
+Strikethrough is as in [GFM section 6.5](https://github.github.com/gfm/#strikethrough-extension-): text wrapped in two tildes. GitHub's renderer also accepts a single `~`, which the GFM spec does not describe. In OFM a single `~` is not a delimiter. ***[chosen]***
 
-**Example 41**
+**Required output:** `<del>`.
+
+**Example 42**
 
 ```````````````````````````````` example
 ~~Striked out text~~ and ~not struck~
@@ -943,7 +1074,7 @@ Strikethrough uses `~~`. Unlike GFM, a single `~` is not a delimiter. ***[chosen
 
 Obsidian's help advises keeping both markers on one line. A `%%` with no closer on its line is literal text, unless it begins a line, in which case it starts a [block comment](#block-comment). ***[chosen]***
 
-**Example 42**
+**Example 43**
 
 ```````````````````````````````` example
 This is an %%inline%% comment.
@@ -957,7 +1088,7 @@ This is an %%inline%% comment.
 <h1>Heading</h1>
 ````````````````````````````````
 
-**Example 43**
+**Example 44**
 
 ```````````````````````````````` example
 Discount of 10%% today
@@ -967,7 +1098,7 @@ Discount of 10%% today
 
 Text after the comment is still parsed:
 
-**Example 44**
+**Example 45**
 
 ```````````````````````````````` example
 %%comment%% _italic_
@@ -977,20 +1108,26 @@ Text after the comment is still parsed:
 
 Spaces and tabs left at the start or end of a paragraph or heading by removing a comment are removed. A paragraph that contains only comments produces no output. ***[chosen]***
 
-**Example 45**
+**Example 46**
 
 ```````````````````````````````` example
 %%only a comment%%
 .
 ````````````````````````````````
 
-Comments are removed from Reading view but remain visible in the editing views. A renderer that exports notes MUST NOT include comment content in its output.
+Comments are removed from Reading view but remain visible in the editing views.
+
+**Required output:** none. A renderer that exports notes MUST NOT include comment content in its output.
 
 ### 7.5 Inline math
 
 <a id="inline-math"></a>**Inline math** begins with a `$` that is not followed by whitespace, and ends at the next `$` that is not preceded by whitespace or a backslash. Both delimiters must be on the same line. ***[reported for whitespace; chosen for the rest]*** The content is LaTeX and is not parsed as Markdown.
 
-**Example 46**
+These rules follow [pandoc's `tex_math_dollars`](https://pandoc.org/MANUAL.html#extension-tex_math_dollars), except that pandoc also requires that the closing `$` is not followed by a digit (see Example 49).
+
+**Required output:** an element with the classes `math` and `math-inline`, holding the LaTeX source, or `math` and `math-block` for inline display math. See [section 5.2](#52-math-blocks).
+
+**Example 47**
 
 ```````````````````````````````` example
 Inline $e^{2i\pi} = 1$ math.
@@ -998,7 +1135,7 @@ Inline $e^{2i\pi} = 1$ math.
 <p>Inline <span class="math math-inline">e^{2i\pi} = 1</span> math.</p>
 ````````````````````````````````
 
-**Example 47**
+**Example 48**
 
 ```````````````````````````````` example
 It costs $ 5 or $5 and more.
@@ -1009,9 +1146,9 @@ Escaped \$5 and \$6.
 <p>Escaped $5 and $6.</p>
 ````````````````````````````````
 
-Dollar amounts with a closing candidate on the same line are math. Authors SHOULD escape them.
+Dollar amounts with a closing candidate on the same line are math, as users report. Authors SHOULD escape them. Under pandoc's rule this example would not be math.
 
-**Example 48**
+**Example 49**
 
 ```````````````````````````````` example
 $100/$200
@@ -1019,9 +1156,9 @@ $100/$200
 <p><span class="math math-inline">100/</span>200</p>
 ````````````````````````````````
 
-**Inline display math** is `$$`, content, `$$` on a single line, anywhere that inlines are parsed. It is rendered in display style. ***[chosen]***
+**Inline display math** is `$$`, content, `$$` on a single line, anywhere that inlines are parsed. It is rendered in display style, as `$$` is in pandoc. ***[chosen]***
 
-**Example 49**
+**Example 50**
 
 ```````````````````````````````` example
 $$x^2$$
@@ -1038,7 +1175,9 @@ Before $$y$$ after
 
 A **tag character** is a Unicode letter, mark, or number; `_`; `-`; `/`; or an emoji or other Unicode symbol outside ASCII. Tag characters do not include spaces or any other ASCII punctuation. The tag ends at the first character that is not a tag character.
 
-**Example 50**
+**Required output:** an `<a class="tag">` whose text is the tag, including its `#`. Its `href` MAY be anything that leads to the tag, such as a search. The canonical rendering uses `#` and the tag name.
+
+**Example 51**
 
 ```````````````````````````````` example
 #meeting #inbox/to-read #snake_case #kebab-case #y1984 #日本語
@@ -1046,7 +1185,7 @@ A **tag character** is a Unicode letter, mark, or number; `_`; `-`; `/`; or an e
 <p><a class="tag" href="#meeting">#meeting</a> <a class="tag" href="#inbox/to-read">#inbox/to-read</a> <a class="tag" href="#snake_case">#snake_case</a> <a class="tag" href="#kebab-case">#kebab-case</a> <a class="tag" href="#y1984">#y1984</a> <a class="tag" href="#日本語">#日本語</a></p>
 ````````````````````````````````
 
-**Example 51**
+**Example 52**
 
 ```````````````````````````````` example
 #1984
@@ -1054,7 +1193,7 @@ A **tag character** is a Unicode letter, mark, or number; `_`; `-`; `/`; or an e
 <p>#1984</p>
 ````````````````````````````````
 
-**Example 52**
+**Example 53**
 
 ```````````````````````````````` example
 Ends at punctuation: #tag. And #bob's.
@@ -1064,7 +1203,7 @@ Ends at punctuation: #tag. And #bob's.
 
 A tag MUST be at the start of the inline content, or preceded by whitespace or by another tag. ***[reported]***
 
-**Example 53**
+**Example 54**
 
 ```````````````````````````````` example
 abc#def is not a tag.
@@ -1077,7 +1216,7 @@ abc#def is not a tag.
 
 CommonMark ATX headings need a space after the `#`, so a tag at the start of a line is not a heading:
 
-**Example 54**
+**Example 55**
 
 ```````````````````````````````` example
 #notheading
@@ -1096,13 +1235,17 @@ A note's tags are its inline tags together with the values of its `tags` propert
 
 <a id="wikilink"></a>A **wikilink** is `[[`, a [link target](#81-linktext), an optional `|` and **display text**, and `]]`, all on one line. The first `]]` after the opening ends it. ***[chosen]***
 
-The target is everything before the first `|`. It MUST contain at least one non-whitespace character, and whitespace at its ends is removed. ***[chosen]*** Backslash escapes are not processed inside a wikilink, except that `\|` is equivalent to `|`. ***[chosen outside tables]***
+The basic syntax, with display text after the `|`, is that of pandoc's `wikilinks_title_after_pipe` extension, which is specified by the tests in [commonmark-hs](https://github.com/jgm/commonmark-hs/blob/master/commonmark-extensions/test/wikilinks_title_after_pipe.md). Those tools give no meaning to `#` and `^` in a target. [Section 8](#8-link-resolution) does.
+
+The target is everything before the first `|`. It MUST contain at least one non-whitespace character, and whitespace at its ends is removed, as in commonmark-hs. ***[chosen]*** Backslash escapes are not processed inside a wikilink, except that `\|` is equivalent to `|`. ***[chosen outside tables]***
 
 Without display text, the link shows the target as written. A renderer MAY show a `#` subpath in another form, such as `Note > Heading`.
 
-The canonical rendering is `<a class="internal-link" data-href="TARGET" href="TARGET">DISPLAY</a>`. A renderer with access to the vault SHOULD add the class `is-unresolved` to a link whose [file](#82-file-resolution) does not exist.
+The canonical rendering is `<a class="internal-link" data-href="TARGET" href="TARGET">DISPLAY</a>`.
 
-**Example 55**
+**Required output:** an `<a>` with an `href` and the display text. Obsidian's class `internal-link` and its `data-href` MAY be produced. So MAY the class `is-unresolved`, which Obsidian adds to a link whose [file](#82-file-resolution) does not exist. A renderer with access to the vault that produces Obsidian's classes SHOULD add it. Pandoc instead gives wikilinks the class `wikilink`.
+
+**Example 56**
 
 ```````````````````````````````` example
 [[Three laws of motion]]
@@ -1116,7 +1259,7 @@ The canonical rendering is `<a class="internal-link" data-href="TARGET" href="TA
 <p><a class="internal-link" data-href="Projects/Three laws of motion" href="Projects/Three laws of motion">Projects/Three laws of motion</a></p>
 ````````````````````````````````
 
-**Example 56**
+**Example 57**
 
 ```````````````````````````````` example
 [[Example|Custom name]]
@@ -1136,9 +1279,9 @@ The canonical rendering is `<a class="internal-link" data-href="TARGET" href="TA
 <p><a class="internal-link" data-href="2023-01-01#^37066d" href="2023-01-01#^37066d">2023-01-01#^37066d</a></p>
 ````````````````````````````````
 
-Display text is plain text and is not parsed for inlines. Only the first `|` is a separator. ***[chosen]***
+Display text is plain text and is not parsed for inlines. Only the first `|` is a separator. Both are as in pandoc. ***[chosen]***
 
-**Example 57**
+**Example 58**
 
 ```````````````````````````````` example
 [[Note|*not emphasis*]]
@@ -1151,7 +1294,7 @@ Display text is plain text and is not parsed for inlines. Only the first `|` is 
 
 Empty targets and targets spanning lines are not wikilinks. ***[chosen]***
 
-**Example 58**
+**Example 59**
 
 ```````````````````````````````` example
 [[]]
@@ -1169,7 +1312,7 @@ lines]]</p>
 
 A wikilink takes precedence over CommonMark link syntax beginning at the same `[`. Text after it is parsed separately. ***[chosen]***
 
-**Example 59**
+**Example 60**
 
 ```````````````````````````````` example
 [[foo]](bar)
@@ -1181,7 +1324,7 @@ A wikilink takes precedence over CommonMark link syntax beginning at the same `[
 
 Wikilinks count as links for CommonMark's rule that links may not contain other links, so an enclosing bracket pair does not form a link. ***[chosen]***
 
-**Example 60**
+**Example 61**
 
 ```````````````````````````````` example
 [a [[b]] c](d)
@@ -1191,7 +1334,7 @@ Wikilinks count as links for CommonMark's rule that links may not contain other 
 
 Wikilinks are not recognized in code:
 
-**Example 61**
+**Example 62**
 
 ```````````````````````````````` example
 `[[Note]]`
@@ -1207,7 +1350,7 @@ The characters `#`, `|`, `^`, `:`, `%%`, `[[`, and `]]` may not work in a link t
 
 <a id="embed"></a>An **embed** is `!` immediately followed by a [wikilink](#wikilink). It displays the linked file's content in place. The rules for the target are those of a wikilink. A `\!` is a literal `!` followed by a wikilink.
 
-**Example 62**
+**Example 63**
 
 ```````````````````````````````` example
 \![[Note]]
@@ -1229,7 +1372,9 @@ The kind of embed depends on the target's extension:
 
 An embed renders as `<span class="internal-embed" src="TARGET" alt="DISPLAY"></span>`, where DISPLAY is the text after `|`, or the target when there is none. An image embed renders as Obsidian's Read view has it once the image is loaded: the span also has the classes `media-embed image-embed is-loaded`, and holds an `<img>` with the same `alt`, `width` and `height`.
 
-**Example 63**
+**Required output:** an image embed is an `<img>` with `src`, `alt`, and any `width` and `height`. The output for other embeds is up to the application. The `span` and its classes and attributes are Obsidian's, and MAY be produced. A `src` attribute is not valid HTML on a `span`, so a renderer that produces valid HTML SHOULD NOT copy that part. No other specification defines embeds. Pandoc reads `![[image.png]]` as an ordinary image.
+
+**Example 64**
 
 ```````````````````````````````` example
 ![[Internal links]]
@@ -1248,7 +1393,7 @@ An embed renders as `<span class="internal-embed" src="TARGET" alt="DISPLAY"></s
 
 For an image, display text matching `^[0-9]+(x[0-9]+)?$` gives dimensions. So does that pattern after the last `|` of the display text, and then the text before that `|` is the alternative text, as in Obsidian: `![[Engelbart.jpg|A portrait|100x145]]`. Other display text is the image's alternative text, which otherwise defaults to the target.
 
-**Example 64**
+**Example 65**
 
 ```````````````````````````````` example
 ![[Engelbart.jpg]]
@@ -1268,13 +1413,35 @@ For an image, display text matching `^[0-9]+(x[0-9]+)?$` gives dimensions. So do
 <p><span class="internal-embed media-embed image-embed is-loaded" src="Engelbart.jpg" alt="A portrait" width="100" height="145"><img src="Engelbart.jpg" alt="A portrait" width="100" height="145" /></span></p>
 ````````````````````````````````
 
+**Example 65, minimal**
+
+```````````````````````````````` example minimal
+![[Engelbart.jpg]]
+
+![[Engelbart.jpg|100]]
+
+![[Engelbart.jpg|100x145]]
+
+![[Engelbart.jpg|A portrait]]
+
+![[Engelbart.jpg|A portrait|100x145]]
+.
+<p><img src="Engelbart.jpg" alt="Engelbart.jpg" /></p>
+<p><img src="Engelbart.jpg" alt="Engelbart.jpg" width="100" /></p>
+<p><img src="Engelbart.jpg" alt="Engelbart.jpg" width="100" height="145" /></p>
+<p><img src="Engelbart.jpg" alt="A portrait" /></p>
+<p><img src="Engelbart.jpg" alt="A portrait" width="100" height="145" /></p>
+````````````````````````````````
+
 An application that expands embeds MUST NOT recurse without limit when notes embed one another. ***[chosen]***
 
 ### 7.9 Images with dimensions
 
 CommonMark images are extended with dimensions in the image description. If the description ends with `|W` or `|WxH`, those give the size in pixels, and that suffix is not part of the alternative text. A description that is entirely `W` or `WxH` also gives the size and leaves empty alternative text.
 
-**Example 65**
+**Required output:** an `<img>` with `width` and `height` attributes for the size, as pandoc writes for its `{width=W height=H}` attributes.
+
+**Example 66**
 
 ```````````````````````````````` example
 ![Engelbart|100x145](https://example.com/e.jpg)
@@ -1295,9 +1462,9 @@ An application MAY display `![](URL)` as an embedded player or post when the URL
 
 ### 7.10 Markdown links to vault files
 
-CommonMark inline links and images whose destination has no URI scheme refer to vault files. The destination is percent-decoded and then treated as a [linktext](#81-linktext). The canonical rendering marks the link as it marks a wikilink, with the class `internal-link` and the decoded destination in `data-href`, as Obsidian does. An image whose destination is an image file renders as an image embed ([7.8](#78-embeds)), with the decoded destination as the span's `src`: `![A|80](my%20pic.png)` is `<span class="internal-embed media-embed image-embed is-loaded" src="my pic.png" alt="A" width="80"><img src="my%20pic.png" alt="A" width="80" /></span>`.
+CommonMark inline links and images whose destination has no URI scheme refer to vault files. The destination is percent-decoded and then treated as a [linktext](#81-linktext). **Required output** is CommonMark's. The canonical rendering marks the link as it marks a wikilink, with the class `internal-link` and the decoded destination in `data-href`, as Obsidian does, and these MAY be produced. An image whose destination is an image file renders as an image embed ([7.8](#78-embeds)), with the decoded destination as the span's `src`: `![A|80](my%20pic.png)` is `<span class="internal-embed media-embed image-embed is-loaded" src="my pic.png" alt="A" width="80"><img src="my%20pic.png" alt="A" width="80" /></span>`.
 
-**Example 66**
+**Example 67**
 
 ```````````````````````````````` example
 [Three laws](Three%20laws%20of%20motion.md)
@@ -1311,13 +1478,13 @@ CommonMark inline links and images whose destination has no URI scheme refer to 
 <p><a class="internal-link" data-href="My Note.md" href="My%20Note.md">With spaces</a></p>
 ````````````````````````````````
 
-Links with a scheme are external, including `obsidian://` URIs. The canonical rendering gives them the class `external-link`, as Obsidian does. This includes autolinks ([7.12](#712-autolinks)).
+Links with a scheme are external, including `obsidian://` URIs. The canonical rendering gives them the class `external-link`, as Obsidian does, which MAY be produced. This includes autolinks ([7.12](#712-autolinks)).
 
 ### 7.11 Footnote references
 
-A **footnote reference** is `[^`, a [footnote label](#footnote-definition), and `]`, where a matching definition exists in the document. Without a definition, it is literal text.
+A **footnote reference** is `[^`, a [footnote label](#footnote-definition), and `]`, where a matching definition exists in the document. Without a definition, it is literal text. The required output is given in [section 6.3](#63-footnote-definitions).
 
-**Example 67**
+**Example 68**
 
 ```````````````````````````````` example
 No such note[^missing].
@@ -1325,9 +1492,9 @@ No such note[^missing].
 <p>No such note[^missing].</p>
 ````````````````````````````````
 
-An **inline footnote** is `^[`, inline content with balanced brackets, and `]`. It defines an anonymous footnote at that point, numbered in sequence with the others. Inline footnotes work only in Reading view.
+An **inline footnote** is `^[`, inline content with balanced brackets, and `]`. It defines an anonymous footnote at that point, numbered in sequence with the others, as in pandoc's `inline_notes` extension. Inline footnotes work only in Reading view.
 
-**Example 68**
+**Example 69**
 
 ```````````````````````````````` example
 Text ^[An *inline* note.].
@@ -1345,9 +1512,11 @@ Text ^[An *inline* note.].
 
 ### 7.12 Autolinks
 
-CommonMark autolinks and GFM extended autolinks (bare `http://`, `https://`, `www.`, and email addresses) are recognized.
+CommonMark autolinks and [GFM extended autolinks](https://github.github.com/gfm/#autolinks-extension-) (bare `http://`, `https://`, `ftp://`, `www.`, and email addresses) are recognized, as GFM specifies.
 
-**Example 69**
+**Required output:** CommonMark's and GFM's. The class `external-link` MAY be produced, as for [other external links](#710-markdown-links-to-vault-files).
+
+**Example 70**
 
 ```````````````````````````````` example
 See https://example.com/#fragment for more.
@@ -1357,9 +1526,9 @@ See https://example.com/#fragment for more.
 
 ### 7.13 Raw HTML
 
-Inline HTML tags are as in CommonMark and subject to [sanitization](#55-html-blocks). The tags themselves are raw HTML, while text between an inline open and close tag is still parsed as Markdown. The Obsidian help describes this as Markdown being "processed outside of the HTML context."
+Inline HTML tags are as in CommonMark and subject to [sanitization](#55-html-blocks). **Required output:** the tags as written, after sanitizing. The tags themselves are raw HTML, while text between an inline open and close tag is still parsed as Markdown. The Obsidian help describes this as Markdown being "processed outside of the HTML context."
 
-**Example 70**
+**Example 71**
 
 ```````````````````````````````` example
 <u>Example</u> and <span>**bold**</span>
@@ -1508,8 +1677,7 @@ If a vault is available, resolve each link according to [section 8](#8-link-reso
 | Front matter | Not defined | YAML or JSON at the start of the file |
 | `> [!type]` | Ordinary block quote. GFM alerts are a smaller, separate feature in GitHub's renderer. | Callout, with any type, folding, and title |
 | Task marker | GFM: only space, `x`, or `X` | Any single character |
-| Strikethrough | GFM: `~` or `~~` | `~~` only |
-| Footnote continuation indent | 4 spaces in GitHub's renderer | 2 spaces |
+| Strikethrough | GFM spec: `~~`. GitHub's renderer also accepts `~` | `~~` only |
 | Inline footnote `^[x]` | Not defined | Anonymous footnote |
 | Image description | Alternative text | May end with dimensions |
 | `==x==` | Literal text | Highlight, with optional color |
@@ -1526,9 +1694,9 @@ If a vault is available, resolve each link according to [section 8](#8-link-reso
 These points most need testing against Obsidian. The current rule is given for each.
 
 1. **Characters allowed before a tag.** Is `(#tag)` a tag? Currently no. The reports found cover only whitespace, `|`, letters, and other tags.
-2. **Inline math delimiters.** Does a closing `$` before a digit count? Currently yes, since a report of `$` amounts being read as math suggests it does.
+2. **Inline math delimiters.** Does a closing `$` before a digit count? Currently yes, since a report of `$` amounts being read as math suggests it does. Pandoc's rule says no.
 3. **Inline comments across lines.** Currently not allowed. The help only advises against them.
-4. **Highlight flanking and delimiter run length.** Are `== x ==` and `===x===` highlights? Currently no.
+4. **Highlight flanking and delimiter run length.** Is `== x ==` a highlight, and is `===x===` read as `=` plus a highlight plus `=`? Currently no and yes, as in markdown-it-mark.
 5. **Alias text.** Are inlines parsed in `[[a|*b*]]`? Currently no.
 6. **Image embeds with both alternative text and a size**, as in `![[a.png|caption|100]]`. Currently the whole `caption|100` is alternative text.
 7. **Block identifier case sensitivity and duplicates.** Currently exact and first wins.
@@ -1563,6 +1731,16 @@ These points most need testing against Obsidian. The current rule is given for e
 **Obsidian API:** [`obsidian.d.ts`](https://unpkg.com/obsidian@1.12.3/obsidian.d.ts) (`parseLinktext`, `stripHeading`, `resolveSubpath`, `getFrontMatterInfo`, `CachedMetadata`).
 
 **Base specifications:** [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/), [GitHub Flavored Markdown](https://github.github.com/gfm/).
+
+**Other specifications and reference implementations followed:**
+[cmark-gfm `extensions.txt`](https://github.com/github/cmark-gfm/blob/master/test/extensions.txt) (footnotes),
+[micromark-extension-gfm-footnote](https://github.com/micromark/micromark-extension-gfm-footnote),
+[pandoc's Markdown extensions](https://pandoc.org/MANUAL.html#pandocs-markdown) (`tex_math_dollars`, `inline_notes`, `mark`, `wikilinks_title_after_pipe`, `hard_line_breaks`, `link_attributes`),
+[commonmark-hs wikilinks tests](https://github.com/jgm/commonmark-hs/blob/master/commonmark-extensions/test/wikilinks_title_after_pipe.md),
+[markdown-it-mark](https://github.com/markdown-it/markdown-it-mark),
+[micromark-extension-math](https://github.com/micromark/micromark-extension-math),
+[micromark-extension-frontmatter](https://github.com/micromark/micromark-extension-frontmatter),
+[Djot](https://djot.net).
 
 **Other references:** [Markdown Guide: Obsidian](https://www.markdownguide.org/tools/obsidian/),
 [What is the formal syntax surrounding tags?](https://forum.obsidian.md/t/what-is-the-formal-syntax-surrounding-tags/12949),

@@ -7,7 +7,7 @@ const FENCE = '`'.repeat(32);
 const EXAMPLE = new RegExp(`^${FENCE} example\\n([\\s\\S]*?)^${FENCE}$`, 'gm');
 
 // ponytail: html is false in render.ts, so raw HTML examples can't pass. Drop this once a sanitizer lets it be true.
-const RAW_HTML_EXAMPLES = new Set([17, 70]);
+const RAW_HTML_EXAMPLES = new Set([17, 71]);
 
 /** Compare as SPEC 1.5 allows: attribute order and whitespace between tags don't matter. */
 const normalize = (html: string) =>

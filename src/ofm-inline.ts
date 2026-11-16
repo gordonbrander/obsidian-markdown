@@ -125,35 +125,42 @@ const embed = (state: StateInline, silent: boolean): boolean => {
   return true;
 };
 
+// Runs split as in markdown-it-mark (SPEC 7.2): `===` is a lone `=` plus one `==` delimiter.
 const highlightTokenize = (state: StateInline, silent: boolean): boolean => {
   if (silent || state.src[state.pos] !== '=') return false;
   const scanned = state.scanDelims(state.pos, true);
-  // Whole runs are consumed, so === can't be read as == followed by =.
-  if (scanned.length !== 2) {
-    state.pending += state.src.slice(state.pos, state.pos + scanned.length);
-    state.pos += scanned.length;
-    return true;
+  let length = scanned.length;
+  if (length < 2) return false;
+  if (length % 2) {
+    state.push('text', '', 0).content = '=';
+    length--;
   }
-  state.push('text', '', 0).content = '==';
-  state.delimiters.push({
-    marker: 0x3d,
-    length: 0,
-    token: state.tokens.length - 1,
-    end: -1,
-    open: scanned.can_open,
-    close: scanned.can_close,
-  });
-  state.pos += 2;
+  for (let i = 0; i < length; i += 2) {
+    state.push('text', '', 0).content = '==';
+    if (!scanned.can_open && !scanned.can_close) continue;
+    state.delimiters.push({
+      marker: 0x3d,
+      length: 0,
+      token: state.tokens.length - 1,
+      end: -1,
+      open: scanned.can_open,
+      close: scanned.can_close,
+    });
+  }
+  state.pos += scanned.length;
   return true;
 };
 
 const applyHighlights = (state: StateInline, delimiters: Delimiter[]) => {
+  const loneMarkers: number[] = [];
   for (const delimiter of delimiters) {
     if (delimiter.marker !== 0x3d || delimiter.end === -1) continue;
+    const closeAt = delimiters[delimiter.end].token;
     const open = state.tokens[delimiter.token];
-    const close = state.tokens[delimiters[delimiter.end].token];
+    const close = state.tokens[closeAt];
     Object.assign(open, { type: 'mark_open', tag: 'mark', nesting: 1, markup: '==', content: '' });
     Object.assign(close, { type: 'mark_close', tag: 'mark', nesting: -1, markup: '==', content: '' });
+    if (state.tokens[closeAt - 1].type === 'text' && state.tokens[closeAt - 1].content === '=') loneMarkers.push(closeAt - 1);
 
     const first = state.tokens[delimiter.token + 1];
     const color = first?.type === 'text' && HIGHLIGHT_COLORS.find(([emoji]) => first.content.startsWith(emoji));
@@ -161,6 +168,13 @@ const applyHighlights = (state: StateInline, delimiters: Delimiter[]) => {
       first.content = first.content.slice(color[0].length);
       open.attrSet('data-highlight', color[1]);
     }
+  }
+  // A closing run's lone `=` comes first, so move it after the closing tags: `===a===` → `=<mark>a</mark>=`.
+  for (const i of loneMarkers.reverse()) {
+    let j = i + 1;
+    while (j < state.tokens.length && state.tokens[j].type === 'mark_close') j++;
+    j--;
+    [state.tokens[i], state.tokens[j]] = [state.tokens[j], state.tokens[i]];
   }
 };
 

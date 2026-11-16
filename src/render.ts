@@ -75,7 +75,7 @@ export const config = (md: MarkdownIt): MarkdownIt => {
 
   md.renderer.rules.th_open = cellOpen;
   md.renderer.rules.td_open = cellOpen;
-  // The canonical output uses del, where markdown-it writes s (SPEC Example 41).
+  // The canonical output uses del, where markdown-it writes s (SPEC Example 42).
   md.renderer.rules.s_open = () => '<del>';
   md.renderer.rules.s_close = () => '</del>';
   md.renderer.rules.image = image;

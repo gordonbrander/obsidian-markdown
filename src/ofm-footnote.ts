@@ -1,5 +1,5 @@
 // Adapted from markdown-it-footnote (MIT, Vitaly Puzrin and Alex Kocharin).
-// Differs for SPEC 6.3: a 2-space continuation indent and case-insensitive labels.
+// Differs for SPEC 6.3: case-insensitive labels, and a 4-space continuation indent as in GFM.
 import type { MarkdownIt, StateBlock, StateCore, StateInline, Token } from 'markdown-it';
 
 type Footnote = { label?: string; count: number; content?: string; tokens?: Token[] };
@@ -7,7 +7,7 @@ type Footnotes = { refs: Map<string, number>; list: Footnote[] };
 type FootnoteEnv = { footnotes?: Footnotes };
 type RefMeta = { id: number; subId: number };
 
-const CONTINUATION_INDENT = 2;
+const CONTINUATION_INDENT = 4;
 const UNNUMBERED = -1;
 
 const footnotesOf = (env: FootnoteEnv): Footnotes => (env.footnotes ??= { refs: new Map(), list: [] });
