@@ -1,5 +1,5 @@
 // Adapted from markdown-it-footnote (MIT, Vitaly Puzrin and Alex Kocharin).
-// Differs for SPEC 6.3: case-insensitive labels, and a 4-space continuation indent as in GFM.
+// Unlike upstream, labels match case-insensitively (SPEC 6.3).
 import type { MarkdownIt, StateBlock, StateCore, StateInline, Token } from 'markdown-it';
 
 type Footnote = { label?: string; count: number; content?: string; tokens?: Token[] };
