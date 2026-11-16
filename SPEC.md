@@ -1,7 +1,7 @@
 ---
-version: "0.1"
+version: "0.2"
 status: draft
-date: 2026-11-10
+date: 2026-11-16
 base-specifications:
   - name: CommonMark 0.31.2
     url: https://spec.commonmark.org/0.31.2/
