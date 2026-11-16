@@ -6,7 +6,7 @@ import { ofmCore } from './ofm-core.ts';
 import { ofmFootnote } from './ofm-footnote.ts';
 import { IMAGE_SIZE, imageEmbed, isImagePath, ofmInline } from './ofm-inline.ts';
 
-// The canonical output uses align, where markdown-it writes a style (SPEC Example 14).
+// GFM and SPEC 5.4 use align, where markdown-it writes a style.
 const cellOpen: RendererRule = (tokens, idx, options, _env, self) => {
   const token = tokens[idx];
   const style = token.attrGet('style');
@@ -75,7 +75,7 @@ export const config = (md: MarkdownIt): MarkdownIt => {
 
   md.renderer.rules.th_open = cellOpen;
   md.renderer.rules.td_open = cellOpen;
-  // The canonical output uses del, where markdown-it writes s (SPEC Example 42).
+  // GFM and SPEC 7.3 use del, where markdown-it writes s.
   md.renderer.rules.s_open = () => '<del>';
   md.renderer.rules.s_close = () => '</del>';
   md.renderer.rules.image = image;
